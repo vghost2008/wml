@@ -1,0 +1,4 @@
+opencv-python
+pycocotools
+gast==0.2.2
+yacs==0.1.8

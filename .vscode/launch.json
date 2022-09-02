@@ -1,0 +1,53 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: train fcos_m",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "object_detection_tools/train_net_on_multi_gpus.py",
+            "console": "integratedTerminal",
+            "args":["--config-file" "FCOS_M" "--gpus" "0"]
+        },
+        {
+            "name": "Python: train gds1",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "object_detection_tools/train_net_on_multi_gpus.py",
+            "console": "integratedTerminal",
+            "args":["--config-file" "gds1v2" "--gpus" "3"]
+        },
+        {
+            "name": "Python: normal",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+        },
+        {
+            "name": "Python: eval",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "object_detection_tools/eval_on_images.py",
+            "console": "integratedTerminal",
+            "args":["--test_data_dir" "/home/wj/ai/mldata1/GDS1Crack/val/ng" "--gpus" "3" "--config-file" "gds1"]
+        },
+        {
+            "name": "Python: tf2pb",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "object_detection_tools/tf2pb.py",
+            "console": "integratedTerminal",
+            "args":["--gpus" "1"  "--config-file" "gds1v2" "--save_pb_path" "model.pb"]
+        },
+    ]
+    
+}
