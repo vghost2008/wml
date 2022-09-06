@@ -60,6 +60,10 @@ def random_color_fn(label):
     nr = len(colors_tableau)
     return colors_tableau[random.randint(0,nr-1)]
 
+def fixed_color_fn(label):
+    color_nr = len(colors_tableau)
+    return colors_tableau[label%color_nr]
+
 def default_text_fn(label,score):
     return str(label)
 
