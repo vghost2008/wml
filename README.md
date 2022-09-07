@@ -16,9 +16,6 @@ Machine learning tools library.
 
 ```
 pip install -r requirements.txt
-cd tfop
-make clean
-make -j18
 ```
 
 

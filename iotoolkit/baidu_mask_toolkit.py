@@ -1,14 +1,11 @@
 import json
-
 import cv2
-
 import wml_utils as wmlu
 import numpy as np
 import os
 import cv2 as cv
 import sys
 import random
-from iotoolkit.labelme_toolkit import get_labels_and_bboxes
 
 
 def get_files(dir_path, img_sub_dir=None,label_sub_dir=None):

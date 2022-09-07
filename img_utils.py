@@ -863,3 +863,4 @@ def pillow2array(img,flag='color'):
 def get_standard_color(idx):
     idx = idx%len(colors_tableau)
     return colors_tableau[idx]
+

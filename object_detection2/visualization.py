@@ -55,6 +55,17 @@ def get_text_pos_fn(pmin,pmax,bbox,label):
         p1 = pmin
     return (p1[0]-5,p1[1])
 
+def get_text_pos_tr(pmin,pmax,bbox,label):
+    p1 = (pmax[0],pmin[1])
+    return (p1[0]-5,p1[1])
+
+def get_text_pos_tm(pmin,pmax,bbox,label):
+    p1 = ((pmin[0]+pmax[0])//2,pmin[1])
+    return p1
+def get_text_pos_br(pmin,pmax,bbox,label):
+    p1 = (pmax[0],pmax[1])
+    return (p1[0]-5,p1[1])
+
 def random_color_fn(label):
     del label
     nr = len(colors_tableau)
@@ -457,3 +468,36 @@ def draw_points(img,points,classes=None,show_text=False,r=2,
             cv2.putText(img, text, pos, cv2.FONT_HERSHEY_COMPLEX, fontScale=font_scale, color=color, thickness=thickness)
     
     return img
+
+'''
+bboxes:[(ymin,xmin,ymax,xmax),....] value in range[0,1]
+mask:[X,h,w]
+size:[H,W]
+'''
+def get_fullsize_mask(boxes,masks,size,mask_bg_value=0):
+    dtype = masks.dtype
+
+    res_masks = []
+    boxes = np.clip(boxes,0.0,1.0)
+    for i,bbox in enumerate(boxes):
+        x = int(bbox[1]*size[1])
+        y = int(bbox[0]*size[0])
+        w = int((bbox[3]-bbox[1])*size[1])
+        h = int((bbox[2]-bbox[0])*size[0])
+        res_mask = np.ones(size,dtype=dtype)*mask_bg_value
+        if w>1 and h>1:
+            mask = masks[i]
+            mask = cv2.resize(mask,(w,h))
+            sys.stdout.flush()
+            res_mask[y:y+h,x:x+w] = mask
+        res_masks.append(res_mask)
+
+    if len(res_masks)==0:
+        return np.zeros([0,size[0],size[1]],dtype=dtype)
+    return np.stack(res_masks,axis=0)
+
+def draw_polygon(img,polygon,color=(255,255,255),is_line=True,isClosed=True):
+    if is_line:
+        return cv2.polylines(img, [polygon], color=color,isClosed=isClosed)
+    else:
+        return cv2.fillPoly(img,[polygon],color=color)
