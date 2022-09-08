@@ -11,6 +11,7 @@ class MOTDataset(object):
 
     img_name_pattern="{:06d}"
     img_suffix=".jpg"
+    data_filter = lambda cls:cls<=1
 
     def __init__(self):
         self.raw_data = None
@@ -27,9 +28,12 @@ class MOTDataset(object):
         self._pid_dict = None
         self.img_dir = img_dir
         for line in content:
-            f_id, p_id, xmin, ymin, w, h, *_ = [float(x) for x in line.strip().split(",")]
+            f_id, p_id, xmin, ymin, w, h, _,cls,*_ = [float(x) for x in line.strip().split(",")]
             f_id = int(f_id)
             p_id = int(p_id)
+            cls = int(cls)
+            if not MOTDataset.data_filter(cls):
+                continue
             bbox = (xmin,ymin,xmin+w,ymin+h)
             self.raw_data.append([f_id,p_id,bbox])
 
@@ -52,7 +56,9 @@ class MOTDataset(object):
     def draw_tracks(self,save_dir,img_dir=None):
         if img_dir is not None:
             self.img_dir = img_dir
-        total_files_nr = glob.glob(osp.join(img_dir,"*"+self.img_suffix))
+        else:
+            img_dir = self.img_dir
+        total_files_nr = len(glob.glob(osp.join(img_dir,"*"+self.img_suffix)))
         mot_data = self.fid_dict
 
         os.makedirs(save_dir,exist_ok=True)
@@ -70,7 +76,7 @@ class MOTDataset(object):
             if len(pids)>0:
                 pids = np.array(pids,dtype=np.int32)
                 bboxes = np.array(bboxes,dtype=np.float32)
-                img = cv2.imread(img)
+                img = cv2.imread(img_path)
                 img = odv.draw_bboxes_xy(img, pids, bboxes=bboxes,
                                        color_fn=odv.fixed_color_fn,
                                        is_relative_coordinate=False,
@@ -83,17 +89,25 @@ class MOTDataset(object):
 
     @staticmethod
     def draw_one_tracks(txt_path,img_dir,save_dir):
+        if not osp.exists(txt_path):
+            print(f"{txt_path} not exists.")
+            return
+
+        if not osp.isdir(img_dir):
+            print(f"{img_dir} is not a dir.")
+            return
+
         ds = MOTDataset()
         ds.read(txt_path,img_dir)
         ds.draw_tracks(save_dir)
 
     @staticmethod
-    def draw_multi_tracks(txt_dir,img_dir,save_dir):
+    def draw_multi_tracks(txt_dir,img_dir,save_dir,img_loc_format="{img_dir}/{seq}/img1"):
         txt_files = glob.glob(osp.join(txt_dir,"*.txt"))
         for i,txt_file in enumerate(txt_files):
             basename = wmlu.base_name(txt_file)
             print(f"Draw {basename} {i+1}/{len(txt_files)}")
-            cur_img_dir = osp.join(img_dir,basename)
+            cur_img_dir = img_loc_format.format(img_dir=img_dir,seq=basename)
             cur_save_dir = osp.join(save_dir,basename)
             MOTDataset.draw_one_tracks(txt_file,cur_img_dir,cur_save_dir)
 
