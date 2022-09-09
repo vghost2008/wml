@@ -9,8 +9,8 @@ sys.path.append('.')
 
 def make_parser():
     parser = argparse.ArgumentParser("Interpolation!")
-    parser.add_argument("--txt_path", default="", help="path to tracking result path in MOTChallenge format")
-    parser.add_argument("--save_path", default=None, help="save result path, none for override")
+    parser.add_argument("txt_path", default="", help="path to tracking result path in MOTChallenge format")
+    parser.add_argument("save_path", default=None, help="save result path, none for override")
     parser.add_argument("--n_min", type=int, default=5, help="minimum") #interpolate only if a tracks' len greater than n_min
     parser.add_argument("--n_dti", type=int, default=20, help="dti") #max interpolate frames between two track entity
     parser.add_argument("--n_remove", type=int, default=0, help="dti") #if tracks' len is smaller than n_remove, the track will be removed
@@ -83,7 +83,7 @@ def dti(txt_path, save_path, n_min=25, n_dti=20,n_remove=0):
                         data_dti[n, 1] = track_id
                         data_dti[n, 2:6] = frames_dti[list(frames_dti.keys())[n]]
                         data_dti[n, 6:] = [1, -1, -1, -1]
-                    print(f"Interpolation: {track_id}, frames = {data_dti[:,0].tolist()}")
+                    print(f"Interpolation: {track_id}, frames = {data_dti[:,0].tolist()}, pos={data_dti[0,2:6]}")
                     tracklet_dti = np.vstack((tracklet, data_dti))
             seq_results = np.vstack((seq_results, tracklet_dti))
         save_seq_txt = os.path.join(save_path, seq_name)

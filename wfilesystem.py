@@ -118,6 +118,8 @@ def recurse_get_filepath_in_dir(dir_path,suffix=None,prefix=None,followlinks=Fal
     res.sort()
     return res
 
+get_files = recurse_get_filepath_in_dir
+
 def recurse_get_subdir_in_dir(dir_path,predicte_fn=None,append_self=False):
     res=[]
     for root,dirs,_ in os.walk(dir_path):

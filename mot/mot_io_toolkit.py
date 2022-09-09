@@ -36,6 +36,14 @@ class MOTDataset(object):
                 continue
             bbox = (xmin,ymin,xmin+w,ymin+h)
             self.raw_data.append([f_id,p_id,bbox])
+    
+    def bboxes(self):
+        if self.raw_data is None:
+            return np.zeros([0,4],dtype=np.float32)
+        bboxes = []
+        for x in self.raw_data:
+            bboxes.append(x[2])
+        return np.array(bboxes,dtype=np.float32)
 
     @property
     def fid_dict(self):

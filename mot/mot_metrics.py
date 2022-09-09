@@ -7,6 +7,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import thirdparty.TrackEval.trackeval as trackeval  # noqa: E402
 
 def eval_two_dirs(gt_floder,trackers_floder,metrics=["HOTA"]):
+    config_args = {}
+    config_args["GT_IMG_LOC_FORMAT"] = ""
+    config_args["GT_LOC_FORMAT"] = "{gt_folder}/{seq}.txt"
+
+    return eval(gt_floder=gt_floder,trackers_floder=trackers_floder,metrics=metrics,config_args=config_args)
+
+def eval(gt_floder,trackers_floder,metrics=["HOTA"],config_args={}):
     freeze_support()
 
     # Command line interface:
@@ -27,6 +34,7 @@ def eval_two_dirs(gt_floder,trackers_floder,metrics=["HOTA"]):
     
     config["SKIP_SPLIT_FOL"] = True
     config["TRACKER_SUB_FOLDER"] = ""
+    config.update(config_args)
 
     for setting in args.keys():
         if args[setting] is not None:
@@ -62,7 +70,7 @@ def eval_two_dirs(gt_floder,trackers_floder,metrics=["HOTA"]):
     data = evaluator.evaluate(dataset_list, metrics_list)
     return data
 
-def eval(gt_floder,trackers_floder,BENCHMARK="sportsmot",split="val",trackers_to_eval="MPNTrack",metrics=["HOTA"]):
+def eval_old(gt_floder,trackers_floder,BENCHMARK="sportsmot",split="val",trackers_to_eval="MPNTrack",metrics=["HOTA"]):
     freeze_support()
 
     # Command line interface:

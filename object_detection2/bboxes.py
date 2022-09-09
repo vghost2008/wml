@@ -424,8 +424,8 @@ def bbox_of_boxes(boxes):
 '''
 bbox:[ymin,xmin,ymax,xmax]
 '''
-def get_bboxes_wh(bbox):
-    return (bbox[2]-bbox[0],bbox[3]-bbox[1])
+def get_bboxes_wh(bboxes):
+    return bboxes[...,2:]-bboxes[...,:2]
 
 
 '''

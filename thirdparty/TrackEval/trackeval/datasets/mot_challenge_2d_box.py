@@ -181,8 +181,14 @@ class MotChallenge2DBox(_BaseDataset):
                     ini_data.read(ini_file)
                     seq_lengths[seq] = int(ini_data['Sequence']['seqLength'])
         return seq_list, seq_lengths
-    
+
     def _auto_make_seq_info(self):
+        if self.config["GT_IMG_LOC_FORMAT"] is not None and len(self.config["GT_IMG_LOC_FORMAT"])>2:
+            return self._auto_make_seq_infov1()
+        else:
+            return self._auto_make_seq_infov2()
+
+    def _auto_make_seq_infov1(self):
         _seqs = wfs.get_subdir_in_dir(self.gt_fol)
         seq_list = []
         seq_lengths = {}
@@ -202,7 +208,36 @@ class MotChallenge2DBox(_BaseDataset):
         wmlu.show_dict(seq_lengths)
 
         return seq_list,seq_lengths
-        
+    
+    def _auto_make_seq_infov2(self):
+        _seqs = wmlu.get_files(self.gt_fol,suffix=".txt")
+        _seqs = [wmlu.base_name(x) for x in _seqs]
+        seq_list = []
+        seq_lengths = {}
+        for seq in _seqs:
+            gt_file = self.config["GT_LOC_FORMAT"].format(gt_folder=self.gt_fol,seq=seq)
+            if not osp.exists(gt_file):
+                print(f"WARNING: Find {gt_file} faild.")
+                continue
+            try:
+                seq_data = np.loadtxt(gt_file, dtype=np.float64, delimiter=',')
+                if len(seq_data.shape) != 2 or seq_data.shape[0]==0 or seq_data.shape[1]<6:
+                    print(f"WARNING: Read {gt_file} faild.")
+                    continue
+                frames_nr = int(np.max(seq_data[:,0]))
+            except:
+                print(f"WARNING: Read {gt_file} faild.")
+                continue
+            seq_list.append(seq)
+            seq_lengths[seq] = frames_nr
+            
+        print(f"Auto find seqs lengths:")
+        wmlu.show_dict(seq_lengths)
+
+        return seq_list,seq_lengths
+
+            
+
 
     def _load_raw_file(self, tracker, seq, is_gt):
         """Load a file (gt or tracker) in the MOT Challenge 2D box format
@@ -280,7 +315,16 @@ class MotChallenge2DBox(_BaseDataset):
                               'columns in the data.' % (tracker, seq)
                         raise TrackEvalException(err)
                 if time_data.shape[1] >= 8:
-                    raw_data['classes'][t] = np.atleast_1d(time_data[:, 7]).astype(int)
+                    #wj
+                    #raw_data['classes'][t] = np.atleast_1d(time_data[:, 7]).astype(int)
+                    if not is_gt:
+                        raw_data['classes'][t] = np.atleast_1d(time_data[:, 7]).astype(int)
+                    else:
+                        if np.max(time_data[:, 7])<0:
+                            raw_data['classes'][t] = np.atleast_1d(np.ones_like(time_data[:, 7])).astype(int)
+                        else:
+                            raw_data['classes'][t] = np.atleast_1d(time_data[:, 7]).astype(int)
+
                 else:
                     if not is_gt:
                         raw_data['classes'][t] = np.ones_like(raw_data['ids'][t])
