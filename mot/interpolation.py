@@ -14,6 +14,8 @@ def make_parser():
     parser.add_argument("--n_min", type=int, default=5, help="minimum") #interpolate only if a tracks' len greater than n_min
     parser.add_argument("--n_dti", type=int, default=20, help="dti") #max interpolate frames between two track entity
     parser.add_argument("--n_remove", type=int, default=0, help="dti") #if tracks' len is smaller than n_remove, the track will be removed
+    parser.add_argument("--move_cond", type=str, default="{scale}", help="move condition") #if set even the frames between two track entity is large
+    #than n_dti, as long as the move distance satisfy this option, we still performance interpolation
 
     return parser
 
@@ -36,7 +38,7 @@ def write_results_score(filename, results):
             f.write(line)
 
 
-def dti(txt_path, save_path, n_min=25, n_dti=20,n_remove=0):
+def dti(txt_path, save_path, n_min=25, n_dti=20,n_remove=0,move_cond=None):
     seq_txts = sorted(glob.glob(os.path.join(txt_path, '*.txt')))
     for seq_txt in seq_txts:
         seq_name = seq_txt.split('/')[-1]
@@ -75,6 +77,24 @@ def dti(txt_path, save_path, n_min=25, n_dti=20,n_remove=0):
                             curr_bbox = (curr_frame - left_frame) * (right_bbox - left_bbox) / \
                                         (right_frame - left_frame) + left_bbox
                             frames_dti[curr_frame] = curr_bbox
+                    elif right_frame - left_frame >= n_dti and move_cond is not None and len(move_cond)>1:
+                        num_bi = int(right_frame - left_frame - 1)
+                        right_bbox = tracklet[i, 2:6]
+                        left_bbox = tracklet[i - 1, 2:6]
+                        bboxes = np.stack([right_bbox,left_bbox],axis=0)
+                        scale = np.max(bboxes[:,2:])
+                        right_cp = right_bbox[:2]+right_bbox[2:]/2
+                        left_cp = left_bbox[:2]+left_bbox[2:]/2
+                        dist_cp = np.linalg.norm(left_cp-right_cp)
+                        dist_limit = float(move_cond.format(scale=scale))
+                        if dist_cp<dist_limit:
+                            print(f"dist limit is satisfy, right_frame={right_frame},left_frame={left_frame}, dist={dist_cp}")
+                            for j in range(1, num_bi + 1):
+                                curr_frame = j + left_frame
+                                curr_bbox = (curr_frame - left_frame) * (right_bbox - left_bbox) / \
+                                            (right_frame - left_frame) + left_bbox
+                                frames_dti[curr_frame] = curr_bbox
+
                 num_dti = len(frames_dti.keys())
                 if num_dti > 0:
                     data_dti = np.zeros((num_dti, 10), dtype=np.float64)
@@ -99,5 +119,5 @@ if __name__ == '__main__':
         args.save_path = args.txt_path
 
     mkdir_if_missing(args.save_path)
-    dti(args.txt_path, args.save_path, n_min=args.n_min, n_dti=args.n_dti)
+    dti(args.txt_path, args.save_path, n_min=args.n_min, n_dti=args.n_dti,move_cond=args.move_cond)
 

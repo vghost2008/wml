@@ -1,1 +1,0 @@
-../tfop/strack.cpp
