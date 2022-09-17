@@ -294,7 +294,7 @@ def random_uniform_indict(minmaxs):
 
     return res
 
-def isChildOf(obj, cls):
+def is_child_of(obj, cls):
     try:
         for i in obj.__bases__:
             if i is cls or isinstance(i, cls):
