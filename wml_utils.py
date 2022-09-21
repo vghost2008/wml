@@ -300,10 +300,10 @@ def is_child_of(obj, cls):
             if i is cls or isinstance(i, cls):
                 return True
         for i in obj.__bases__:
-            if isChildOf(i, cls):
+            if is_child_of(i, cls):
                 return True
     except AttributeError:
-        return isChildOf(obj.__class__, cls)
+        return is_child_of(obj.__class__, cls)
     return False
 
 
