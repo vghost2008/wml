@@ -31,7 +31,7 @@ def get_rank() -> int:
         return 0
     return dist.get_rank()
 
-def setup_dist_train(rank,world_size,port="12355",host="localhost",backend='nccl'):
+def setup_dist_group(rank,world_size,port="12355",host="localhost",backend='nccl'):
     os.environ['MASTER_ADDR'] = host
     os.environ['MASTER_PORT'] = port
     #backend: gloo, nccl

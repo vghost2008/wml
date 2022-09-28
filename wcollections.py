@@ -69,10 +69,12 @@ class MDict(dict):
             output:
             {1: ['a', 'c'], 2: ['b']}
         '''
+        self.default_type = None
+        self.default_value = None
         if "dtype" in kwargs:
             self.default_type = kwargs.pop("dtype")
-        else:
-            self.default_type = None
+        elif "dvalue" in kwargs:
+            self.default_value = kwargs.pop("dvalue")
         super().__init__(*args,**kwargs)
 
     def __getattr__(self, key):
@@ -88,6 +90,8 @@ class MDict(dict):
         elif self.default_type is not None:
             super().__setitem__(key,self.default_type())
             return super().__getitem__(key)
+        elif self.default_value is not None:
+            super().__setitem__(key,self.default_value)
         return super().__getitem__(key)
 
     def __delattr__(self, key):
