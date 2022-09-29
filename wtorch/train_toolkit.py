@@ -23,47 +23,52 @@ def grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
     return total_norm
 
 def simple_split_parameters(model,filter=None):
-    pg0, pg1, pg2 = [], [], []
+    bn_weights, weights, biases = [], [], []
     parameters_set = set()
     print(f"------------------------------------------")
+    total_skip = 0
     for k, v in model.named_modules():
         if filter is not None and not(filter(k,v)):
             continue
         if hasattr(v, "bias") and isinstance(v.bias, nn.Parameter):
             if v.bias.requires_grad is False:
                 print(f"{k}.bias requires grad == False, skip.")
+                total_skip += 1
             else:
-                pg2.append(v.bias)  # biases
+                biases.append(v.bias)  # biases
                 parameters_set.add(k+".bias")
         if isinstance(v, nn.BatchNorm2d) or "bn" in k:
             if v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
+                total_skip += 1
             else:
-                pg0.append(v.weight)  # no decay
+                bn_weights.append(v.weight)  # no decay
                 parameters_set.add(k+".weight")
         elif hasattr(v, "weight") and isinstance(v.weight, nn.Parameter):
             if v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
+                total_skip += 1
             else:
-                pg1.append(v.weight)  # apply decay
+                weights.append(v.weight)  # apply decay
                 parameters_set.add(k+".weight")
         for k1,p in v.named_parameters(recurse=False):
             if k1 in ["weight","bias"]:
                 continue
             if p.requires_grad == False:
                 print(f"{k}.{k1} requires grad == False, skip.")
+                total_skip += 1
                 continue
             if "weight" in k:
-                pg1.append(p)
+                weights.append(p)
                 parameters_set.add(k+f".{k1}")
             elif "bias" in k:
-                pg2.append(p)
+                biases.append(p)
                 parameters_set.add(k+f".{k1}")
             else:
                 if p.ndim>1:
-                    pg1.append(p)
+                    weights.append(p)
                 else:
-                    pg2.append(p)
+                    biases.append(p)
                 parameters_set.add(k+f".{k1}")
 
     print(f"------------------------------------------")
@@ -73,7 +78,16 @@ def simple_split_parameters(model,filter=None):
         if k not in parameters_set:
             print(f"ERROR: {k} not in any parameters set.")
     #batch norm weight, weight, bias
-    return pg0,pg1,pg2
+    '''
+    optimizer = optim.AdamW(pg0, lr=lr,weight_decay=0.0)
+    optimizer.add_param_group(
+                    {"params": pg1, "weight_decay": 4e-5}
+                )  # add pg1 with weight_decay
+    optimizer.add_param_group({"params": pg2,"weight_decay":0.0})
+    '''
+    print(f"Total have {len(list(model.named_parameters()))} parameters.")
+    print(f"Finaly find {len(bn_weights)} bn weights, {len(weights)} weights, {len(biases)} biases, total {len(bn_weights)+len(weights)+len(biases)}, total skip {total_skip}.")
+    return bn_weights,weights,biases
 
 def freeze_model(model,freeze_bn=True):
     if freeze_bn:
