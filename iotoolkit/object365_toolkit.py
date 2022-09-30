@@ -4,6 +4,8 @@ import object_detection2.bboxes as odb
 import numpy as np
 import object_detection2.visualization as odv
 import wml_utils as wmlu
+import PIL.Image as Image
+import img_utils as wmli
 
 
 class Object365:
@@ -14,7 +16,7 @@ class Object365:
         self.absolute_coord = absolute_coord
         self.images_data = {}
         self.annotation_data = {}
-        self.images_id = []
+        self.ids = []
         self.id2name = {}
 
     def read_data(self,json_path,img_dir):
@@ -23,12 +25,12 @@ class Object365:
         with open(self.json_path,"r") as f:
             self.data = json.load(f)
         self.images_data = {}
-        self.images_id = []
+        self.ids = []
         self.annotation_data = {}
 
         for d in self.data['images']:
             id = d['id']
-            self.images_id.append(id)
+            self.ids.append(id)
             self.images_data[id] = d
         for d in self.data['annotations']:
             id = d['image_id']
@@ -37,6 +39,10 @@ class Object365:
         for x in self.data['categories']:
             name_dict[x['id']] = x['name']
         self.id2name = name_dict
+        info = list(name_dict.items())
+        info.sort(key=lambda x:x[0])
+        print(f"Category")
+        wmlu.show_list(info)
 
     @staticmethod
     def add_anno_data(dict_data,id,item_data):
@@ -46,11 +52,15 @@ class Object365:
             dict_data[id] = [item_data]
 
     def __len__(self):
-        return len(self.images_id)
+        return len(self.ids)
+
+    def getitem_by_id(self,id):
+        idx = self.ids.index(id)
+        return self.__getitem__(idx)
 
     def __getitem__(self, item):
         try:
-            id = self.images_id[item]
+            id = self.ids[item]
             item_data = self.annotation_data[id]
             is_crowd = []
             bboxes = []
@@ -73,18 +83,40 @@ class Object365:
                 bboxes = odb.absolutely_boxes_to_relative_boxes(bboxes,width=shape[1],height=shape[0])
             img_name = image_data['file_name']
             img_file = osp.join(self.img_dir,img_name)
+            '''
+            bboxes: [N,4] (x0,y0,x1,y1)
+            '''
             return img_file, shape, labels, labels_names, bboxes, None, None, is_crowd, None
         except Exception as e:
             print(e)
             return None
 
     def get_items(self):
-        for i in range(len(self.images_id)):
+        for i in range(len(self.ids)):
             res = self.__getitem__(i)
             if res is None:
                 continue
             yield res
 
+class TorchObject365(Object365):
+    def __init__(self, img_dir,anno_path,absolute_coord=True):
+        super().__init__(absolute_coord)
+        super().read_data(anno_path,img_dir)
+
+    def __getitem__(self, item):
+        x = super().__getitem__(item)
+        full_path, shape,category_ids, category_names, boxes, binary_mask, area, is_crowd, num_annotations_skipped = x
+        img = wmli.imread(full_path)
+        img = Image.fromarray(img)
+        res = []
+        nr = len(category_ids)
+        boxes = odb.npchangexyorder(boxes)
+        boxes[...,2:] = boxes[...,2:] - boxes[...,:2]
+        for i in range(nr):
+            item = {"bbox":boxes[i],"category_id":category_ids[i],"iscrowd":is_crowd[i]}
+            res.append(item)
+        
+        return img,res
 
 if __name__ == "__main__":
     import img_utils as wmli

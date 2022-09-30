@@ -598,3 +598,20 @@ def is_point_in_bbox(p,bbox):
     if p[0]>=bbox[0] and p[0]<=bbox[2] and p[1]>=bbox[1] and p[1]<=bbox[3]:
         return True
     return False
+
+def make_yolo_target(bboxes,labels):
+    '''
+    bboxes: list[[N,4]]
+    labels: list[[N]]
+    '''
+    max_nr = max(*[len(x) for x in labels])
+    batch_size = len(labels)
+    res = np.zeros([batch_size,max_nr, 5], dtype=np.float32)
+    if max_nr == 0:
+        return res
+    for i,bbox in enumerate(bboxes):
+        l = labels[i]
+        nr = len(l)
+        res[i,:nr,0] = l
+        res[i,:nr,1:] = bbox
+    return res

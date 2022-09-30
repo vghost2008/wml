@@ -250,6 +250,14 @@ def time_this(func):
         return res
     return wraps_func
 
+def no_throw(func):
+    @wraps(func)
+    def wraps_func(*args,**kwargs):
+        try:
+            return func(*args,**kwargs)
+        except:
+            return None
+    return wraps_func
 '''
 将list data分为多个组，每个组size个元素
 '''
@@ -334,4 +342,10 @@ def file_md5(path):
     with open(path,'rb') as f:
         data = f.read()
     return hashlib.md5(data).hexdigest()
+
+def nparray(data,default_shape=[0],dtype=np.float):
+    res = np.array(data)
+    if res.size == 0:
+        return np.zeros(default_shape,dtype=dtype)
+    return res
 
