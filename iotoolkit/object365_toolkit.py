@@ -120,20 +120,22 @@ class TorchObject365(Object365):
 
 if __name__ == "__main__":
     import img_utils as wmli
+    import random
     import matplotlib.pyplot as plt
 
     save_dir = "/home/wj/ai/mldata1/Objects365/tmp"
-    wmlu.create_empty_dir(save_dir)
+
+    wmlu.create_empty_dir_remove_if(save_dir)
     data = Object365(absolute_coord=False)
     data.read_data("/home/wj/ai/mldata1/Objects365/Annotations/train/train.json","/home/wj/ai/mldata1/Objects365/Images/train/train")
-    MIN_IMG_SIZE = 768
-    for x in data.get_items():
+    idxs = list(range(len(data)))
+    random.shuffle(idxs)
+    max_nr = 100
+    idxs = idxs[:max_nr]
+    for idx in idxs:
+        x = data[idx]
         full_path, shape,category_ids, category_names, boxes, binary_mask, area, is_crowd, num_annotations_skipped = x
-        if 'car' not in category_names or len(category_ids)<20:
-            continue
         img = wmli.imread(full_path)
-        if img.shape[0]<MIN_IMG_SIZE or img.shape[1]<MIN_IMG_SIZE:
-            img = wmli.resize_img(img,[MIN_IMG_SIZE,MIN_IMG_SIZE],keep_aspect_ratio=True)
 
         def text_fn(classes, scores):
             return data.id2name[classes]
