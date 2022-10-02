@@ -4,7 +4,7 @@ import random
 import numpy as np
 import semantic.visualization_utils as smv
 from PIL import Image
-from iotoolkit.coco_toolkit import JOINTS_PAIR as COCO_JOINTS_PAIR
+from iotoolkit.coco_data_fwd import JOINTS_PAIR as COCO_JOINTS_PAIR
 from .basic_datadef import colors_tableau as _colors_tableau
 from .basic_datadef import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
