@@ -10,13 +10,13 @@ def trans_file_name(filename,image_dir):
     return osp.join(*names)
 random.seed(time.time())
 COCOData.trans_file_name = trans_file_name
-data = TorchCOCOData("/media/vghost/Linux/constant_data/MachineLearning/mldata/objects365/val",
-                     "/media/vghost/Linux/constant_data/MachineLearning/mldata/objects365/val/zhiyuan_objv2_val.json")
+data = TorchCOCOData("/home/wj/ai/mldata/o365/train",
+                     "/home/wj/ai/mldata/o365/train/zhiyuan_objv2_train.json")
 save_dir = "tmp/imgs"
 
 wmlu.create_empty_dir_remove_if(save_dir)
 
-max_show_nr = 100
+max_show_nr = 1000
 idxs = list(range(len(data)))
 random.shuffle(idxs)
 idxs = idxs[:max_show_nr]
@@ -35,4 +35,5 @@ for idx in idxs:
         show_text=True,
         font_scale=0.8)
     save_path = osp.join(save_dir,f"{idx}.jpg")
+    print(f"Save {save_path}")
     wmli.imwrite(save_path,img)

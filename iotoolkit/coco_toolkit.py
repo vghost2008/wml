@@ -133,7 +133,11 @@ class COCOData:
             if width <= 0 or height <= 0:
                 num_annotations_skipped += 1
                 continue
-            if x<0 or x>=image_width  or y<0 or y>=image_height:
+            if x<0:
+                x = 0
+            if y<0:
+                y=0
+            if x>=image_width  or y>=image_height:
                 num_annotations_skipped += 1
                 continue
             if x + width > image_width:
@@ -182,7 +186,7 @@ class COCOData:
         if len(category_ids)==0:
             print("No annotation: ", full_path)
             sys.stdout.flush()
-            return None,None,None,None,None,None,None,None,None
+            return full_path,img_shape,[],[],np.zeros([0,4],dtype=np.float32),None,[],[],num_annotations_skipped
         img_shape = [image_height,image_width]
         category_ids = np.array(category_ids,dtype=np.int32)
         return full_path,img_shape,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
@@ -202,8 +206,8 @@ class COCOData:
 
 
 class TorchCOCOData(COCOData):
-    def __init__(self, img_dir, anno_path, absolute_coord=True):
-        super().__init__(is_relative_coordinate=not absolute_coord)
+    def __init__(self, img_dir, anno_path):
+        super().__init__(is_relative_coordinate=False)
         super().read_data(anno_path, img_dir)
 
     def __getitem__(self, item):
