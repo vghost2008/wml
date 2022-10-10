@@ -76,7 +76,7 @@ def fixed_color_fn(label):
 
 def fixed_color_large_fn(label):
     color_nr = len(colors_tableau_large)
-    return colors_tableau[label%color_nr]
+    return colors_tableau_large[label%color_nr]
 
 def default_text_fn(label,score):
     return str(label)
