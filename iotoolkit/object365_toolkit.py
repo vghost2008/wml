@@ -122,6 +122,9 @@ if __name__ == "__main__":
     import img_utils as wmli
     import random
     import matplotlib.pyplot as plt
+    import time
+
+    random.seed(time.time())
 
     save_dir = "/home/wj/ai/mldata1/Objects365/tmp"
 

@@ -4,12 +4,11 @@ import random
 import numpy as np
 import semantic.visualization_utils as smv
 from PIL import Image
-from iotoolkit.coco_toolkit import JOINTS_PAIR as COCO_JOINTS_PAIR
-from .basic_datadef import colors_tableau as _colors_tableau
+from iotoolkit.coco_data_fwd import JOINTS_PAIR as COCO_JOINTS_PAIR
+from .basic_datadef import colors_tableau ,colors_tableau_large
 from .basic_datadef import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
 
-colors_tableau = _colors_tableau
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
 
 def draw_text_on_image(img,text,font_scale=1.2,color=(0.,255.,0.),pos=None):
@@ -75,6 +74,10 @@ def fixed_color_fn(label):
     color_nr = len(colors_tableau)
     return colors_tableau[label%color_nr]
 
+def fixed_color_large_fn(label):
+    color_nr = len(colors_tableau_large)
+    return colors_tableau_large[label%color_nr]
+
 def default_text_fn(label,score):
     return str(label)
 
@@ -85,7 +88,7 @@ text_fn: str (*f)(label,score)
 get_text_pos_fn: tuple(2) (*f)(lt_corner,br_corner,bboxes,label)
 '''
 def draw_bboxes(img, classes=None, scores=None, bboxes=None,
-                        color_fn=random_color_fn,
+                        color_fn=fixed_color_large_fn,
                         text_fn=default_text_fn,
                         get_text_pos_fn=get_text_pos_fn,
                         thickness=2,show_text=True,font_scale=1.2,text_color=(0.,255.,0.),
@@ -151,7 +154,7 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
     return img
 
 def draw_bboxes_xy(img, classes=None, scores=None, bboxes=None,
-                color_fn=random_color_fn,
+                color_fn=fixed_color_large_fn,
                 text_fn=default_text_fn,
                 get_text_pos_fn=get_text_pos_fn,
                 thickness=2,show_text=True,font_scale=1.2,text_color=(0.,255.,0.),
@@ -440,7 +443,7 @@ def draw_keypoints_diff(image, joints0, joints1,color=[0,255,0]):
 
 
 def draw_points(img,points,classes=None,show_text=False,r=2,
-                color_fn=random_color_fn,
+                color_fn=fixed_color_large_fn,
                 text_fn=default_text_fn,
                 font_scale=0.8,
                 thickness=2):
