@@ -44,6 +44,33 @@ def log_all_variable(tb,net:torch.nn.Module,global_step):
     except Exception as e:
         print("ERROR:",e)
 
+def log_all_variable_min_max(tb,net:torch.nn.Module,global_step):
+    try:
+        for name,param in net.named_parameters():
+            if 'bias' in name:
+                name = "BIAS/"+name
+            elif "." in name:
+                name = name.replace(".","/",1)
+            if param.numel()>1:
+                std,mean = torch.std_mean(param)
+                tb.add_scalar(name+"_min",torch.min(param),global_step)
+                tb.add_scalar(name+"_max",torch.max(param),global_step)
+                tb.add_scalar(name+"_mean",mean,global_step)
+                tb.add_scalar(name+"_std",std,global_step)
+            else:
+                tb.add_scalar(name,param,global_step)
+
+        data = net.state_dict()
+        for name in data:
+            if "running" in name:
+                param = data[name]
+                if param.numel()>1:
+                    tb.add_histogram("BN/"+name,param,global_step)
+                else:
+                    tb.add_scalar("BN/"+name,param,global_step)
+    except Exception as e:
+        print("ERROR:",e)
+
 def log_basic_info(tb,name,value:torch.Tensor,global_step):
     if value.numel()>1:
         min_v = torch.min(value)
