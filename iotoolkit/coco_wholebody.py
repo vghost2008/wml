@@ -5,7 +5,6 @@ import json
 import os
 import numpy as np
 from pycocotools import mask
-import iotoolkit.label_map_util as label_map_util
 import wml_utils as wmlu
 import sys
 import object_detection2.keypoints as odk
@@ -25,6 +24,24 @@ ID2NAMES = {
     3:"righthand",
     4:"face",
 }
+
+def create_category_index(categories):
+  """Creates dictionary of COCO compatible categories keyed by category id.
+
+  Args:
+    categories: a list of dicts, each of which has the following keys:
+      'id': (required) an integer id uniquely identifying this category.
+      'name': (required) string representing category name
+        e.g., 'cat', 'dog', 'pizza'.
+
+  Returns:
+    category_index: a dict containing the same entries as categories, but keyed
+      by the 'id' field of each category.
+  """
+  category_index = {}
+  for cat in categories:
+    category_index[cat['id']] = cat
+  return category_index
 
 class COCOWholeBodyData:
     def __init__(self,trans_label=None,include_masks=False,no_crowd=True):
@@ -50,7 +67,7 @@ class COCOWholeBodyData:
         with open(annotations_file, 'r') as fid:
             groundtruth_data = json.load(fid)
             images = groundtruth_data['images']
-            category_index = label_map_util.create_category_index(
+            category_index = create_category_index(
                 groundtruth_data['categories'])
 
             annotations_index = {}

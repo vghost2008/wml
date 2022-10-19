@@ -276,3 +276,44 @@ def split_forward_batch32(func):
         else:
             return np.concatenate(res,axis=0)
     return wrapper
+
+def to(data,device=torch.device("cpu")):
+    if torch.is_tensor(data):
+        return data.to(device)
+    elif isinstance(data,dict):
+        keys = list(data.keys())
+        new_data = {}
+        for k in keys:
+            new_data[k] = to(data[k],device)
+    elif isinstance(data,(list,tuple)):
+        new_data = []
+        for v in data:
+            new_data.append(to(v,device))
+        new_data = type(data)(new_data)
+    elif not isinstance(data,Iterable):
+        return data
+    elif isinstance(data,np.ndarray):
+        return data
+    else:
+        print(f"Unsupport type {type(data)}")
+
+    return new_data
+
+def cpu(data):
+    return to(data,device=torch.device("cpu"))
+
+def cuda(data):
+    return to(data,device=torch.device("cuda:0"))
+
+def sparse_gather(data,index,return_tensor=True):
+    '''
+    data: list of tensor (mybe different length)
+    '''
+    res = []
+    for i,d in enumerate(data):
+        res.append(d[index[i]])
+    if return_tensor:
+        return torch.stack(res,dim=0)
+    else:
+        return res
+    

@@ -154,7 +154,7 @@ class TimeThis():
         if self.auto_show:
             te = (self.end_time-self.begin_time)*1000
             fps = 1000/(te+1e-8)
-            print(f"{self.name}: total time {te:.3f}, FPS={fps:.3f}.")
+            print(f"{self.name}: total time {te:.3f}ms, FPS={fps:.3f}.")
 
     def time(self):
         return self.end_time-self.begin_time

@@ -830,3 +830,20 @@ def coco_keypoint_eval_file(gt_file, res_file):
         info_str.append((name, coco_eval.stats[ind]))
 
     return info_str
+
+def coco_bbox_eval_file(gt_file, res_file):
+    coco = COCO(gt_file)
+    coco_dt = coco.loadRes(res_file)
+    coco_eval = COCOeval(coco, coco_dt, 'bbox')
+    coco_eval.params.useSegm = None
+    coco_eval.evaluate()
+    coco_eval.accumulate()
+    coco_eval.summarize()
+
+    stats_names = ['AP', 'Ap .5', 'AP .75', 'AP (M)', 'AP (L)', 'AR', 'AR .5', 'AR .75', 'AR (M)', 'AR (L)']
+
+    info_str = []
+    for ind, name in enumerate(stats_names):
+        info_str.append((name, coco_eval.stats[ind]))
+
+    return info_str

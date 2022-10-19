@@ -33,7 +33,6 @@ def create_category_index(categories):
   return category_index
 
 class COCOData:
-    trans_file_name = None  # fn(filename,image_dir)->filename
     def __init__(self,trans_label=None,include_masks=False,is_relative_coordinate=False):
         '''
 
@@ -46,10 +45,12 @@ class COCOData:
         self.image_dir = None
         self.include_masks = include_masks
         self.category_index = None
+        self.id2name = None #same as category_index
         self.trans_label = trans_label
         self.filename2image = None
         self.is_relative_coordinate = is_relative_coordinate
         self.ids = []
+        self.trans_file_name = None  # fn(filename,image_dir)->filename
 
     def get_image_full_path(self,image):
         filename = image['file_name']
@@ -80,16 +81,18 @@ class COCOData:
             print(f'{missing_annotation_count} images are missing annotations.')
 
         self.image_dir = image_dir
-        if COCOData.trans_file_name is not None:
+        if self.trans_file_name is not None:
             _images = images
             images = []
             for image in _images:
-                image["file_name"] = COCOData.trans_file_name(image["file_name"],self.image_dir)
+                image["file_name"] = self.trans_file_name.apply(image["file_name"],self.image_dir)
                 images.append(image)
         self.images = images
         self.annotations_index = annotations_index
         self.category_index = category_index
         self.ids = [image["id"] for image in images]
+        for id,info in self.category_index.items():
+            self.id2name[id] = info['name']
 
     def __len__(self):
         return len(self.ids)

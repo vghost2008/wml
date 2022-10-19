@@ -84,7 +84,7 @@ class Object365:
             img_name = image_data['file_name']
             img_file = osp.join(self.img_dir,img_name)
             '''
-            bboxes: [N,4] (x0,y0,x1,y1)
+            bboxes: [N,4] (y0,x0,y1,x1)
             '''
             return img_file, shape, labels, labels_names, bboxes, None, None, is_crowd, None
         except Exception as e:
