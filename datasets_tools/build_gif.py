@@ -16,22 +16,25 @@ def parse_args():
     parser.add_argument("out_dir",type=str,help="out dir")
     parser.add_argument("--video_ext",type=str,default=None,help="video ext")
     parser.add_argument("--img_ext",type=str,default=".jpg",help="img ext")
-    parser.add_argument("--fps",type=int,default=10,help="output fps")
+    parser.add_argument("--fps",type=int,default=25,help="output fps")
     parser.add_argument("--beg_idx",type=int,default=0,help="output fps")
     parser.add_argument("--total_nr",type=int,default=-1,help="output fps")
     parser.add_argument("--step",type=int,default=1,help="output fps")
+    parser.add_argument("--file_pattern",type=str,default="img_{:05d}.jpg",help="output fps")
     args = parser.parse_args()
     return args
 
 
-def trans_one(src_data,out_dir,fps,beg_idx=0,total_nr=-1,step=1):
-    reader = wmli.VideoReader(src_data)
+def trans_one(src_data,out_dir,fps,beg_idx=0,total_nr=-1,step=1,file_pattern="img_{:05d}.jpg"):
+    print(f"Trans {src_data}")
+    reader = wmli.VideoReader(src_data,file_pattern=file_pattern)
     if total_nr>1:
         frames = []
         for i in range(beg_idx,beg_idx+total_nr,step):
             frames.append(reader[i])
     else:
         frames = [x for x in reader]
+    frames = [wmli.resize_width(x,512) for x in frames]
     save_name = wmlu.base_name(src_data,process_suffix=False)+".gif"
     save_path = osp.join(out_dir,save_name)
     if osp.exists(save_path):
@@ -60,4 +63,4 @@ if __name__ == "__main__":
             else:
                 print(f"Skip {rd}")
         for sd in sub_dirs:
-            trans_one(sd,args.out_dir,args.fps,args.beg_idx,args.total_nr)
+            trans_one(sd,args.out_dir,args.fps,args.beg_idx,args.total_nr,file_pattern=args.file_pattern)
