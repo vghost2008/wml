@@ -1,21 +1,33 @@
 from iotoolkit.coco_toolkit import *
 import os.path as osp
+from .o365_to_coco import *
+from .coco_data_fwd import ID_TO_TEXT
 
-class Object365V2TransFile:
 
-    @staticmethod
-    def apply(filename,image_dir):
-        names = filename.split("/")[-2:]
-        return osp.join(*names)
+def trans_file_name(filename,image_dir):
+    names = filename.split("/")[-2:]
+    return osp.join(*names)
+
+def trans_label2coco(id):
+    if id in o365_id_to_coco_id:
+        return o365_id_to_coco_id[id]
+    else:
+        return None
 
 class Object365V2(COCOData):
-    def __init__(self,is_relative_coordinate=False):
+    def __init__(self,is_relative_coordinate=False,trans2coco=False):
         super().__init__(is_relative_coordinate=is_relative_coordinate)
-        self.trans_file_name = Object365V2TransFile()
+        if trans2coco:
+            self.trans_label = trans_label2coco
+        self.trans_file_name = trans_file_name
+        if trans2coco:
+            self.id2name = {}
+            for k,info in ID_TO_TEXT.items():
+                self.id2name[k] = info['name']
 
 class TorchObject365V2(Object365V2):
-    def __init__(self, img_dir, anno_path):
-        super().__init__(is_relative_coordinate=False)
+    def __init__(self, img_dir, anno_path,trans2coco=False):
+        super().__init__(is_relative_coordinate=False,trans2coco=trans2coco)
         super().read_data(anno_path, img_dir)
 
     def __getitem__(self, item):

@@ -11,6 +11,7 @@ import object_detection2.bboxes as odb
 import sys
 from PIL import Image
 from iotoolkit.coco_data_fwd import *
+import copy
 
 
 
@@ -37,7 +38,7 @@ class COCOData:
         '''
 
         Args:
-            trans_label: label fn(label) : return transed label is label is useful else return None
+            trans_label: label fn(label) : return transed label if label is useful else return None
             include_masks:
         '''
         self.images = None
@@ -51,33 +52,52 @@ class COCOData:
         self.is_relative_coordinate = is_relative_coordinate
         self.ids = []
         self.trans_file_name = None  # fn(filename,image_dir)->filename
+        self.update_id2name = True
 
     def get_image_full_path(self,image):
         filename = image['file_name']
         return os.path.join(self.image_dir, filename)
 
     def read_data(self,annotations_file,image_dir):
+        image_id2shape = {}
         with open(annotations_file, 'r') as fid:
             groundtruth_data = json.load(fid)
-            images = groundtruth_data['images']
+            _images = groundtruth_data['images']
             category_index = create_category_index(
                 groundtruth_data['categories'])
+            for image in groundtruth_data['images']:
+                image_id2shape[image['id']] = (image['height'],image['width'])
 
             annotations_index = {}
             if 'annotations' in groundtruth_data:
                 print(
                     'Found groundtruth annotations. Building annotations index.')
                 for annotation in groundtruth_data['annotations']:
+                    if self.trans_label is not None:
+                        category_id = annotation['category_id']
+                        new_category_id = self.trans_label(category_id)
+                        if new_category_id is None:
+                            continue
+                        else:
+                            annotation['category_id'] = new_category_id
                     image_id = annotation['image_id']
+                    bbox = annotation['bbox']
+                    bbox = self.check_bbox(bbox,image_id2shape[image_id])
+                    if bbox is None:
+                        continue
+                    annotation['bbox'] = bbox
                     if image_id not in annotations_index:
                         annotations_index[image_id] = []
-                    annotations_index[image_id].append(annotation)
+                    annotations_index[image_id].append(copy.deepcopy(annotation))
             missing_annotation_count = 0
-            for image in images:
+            images = []
+            for image in _images:
                 image_id = image['id']
                 if image_id not in annotations_index:
                     missing_annotation_count += 1
                     annotations_index[image_id] = []
+                else:
+                    images.append(image)
             print(f'{missing_annotation_count} images are missing annotations.')
 
         self.image_dir = image_dir
@@ -85,14 +105,16 @@ class COCOData:
             _images = images
             images = []
             for image in _images:
-                image["file_name"] = self.trans_file_name.apply(image["file_name"],self.image_dir)
+                image["file_name"] = self.trans_file_name(image["file_name"],self.image_dir)
                 images.append(image)
         self.images = images
         self.annotations_index = annotations_index
         self.category_index = category_index
         self.ids = [image["id"] for image in images]
-        for id,info in self.category_index.items():
-            self.id2name[id] = info['name']
+        if self.trans_label is None:
+            self.id2name = {}
+            for id,info in self.category_index.items():
+                self.id2name[id] = info['name']
 
     def __len__(self):
         return len(self.ids)
@@ -112,6 +134,27 @@ class COCOData:
         image = self.filename2image[file_name]
 
         return self.get_image_annotation(image)
+    
+    def check_bbox(self,bbox,img_shape):
+        image_height,image_width = img_shape
+        (x, y, width, height) = bbox
+        if width <= 0 or height <= 0:
+            return None
+        if x<0:
+            x = 0
+        if y<0:
+            y=0
+        if x>=image_width:
+            x = image_width-1
+        if  y>=image_height:
+            y = image_height-1
+        if x + width > image_width:
+            width = image_width-x
+        if y + height > image_height:
+            height = image_height-y
+        if width <= 0 or height <= 0:
+            return None
+        return (x,y,width,height)
 
     def get_image_annotation(self,image):
         image_height = image['height']
@@ -133,27 +176,8 @@ class COCOData:
         binary_masks = []
         for object_annotations in annotations_list:
             (x, y, width, height) = tuple(object_annotations['bbox'])
-            if width <= 0 or height <= 0:
-                num_annotations_skipped += 1
-                continue
-            if x<0:
-                x = 0
-            if y<0:
-                y=0
-            if x>=image_width  or y>=image_height:
-                num_annotations_skipped += 1
-                continue
-            if x + width > image_width:
-                width = image_width-x
-            if y + height > image_height:
-                height = image_height-y
-
             category_id = int(object_annotations['category_id'])
             org_category_id = category_id
-            if self.trans_label is not None:
-                category_id = self.trans_label(category_id)
-                if category_id is None:
-                    continue
 
             if self.is_relative_coordinate:
                 xmin.append(float(x) / image_width)
@@ -186,11 +210,13 @@ class COCOData:
         else:
             binary_masks = None
 
+        img_shape = [image_height,image_width]
+
         if len(category_ids)==0:
             print("No annotation: ", full_path)
             sys.stdout.flush()
             return full_path,img_shape,[],[],np.zeros([0,4],dtype=np.float32),None,[],[],num_annotations_skipped
-        img_shape = [image_height,image_width]
+
         category_ids = np.array(category_ids,dtype=np.int32)
         return full_path,img_shape,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
 
