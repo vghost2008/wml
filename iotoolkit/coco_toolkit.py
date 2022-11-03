@@ -34,7 +34,7 @@ def create_category_index(categories):
   return category_index
 
 class COCOData:
-    def __init__(self,trans_label=None,include_masks=False,is_relative_coordinate=False):
+    def __init__(self,trans_label=None,include_masks=False,is_relative_coordinate=False,remove_crowd=True):
         '''
 
         Args:
@@ -53,6 +53,7 @@ class COCOData:
         self.ids = []
         self.trans_file_name = None  # fn(filename,image_dir)->filename
         self.update_id2name = True
+        self.remove_crowd = remove_crowd
 
     def get_image_full_path(self,image):
         filename = image['file_name']
@@ -80,6 +81,8 @@ class COCOData:
                             continue
                         else:
                             annotation['category_id'] = new_category_id
+                    if self.remove_crowd and annotation['iscrowd']:
+                        continue
                     image_id = annotation['image_id']
                     bbox = annotation['bbox']
                     bbox = self.check_bbox(bbox,image_id2shape[image_id])

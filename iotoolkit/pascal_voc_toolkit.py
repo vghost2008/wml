@@ -6,7 +6,6 @@ from xml.dom.minidom import Document
 import random
 import os
 import math
-from semantic.visualization_utils import draw_bounding_boxes_on_image_tensors
 import object_detection2.visualization as odv
 import wml_utils
 import logging

@@ -608,6 +608,111 @@ class COCOEvaluation(object):
             return self.box_evaluator.to_string()
 
 
+class COCOKeypointsEvaluation(object):
+    def __init__(self,num_joints,categories="person",oks_sigmas=None):
+        categories_keypoints = []
+        for i in range(num_joints):
+            categories_keypoints.append({"id":i,"name":f"KP{i}"})
+        self.coco_evaluator = coco_evaluation.CocoKeypointEvaluator(
+                category_id=1,
+                category_keypoints=categories_keypoints,
+                class_text=categories,
+                oks_sigmas=oks_sigmas)
+        self.image_id = 0
+        self.cached_values = {}
+    '''
+    gtboxes:[N,4]
+    img_size:[H,W]
+    gtkeypoitns:[N,num_joints,3]
+    boxes: [M,4]
+    kps: [M,num_joints,3]
+    '''
+    def __call__(self, gtboxes,gtkeypoints,kps,scores,area=None,iscrowd=None):
+        self.image_id += 1
+        self.add_groundtruth(self.image_id,gtboxes,gtkeypoints,area=area,iscrowd=iscrowd)
+        self.add_detection(self.image_id,kps,scores)
+
+    def add_groundtruth(self, image_id,gtboxes,gtkeypoints,area=None,iscrowd=None):
+        if not isinstance(gtboxes,np.ndarray):
+            gtboxes = np.array(gtboxes)
+        if not isinstance(gtkeypoints,np.ndarray):
+            gtkeypoints = np.array(gtkeypoints)
+
+        if gtboxes.shape[0]>0:
+            groundtruth_dict={
+                standard_fields.InputDataFields.groundtruth_boxes:
+                    gtboxes,
+                standard_fields.InputDataFields.groundtruth_classes:np.ones([gtboxes.shape[0]],dtype=np.int32),
+            }
+            if iscrowd is not None:
+                if not isinstance(iscrowd,np.ndarray):
+                    iscrowd = np.array(iscrowd)
+                groundtruth_dict[standard_fields.InputDataFields.groundtruth_is_crowd] = iscrowd
+            if area is not None:
+                if not isinstance(area,np.ndarray):
+                    area = np.array(area)
+                groundtruth_dict[standard_fields.InputDataFields.groundtruth_area] = area 
+            groundtruth_dict[standard_fields.InputDataFields.groundtruth_keypoints] = gtkeypoints[...,:2]
+            groundtruth_dict[standard_fields.InputDataFields.groundtruth_keypoint_visibilities] = gtkeypoints[...,2]
+            self.coco_evaluator.add_single_ground_truth_image_info(
+                image_id=str(image_id),
+                groundtruth_dict=groundtruth_dict)
+
+    def add_detection(self, image_id,kps,scores):
+        if not isinstance(kps,np.ndarray):
+            kps = np.array(kps)
+        if not isinstance(scores,np.ndarray):
+            scores = np.array(scores)
+
+        if kps.shape[0]>0:
+            detections_dict={
+                standard_fields.DetectionResultFields.detection_boxes:np.zeros([kps.shape[0],4],dtype=np.float32),
+                standard_fields.DetectionResultFields.detection_scores: scores,
+                standard_fields.DetectionResultFields.detection_keypoints: kps[...,:2],
+                standard_fields.DetectionResultFields.detection_classes:np.ones([kps.shape[0]],dtype=np.int32),
+            }
+            self.coco_evaluator.add_single_detected_image_info(
+                image_id=str(image_id),
+                detections_dict=detections_dict)
+
+    def num_examples(self):
+        if '_image_ids_with_detections' in self.coco_evaluator.__dict__:
+            return len(self.coco_evaluator._image_ids_with_detections)
+        elif '_image_ids' in self.coco_evaluator.__dict__:
+            return len(self.coco_evaluator._image_ids)
+        else:
+            raise RuntimeError("Error evaluator type.")
+
+    def evaluate(self):
+        print(f"Test size {self.num_examples()}")
+        return self.coco_evaluator.evaluate()
+
+    def show(self,name=""):
+        sys.stdout.flush()
+        print(f"Test size {self.num_examples()}")
+        res = self.coco_evaluator.evaluate()
+        str0 = "|配置|"
+        str1 = "|---|"
+        str2 = f"|{name}|"
+        for k,v in res.items():
+            index = k.find("/")
+            if index>0:
+                k = k[index+1:]
+            self.cached_values[k] = v
+            str0 += f"{k}|"
+            str1 += "---|"
+            str2 += f"{v:.3f}|"
+        print(str0)
+        print(str1)
+        print(str2)
+        sys.stdout.flush()
+        return res
+
+    def to_string(self):
+        if 'mAP' in self.cached_values and 'mAP@.50IOU' in self.cached_values:
+            return f"{self.cached_values['mAP']:.3f}/{self.cached_values['mAP@.50IOU']:.3f}"
+        else:
+            return f"N.A."
 
 class ClassesWiseModelPerformace(object):
     def __init__(self,num_classes,threshold=0.5,classes_begin_value=1,model_type=COCOEvaluation,model_args={},label_trans=None,

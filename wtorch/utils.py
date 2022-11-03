@@ -317,3 +317,5 @@ def sparse_gather(data,index,return_tensor=True):
     else:
         return res
     
+def simple_model_device(model):
+     return next(model.parameters()).device

@@ -319,18 +319,14 @@ class CocoKeypointEvaluator(CocoDetectionEvaluator):
           'name': (required) a string representing the keypoint name.
       class_text: A string representing the category name for which keypoint
         metrics are to be computed.
-      oks_sigmas: A dict of keypoint name to standard deviation values for OKS
-        metrics. If not provided, default value of 0.05 will be used.
+      oks_sigmas: list of sigmas
     """
     self._category_id = category_id
     self._category_name = class_text
-    self._keypoint_ids = sorted(
-        [keypoint['id'] for keypoint in category_keypoints])
+    self._keypoint_ids = sorted([keypoint['id'] for keypoint in category_keypoints])
     kpt_id_to_name = {kpt['id']: kpt['name'] for kpt in category_keypoints}
     if oks_sigmas:
-      self._oks_sigmas = np.array([
-          oks_sigmas[kpt_id_to_name[idx]] for idx in self._keypoint_ids
-      ])
+      self._oks_sigmas = np.array([oks_sigmas[idx] for idx in self._keypoint_ids])
     else:
       # Default all per-keypoint sigmas to 0.
       self._oks_sigmas = np.full((len(self._keypoint_ids)), 0.05)
@@ -462,8 +458,7 @@ class CocoKeypointEvaluator(CocoDetectionEvaluator):
     # Keep only the detections for our category and its keypoints.
     detection_classes = detections_dict[
         standard_fields.DetectionResultFields.detection_classes]
-    detection_boxes = detections_dict[
-        standard_fields.DetectionResultFields.detection_boxes]
+    detection_boxes = detections_dict.get(standard_fields.DetectionResultFields.detection_boxes,None)
     detection_scores = detections_dict[
         standard_fields.DetectionResultFields.detection_scores]
     detection_keypoints = detections_dict[
@@ -474,7 +469,10 @@ class CocoKeypointEvaluator(CocoDetectionEvaluator):
     ]
     filtered_detection_classes = np.take(
         detection_classes, class_indices, axis=0)
-    filtered_detection_boxes = np.take(detection_boxes, class_indices, axis=0)
+    if detection_boxes is not None:
+      filtered_detection_boxes = np.take(detection_boxes, class_indices, axis=0)
+    else:
+      filtered_detection_boxes = None
     filtered_detection_scores = np.take(detection_scores, class_indices, axis=0)
     filtered_detection_keypoints = np.take(
         detection_keypoints, class_indices, axis=0)
