@@ -12,6 +12,8 @@ import sys
 from PIL import Image
 from iotoolkit.coco_data_fwd import *
 import copy
+import os.path as osp
+from iotoolkit.pascal_voc_toolkit import read_voc_xml
 
 
 
@@ -34,6 +36,7 @@ def create_category_index(categories):
   return category_index
 
 class COCOData:
+    load_patch = False
     def __init__(self,trans_label=None,include_masks=False,is_relative_coordinate=False,remove_crowd=True):
         '''
 
@@ -118,6 +121,34 @@ class COCOData:
             self.id2name = {}
             for id,info in self.category_index.items():
                 self.id2name[id] = info['name']
+        self._load_patch()
+
+
+    def _load_patch(self):
+        if not COCOData.load_patch:
+            return
+
+        for image in self.images:
+            image_id = image['id']
+            annotations_list = self.annotations_index[image_id]
+            full_path = self.get_image_full_path(image)
+            patch_path = wmlu.change_suffix(full_path,"xml")
+            if not osp.exists(patch_path):
+                continue
+            shape, bboxes, labels_text, difficult, truncated, probs = read_voc_xml(patch_path,absolute_coord=True)
+            if bboxes.shape[0] == 0:
+                continue
+            labels = [int(x) for x in labels_text]
+
+            old_len = len(annotations_list)
+            for i in range(bboxes.shape[0]):
+                bbox = bboxes[i]
+                bbox[2:] = bbox[2:]-bbox[:2]
+                area = np.prod(bbox[2:])
+                annotation = {"bbox":bbox,"category_id":labels[i],"iscrowd":False,"area":area}
+                annotations_list.append(annotation)
+            
+            print(f"Load patch {patch_path}, old len {old_len}, new len {len(self.annotations_index[image_id])}.")
 
     def __len__(self):
         return len(self.ids)
