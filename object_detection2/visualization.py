@@ -47,12 +47,18 @@ def draw_bbox(img, bbox, shape=None, label=None, color=[255, 0, 0], thickness=2,
         cv2.putText(img, str(label), p1[::-1], cv2.FONT_HERSHEY_DUPLEX, 0.5, color, 1)
     return img
 
-def get_text_pos_fn(pmin,pmax,bbox,label):
-    if bbox[0]<0.1:
+'''
+pmin: (y0,x0)
+pmax: (y1,x1)
+'''
+def get_text_pos_fn(pmin,pmax,bbox,label,text_size):
+    text_width,text_height = text_size
+    return (pmin[0]+text_height+5,pmin[1]+5)
+    '''if bbox[0]<text_height:
         p1 = (pmax[0],pmin[1])
     else:
         p1 = pmin
-    return (p1[0]-5,p1[1])
+    return (p1[0]-5,p1[1])'''
 
 def get_text_pos_tr(pmin,pmax,bbox,label):
     p1 = (pmax[0],pmin[1])
@@ -134,12 +140,14 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                     f_show_text = is_show_text(p10,p2)
 
                 if f_show_text:
+                    text_thickness = 1
                     s = text_fn(classes[i], scores[i])
-                    p = get_text_pos_fn(p10,p2,bbox,classes[i])
+                    text_size,_ = cv2.getTextSize(s,cv2.FONT_HERSHEY_DUPLEX,fontScale=font_scale,thickness=text_thickness)
+                    p = get_text_pos_fn(p10,p2,bbox,classes[i],text_size)
                     cv2.putText(img, s, p[::-1], cv2.FONT_HERSHEY_DUPLEX,
                                 fontScale=font_scale,
                                 color=text_color,
-                                thickness=1)
+                                thickness=text_thickness)
         except Exception as e:
             bbox = bboxes[i]
             p10 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))

@@ -15,8 +15,8 @@ def trans_label2coco(id):
         return None
 
 class Object365V2(COCOData):
-    def __init__(self,is_relative_coordinate=False,trans2coco=False):
-        super().__init__(is_relative_coordinate=is_relative_coordinate)
+    def __init__(self,is_relative_coordinate=False,trans2coco=False,remove_crowd=True):
+        super().__init__(is_relative_coordinate=is_relative_coordinate,remove_crowd=remove_crowd)
         if trans2coco:
             self.trans_label = trans_label2coco
         self.trans_file_name = trans_file_name
