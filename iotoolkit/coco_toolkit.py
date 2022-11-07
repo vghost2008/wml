@@ -57,6 +57,7 @@ class COCOData:
         self.trans_file_name = None  # fn(filename,image_dir)->filename
         self.update_id2name = True
         self.remove_crowd = remove_crowd
+        self.patchs_index = []
 
     def get_image_full_path(self,image):
         filename = image['file_name']
@@ -128,7 +129,9 @@ class COCOData:
         if not COCOData.load_patch:
             return
 
-        for image in self.images:
+        patchs_index = []
+
+        for idx,image in enumerate(self.images):
             image_id = image['id']
             annotations_list = self.annotations_index[image_id]
             full_path = self.get_image_full_path(image)
@@ -149,6 +152,11 @@ class COCOData:
                 annotations_list.append(annotation)
             
             print(f"Load patch {patch_path}, old len {old_len}, new len {len(self.annotations_index[image_id])}.")
+
+            patchs_index.append(idx)
+
+        self.patchs_index = set(patchs_index)
+
 
     def __len__(self):
         return len(self.ids)
