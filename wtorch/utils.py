@@ -305,6 +305,28 @@ def cpu(data):
 def cuda(data):
     return to(data,device=torch.device("cuda:0"))
 
+def numpy(data):
+    if torch.is_tensor(data):
+        return data.cpu().numpy()
+    elif isinstance(data,dict):
+        keys = list(data.keys())
+        new_data = {}
+        for k in keys:
+            new_data[k] = numpy(data[k])
+    elif isinstance(data,(list,tuple)):
+        new_data = []
+        for v in data:
+            new_data.append(numpy(v))
+        new_data = type(data)(new_data)
+    elif not isinstance(data,Iterable):
+        return data
+    elif isinstance(data,np.ndarray):
+        return data
+    else:
+        print(f"Unsupport type {type(data)}")
+
+    return new_data
+
 def sparse_gather(data,index,return_tensor=True):
     '''
     data: list of tensor (mybe different length)

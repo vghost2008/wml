@@ -213,3 +213,9 @@ COMPRESSED_ID_TO_FREQ = np.ones(shape=[81],dtype=np.float32)
 for i in range(1,81):
     id = COMPRESSED_ID_TO_ID[i]
     COMPRESSED_ID_TO_FREQ[i] = ID_TO_FREQ[id]
+
+'''
+APsmall% AP for small objects: area < 32^2
+APmedium% AP for medium objects: 32^2 < area < 96^2 
+APlarge% AP for large objects: area > 96^2
+'''

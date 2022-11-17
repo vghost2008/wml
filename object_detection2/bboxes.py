@@ -567,13 +567,29 @@ def npbbxoes_nms(bboxes,nms_thrsh=0.5):
     bboxes = bboxes[mask]
     return bboxes,mask
 
+'''
+bboxes0: [N,4],(x0,y0,x1,y1)
+bboxes1: [M,4],(x0,y0,x1,y1)
+return:
+[N,M]
+'''
 def iou_matrix(bboxes0,bboxes1):
-    ious = []
-    for bbox in bboxes0:
-        _ious = npbboxes_jaccard(bboxes1,[bbox])
-        ious.append(_ious)
-    return np.array(ious,dtype=np.float32)
+    bboxes0 = np.expand_dims(bboxes0,axis=1)
+    bboxes1 = np.expand_dims(bboxes1,axis=0)
 
+    x_int_min = np.maximum(bboxes0[...,0],bboxes1[...,0])
+    x_int_max = np.minimum(bboxes0[...,2],bboxes1[...,2])
+    y_int_min = np.maximum(bboxes0[...,1],bboxes1[...,1])
+    y_int_max = np.minimum(bboxes0[...,3],bboxes1[...,3])
+
+    int_w = np.maximum(x_int_max-x_int_min,0.0)
+    int_h = np.maximum(y_int_max-y_int_min,0.0)
+    inter_vol = int_w*int_h
+    areas0 = np.prod(bboxes0[...,2:]-bboxes0[...,:2],axis=-1)
+    areas1 = np.prod(bboxes1[...,2:]-bboxes1[...,:2],axis=-1)
+    union_vol = areas0+areas1-inter_vol
+
+    return wmath.npsafe_divide(inter_vol,union_vol)
 
 def giou_matrix(atlbrs, btlbrs):
     ious = np.zeros((len(atlbrs), len(btlbrs)), dtype=np.float)
@@ -615,3 +631,29 @@ def make_yolo_target(bboxes,labels):
         res[i,:nr,0] = l
         res[i,:nr,1:] = bbox
     return res
+
+def trans_mmdet_result(results,labels_trans=None):
+    '''
+    results: list[np.[X,5]], x0,y0,x1,y1,score, list idx is classes id
+    '''
+    bboxes = []
+    scores = []
+    labels = []
+    for i in range(len(results)):
+        if len(results[i]) == 0:
+            continue
+        bboxes.append(results[i][:,:4])
+        scores.append(results[i][:,4])
+        l = i
+        if labels_trans is not None:
+            l = labels_trans(l)
+        l = [l]*results[i].shape[0] 
+        labels.extend(l)
+    
+    if len(bboxes) == 0:
+        return np.zeros([0,4],dtype=np.float32),np.zeros([0],dtype=np.int32),np.zeros([0],dtype=np.float32)
+    bboxes = np.concatenate(bboxes,axis=0)
+    scores = np.concatenate(scores,axis=0)
+    labels = np.array(labels)
+
+    return bboxes,labels,scores
