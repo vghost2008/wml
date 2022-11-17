@@ -64,6 +64,9 @@ class COCOData:
         return os.path.join(self.image_dir, filename)
 
     def read_data(self,annotations_file,image_dir):
+        if self.trans_label is not None:
+            print(f"Trans label is not None")
+        sys.stdout.flush()
         image_id2shape = {}
         with open(annotations_file, 'r') as fid:
             groundtruth_data = json.load(fid)
@@ -122,7 +125,8 @@ class COCOData:
             self.id2name = {}
             for id,info in self.category_index.items():
                 self.id2name[id] = info['name']
-        self._load_patch()
+        '''if COCOData.load_patch:
+            self._load_patch()'''
 
 
     def _load_patch(self):
@@ -141,6 +145,8 @@ class COCOData:
             shape, bboxes, labels_text, difficult, truncated, probs = read_voc_xml(patch_path,absolute_coord=True)
             if bboxes.shape[0] == 0:
                 continue
+
+            bboxes = odb.npchangexyorder(bboxes)
             labels = [int(x) for x in labels_text]
 
             old_len = len(annotations_list)
@@ -165,6 +171,21 @@ class COCOData:
         image = self.images[item]
         res = self.get_image_annotation(image)
         return res
+
+    def filter(self,filter_func):
+        '''
+        filter_func(labels,bboxes,is_crowd)->bool
+        '''
+        old_images = self.images
+        new_images = []
+        for image in old_images:
+            x = self.get_image_annotation(image)
+            full_path,img_shape,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped = x
+            if filter_func(labels=category_ids,bboxes=boxes,is_crowd=is_crowd):
+                new_images.append(image)
+        self.images = new_images
+        self.ids = [image["id"] for image in new_images]
+        print(f"Old len {len(old_images)}, new len {len(new_images)}")
 
     def get_image_annotation_by_image_name(self,file_name):
         if self.filename2image is None:
@@ -277,8 +298,8 @@ class COCOData:
 
 
 class TorchCOCOData(COCOData):
-    def __init__(self, img_dir, anno_path):
-        super().__init__(is_relative_coordinate=False)
+    def __init__(self, img_dir, anno_path,trans_label=None):
+        super().__init__(is_relative_coordinate=False,trans_label=trans_label)
         super().read_data(anno_path, img_dir)
 
     def __getitem__(self, item):
