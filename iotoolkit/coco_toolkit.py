@@ -14,6 +14,7 @@ from iotoolkit.coco_data_fwd import *
 import copy
 import os.path as osp
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
+from collections import defaultdict
 
 
 
@@ -166,6 +167,9 @@ class COCOData:
         res = self.get_image_annotation(image)
         return res
 
+    def get_image_id(self,item):
+        return self.images[item]["id"]
+
     def get_image_annotation_by_image_name(self,file_name):
         if self.filename2image is None:
             self.filename2image = {}
@@ -300,6 +304,34 @@ class TorchCOCOData(COCOData):
             res.append(item)
 
         return img, res
+
+def load_coco_results(json_path):
+    with open(json_path,"r") as f:
+        data = json.load(f)
+    res = defaultdict(defaultdict(list))
+    r_res = defaultdict(defaultdict(list))
+    """
+          {
+                        "image_id": original_id,
+                        "category_id": labels[k],
+                        "bbox": box,
+                        "score": scores[k],
+                    }
+                    """
+    for re in data:
+        image_id = re["image_id"]
+        category_id = re["category_id"]
+        bbox = re["bbox"]
+        score = re["score"]
+        res[image_id]["bbox"].append(bbox)
+        res[image_id]["category_id"].append(category_id)
+        res[image_id]["score"].append(score)
+    
+    for k,v in res.items():
+        for k0,v0 in v.items():
+            r_res[k][k0] = np.array(v0)
+    
+    return r_res
 
 if __name__ == "__main__":
     import img_utils as wmli

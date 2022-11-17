@@ -62,10 +62,13 @@ def show_list(values,fmt=None,recurse=False):
 
     print("]")
 
-def show_dict(values):
+def show_dict(values,format:str=None):
     print("{")
     for k,v in values.items():
-        print(k,":",v,",")
+        if format is None:
+            print(k,":",v,",")
+        else:
+            print(k,":",format.format(v),",")
     print("}")
 
 def nparray2str(value,split=",",format="{}"):

@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional
 
-def npsafe_divide(numerator, denominator, name):
+def npsafe_divide(numerator, denominator, name=None):
     return np.where(
         np.greater(denominator, 0),
         np.divide(numerator, denominator),

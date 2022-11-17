@@ -10,6 +10,7 @@ import copy
 import sys
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
+import wml_utils as wmlu
 
 def __safe_persent(v0,v1):
     if v1==0:
@@ -463,7 +464,7 @@ class GeneralCOCOEvaluation(object):
     '''
     def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
                  gtmasks=None,
-                 masks=None,is_crowd=None,use_relative_coord=True):
+                 masks=None,is_crowd=None,use_relative_coord=False):
         if probability is None:
             probability = np.ones_like(labels,dtype=np.float32)
         if not isinstance(gtboxes,np.ndarray):
@@ -685,7 +686,13 @@ class COCOKeypointsEvaluation(object):
 
     def evaluate(self):
         print(f"Test size {self.num_examples()}")
-        return self.coco_evaluator.evaluate()
+        res = self.coco_evaluator.evaluate()
+        for k,v in res.items():
+            index = k.find("/")
+            if index>0:
+                k = k[index+1:]
+            self.cached_values[k] = v
+        return res
 
     def show(self,name=""):
         sys.stdout.flush()
@@ -737,7 +744,7 @@ class ClassesWiseModelPerformace(object):
         rlabels = labels[mask]
         return rbboxes,rlabels,mask
 
-    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=None,use_relative_coord=True):
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=None,use_relative_coord=False,is_crowd=None):
         if not isinstance(gtboxes,np.ndarray):
             gtboxes = np.array(gtboxes)
         if not isinstance(gtlabels,np.ndarray):
@@ -747,11 +754,18 @@ class ClassesWiseModelPerformace(object):
         if self.label_trans is not None:
             gtlabels = self.label_trans(gtlabels)
             labels = self.label_trans(labels)
+        
+        if is_crowd is not None and not isinstance(is_crowd,np.ndarray):
+            is_crowd = np.array(is_crowd)
             
         for i in range(self.num_classes):
             classes = i+self.clases_begin_value
-            lgtboxes,lgtlabels,_ = self.select_bboxes_and_labels(gtboxes,gtlabels,classes)
+            lgtboxes,lgtlabels,lgtmask = self.select_bboxes_and_labels(gtboxes,gtlabels,classes)
             lboxes,llabels,lmask = self.select_bboxes_and_labels(boxes,labels,classes)
+            if is_crowd is not None:
+                lis_crowd = is_crowd[lgtmask]
+            else:
+                lis_crowd = None
             if probability is not None:
                 lprobs = probability[lmask]
             else:
@@ -759,8 +773,9 @@ class ClassesWiseModelPerformace(object):
             if (lgtlabels.shape[0]==0) and (llabels.shape[0] ==0):
                 continue
             self.have_data[i] = True
-            self.data[i](lgtboxes,lgtlabels,lboxes,llabels,lprobs,img_size=img_size,use_relative_coord=use_relative_coord)
-        return self.mp(gtboxes,gtlabels,boxes,labels)
+            self.data[i](lgtboxes,lgtlabels,lboxes,llabels,lprobs,img_size=img_size,use_relative_coord=use_relative_coord,is_crowd=lis_crowd)
+        return self.mp(gtboxes,gtlabels,boxes,labels,probability,is_crowd=is_crowd,img_size=img_size,
+                        use_relative_coord=use_relative_coord)
 
     def show(self):
         sys.stdout.flush()
@@ -770,6 +785,7 @@ class ClassesWiseModelPerformace(object):
             classes = i+self.clases_begin_value
             print(f"Classes:{classes}")
             self.data[i].show()
+        self.classes_wise_results = {}
         sys.stdout.flush()
         print(f"---------------------------------------------------------------")
         print(f"All classes")
@@ -781,12 +797,26 @@ class ClassesWiseModelPerformace(object):
         str1 = "|---|"
         str2 = "||"
         for i in range(self.num_classes):
+            classes_id = i+1
             str0 += f"C{i+1}|"
             str1 += "---|"
             str2 += f"{str(self.data[i].to_string())}|"
+            try:
+                keys = ['mAP', 'mAP (small)', 'mAP (medium)', 'mAP (large)']
+                if hasattr(self.data[i], "box_evaluator"):
+                    d = self.data[i].box_evaluator.cached_values
+                else:
+                    d = self.data[i].cached_values
+                values = [d[k] for k in keys]
+                self.classes_wise_results[classes_id] = values
+            except:
+                self.classes_wise_results[classes_id] = [-1.0]*len(keys)
         print(str0)
         print(str1)
         print(str2)
+        #wmlu.show_dict(self.classes_wise_results,format="{:.3f}")
+        print("Summary")
+        wmlu.show_dict(self.classes_wise_results)
         sys.stdout.flush()
 
     def __getattr__(self, item):
