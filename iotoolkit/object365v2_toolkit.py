@@ -2,23 +2,32 @@ from iotoolkit.coco_toolkit import *
 import os.path as osp
 from .o365_to_coco import *
 from .coco_data_fwd import ID_TO_TEXT
+from functools import partial
 
 
 def trans_file_name(filename,image_dir):
     names = filename.split("/")[-2:]
     return osp.join(*names)
 
-def trans_label2coco(id):
+def trans_label2coco(id,fn=None):
     if id in o365_id_to_coco_id:
-        return o365_id_to_coco_id[id]
+        id = o365_id_to_coco_id[id]
+        if fn is not None:
+            return fn(id)
+        else:
+            return id
     else:
         return None
 
 class Object365V2(COCOData):
-    def __init__(self,is_relative_coordinate=False,trans2coco=False,remove_crowd=True):
-        super().__init__(is_relative_coordinate=is_relative_coordinate,remove_crowd=remove_crowd)
-        if trans2coco:
+    def __init__(self,is_relative_coordinate=False,trans2coco=False,remove_crowd=True,trans_label=None):
+        super().__init__(is_relative_coordinate=is_relative_coordinate,remove_crowd=remove_crowd,trans_label=trans_label)
+        if trans2coco and trans_label is not None:
+            self.trans_label = partial(trans_label2coco,fn=trans_label)
+        elif trans2coco:
             self.trans_label = trans_label2coco
+        elif trans_label is not None:
+            self.trans_label = trans_label
         self.trans_file_name = trans_file_name
         if trans2coco:
             self.id2name = {}
@@ -26,8 +35,8 @@ class Object365V2(COCOData):
                 self.id2name[k] = info['name']
 
 class TorchObject365V2(Object365V2):
-    def __init__(self, img_dir, anno_path,trans2coco=False):
-        super().__init__(is_relative_coordinate=False,trans2coco=trans2coco)
+    def __init__(self, img_dir, anno_path,trans2coco=False,trans_label=None):
+        super().__init__(is_relative_coordinate=False,trans2coco=trans2coco,trans_label=trans_label)
         super().read_data(anno_path, img_dir)
 
     def __getitem__(self, item):
