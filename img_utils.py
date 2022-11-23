@@ -218,6 +218,13 @@ def resize_short_size(img,size,interpolation=cv2.INTER_LINEAR):
         return resize_height(img,size,interpolation)
     else:
         return resize_width(img,size,interpolation)
+
+def resize_long_size(img,size,interpolation=cv2.INTER_LINEAR):
+    shape = img.shape
+    if shape[0]>shape[1]:
+        return resize_height(img,size,interpolation)
+    else:
+        return resize_width(img,size,interpolation)
 '''
 size:(w,h)
 return:

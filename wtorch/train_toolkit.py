@@ -7,6 +7,17 @@ import time
 import inspect
 import sys
 from .wlr_scheduler import *
+from collections import OrderedDict
+
+_NORMS = (
+    nn.BatchNorm1d,
+    nn.BatchNorm2d,
+    nn.BatchNorm3d,
+    nn.InstanceNorm1d,
+    nn.InstanceNorm2d,
+    nn.InstanceNorm3d,
+    nn.SyncBatchNorm,
+)
 
 def grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
     if isinstance(parameters, torch.Tensor):
@@ -155,6 +166,15 @@ def show_model_parameters_info(net):
             not_freeze_nr += 1
     print(f"Total freeze {_nr} batch normal layers, {not_freeze_nr} batch normal layer not freeze.")
 
+def show_async_norm_states(module):
+    for name, child in module.named_modules():
+        if isinstance(child, _NORMS):
+            info = ""
+            for k,v in child.state_dict().items():
+                if hasattr(v,"requires_grad"):
+                    info += f"{k}:{v.requires_grad}, "
+            print(f"{name}: {type(child)}: training: {child.training}, requires_grad: {info}")
+
 def get_total_and_free_memory_in_Mb(cuda_device):
     devices_info_str = os.popen(
         "nvidia-smi --query-gpu=memory.total,memory.used --format=csv,nounits,noheader"
@@ -254,9 +274,8 @@ def finetune_model(model,names_not2train=None,names2train=None):
             ms.eval()
             _nr += 1
     print(f"Total freeze {_nr} batch normal layers.")
-    show_model_parameters_info(model)
 
-def finetune_modelv2(model,names_not2train):
+def finetune_modelv2(model:torch.nn.Module,names_not2train):
     def is_name_of(name, names):
         for x in names:
             if name.startswith(x) or name.startswith("module."+x):
@@ -288,5 +307,4 @@ def finetune_modelv2(model,names_not2train):
             print(f"{name}:{ms} unfreeze.")
             continue
     print(f"Total freeze {_nr} batch normal layers.")
-    show_model_parameters_info(model)
     sys.stdout.flush()

@@ -16,6 +16,7 @@ import pandas as pd
 import wml_utils as wmlu
 from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
 from sklearn.cluster import KMeans
+from functools import partial
 '''
 ratio: h/w
 '''
@@ -309,6 +310,7 @@ def pascal_voc_dataset():
     data_path = "/home/wj/ai/mldata1/GDS1Crack/train"
     data_path = "/home/wj/ai/mldata1/take_photo/train/coco"
     data_path = "/mnt/data1/wj/ai/mldata/MOT/MOT17/train/MOT17-09-SDP/img1"
+    data_path = "/home/wj/ai/mldata1/B11ACT/datas/labeled"
     #data_path = "/home/wj/0day/wt_06"
     #data_path = '/home/wj/0day/pyz'
     data.read_data(data_path,silent=True,img_suffix=".bmp;;.jpg")
@@ -388,14 +390,13 @@ if __name__ == "__main__":
             k = min_size/ img_size[1]
         return [k*img_size[0],k*img_size[1]]'''
 
-    statics = statistics_boxes_with_datas(
-                                          pascal_voc_dataset(),
+    statics = statistics_boxes_with_datas(pascal_voc_dataset(),
                                           #labelme_dataset(),
                                         #mapillary_vistas_dataset(),
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
                                           max_aspect=None,absolute_size=True,
-                                          trans_img_size=None)
+                                          trans_img_size=partial(trans_img_long_size_to,long_size=1024))
 
     statistics_boxes(statics[0], nr=nr)
     statistics_boxes_by_different_area(statics[0],nr=nr,bin_size=5)
