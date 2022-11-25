@@ -358,4 +358,7 @@ def make_dir_for_file(file_path):
     dir_name = osp.dirname(file_path)
     os.makedirs(dir_name,exist_ok=True)
 
-
+def symlink(src, dst, overwrite=True, **kwargs):
+    if os.path.lexists(dst) and overwrite:
+        os.remove(dst)
+    os.symlink(src, dst, **kwargs)
