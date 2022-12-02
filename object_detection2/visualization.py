@@ -84,6 +84,18 @@ def fixed_color_large_fn(label):
     color_nr = len(colors_tableau_large)
     return colors_tableau_large[label%color_nr]
 
+def red_color_fn(label):
+    del label
+    return (255,0,0)
+
+def blue_color_fn(label):
+    del label
+    return (0,0,255)
+
+def green_color_fn(label):
+    del label
+    return (0,255,0)
+
 def default_text_fn(label,score):
     return str(label)
 
@@ -222,40 +234,82 @@ def draw_legend(labels,text_fn,img_size,color_fn,thickness=4,font_scale=1.2,text
 '''
 mask only include the area within bbox
 '''
-def draw_bboxes_and_mask(img,classes,scores,bboxes,masks,color_fn=None,text_fn=None,thickness=4,show_text=False,fontScale=0.8):
+def draw_mask(img,classes,bboxes,masks,
+              color_fn=fixed_color_large_fn,
+              is_relative_coordinate=True):
     masks = masks.astype(np.uint8)
+    if is_relative_coordinate:
+        scales = np.array([[img.shape[1],img.shape[0],img.shape[1],img.shape[0]]],dtype=np.float32)
+        bboxes = bboxes*scales
     for i,bbox in enumerate(bboxes):
         if color_fn is not None:
             color = list(color_fn(classes[i]))
         else:
             color = [random.random()*255, random.random()*255, random.random()*255]
-        x = int(bbox[1]*img.shape[1])
-        y = int(bbox[0]*img.shape[0])
-        w = int((bbox[3]-bbox[1])*img.shape[1])
-        h = int((bbox[2]-bbox[0])*img.shape[0])
+        color = np.reshape(np.array(color,dtype=np.float32),[1,1,-1])
+        x = int(bbox[1])
+        y = int(bbox[0])
+        w = int((bbox[3]-bbox[1]))
+        h = int((bbox[2]-bbox[0]))
         if w<=0 or h<=0:
             continue
         mask = masks[i]
         mask = cv2.resize(mask,(w,h))
         mask = np.expand_dims(mask,axis=-1)
-        img[y:y+h,x:x+w,:] = (img[y:y+h,x:x+w,:]*(np.array([[[1]]],dtype=np.float32)-mask*0.4)).astype(np.uint8)+(mask*color*0.4).astype(np.uint8)
+        try:
+            img[y:y+h,x:x+w,:] = (img[y:y+h,x:x+w,:]*(np.array([[[1]]],dtype=np.float32)-mask*0.4)).astype(np.uint8)+(mask*color*0.4).astype(np.uint8)
+        except:
+            pass
 
+    return img
+
+'''
+mask only include the area within bbox
+'''
+def draw_mask_xy(img,classes,bboxes,masks,
+              color_fn=fixed_color_large_fn,
+              is_relative_coordinate=False):
+    bboxes = odb.npchangexyorder(bboxes)
+    img = draw_mask(img=img,
+                    classes=classes,bboxes=bboxes,
+                    masks=masks,color_fn=color_fn,
+                    is_relative_coordinate=is_relative_coordinate)
+    return img
+'''
+mask only include the area within bbox
+'''
+def draw_bboxes_and_mask(img,classes,scores,bboxes,masks,
+                         color_fn=fixed_color_large_fn,
+                         text_fn=default_text_fn,
+                         thickness=4,
+                         show_text=False,
+                         font_scale=0.8,
+                         is_relative_coordinate=False):
+    masks = masks.astype(np.uint8)
+    img = draw_mask(img=img,
+                    classes=classes,bboxes=bboxes,
+                    masks=masks,color_fn=color_fn,
+                    is_relative_coordinate=is_relative_coordinate)
     img = draw_bboxes(img,classes,scores,bboxes,
                                color_fn=color_fn,
                                text_fn=text_fn,
                                thickness=thickness,
                                show_text=show_text,
-                               fontScale=fontScale)
+                               fontScale=font_scale)
     return img
 
 '''
 mask include the area of whole image
 '''
-def draw_bboxes_and_maskv2(img,classes,scores,bboxes,masks,color_fn=None,text_fn=None,thickness=4,
-                           show_text=False,
-                           fontScale=0.8):
+def draw_maskv2(img,classes,bboxes=None,masks=None,
+                           color_fn=fixed_color_large_fn,
+                           is_relative_coordinate=True,
+                           ):
     if not isinstance(masks,np.ndarray):
         masks = np.array(masks)
+    if is_relative_coordinate:
+        scales = np.array([[img.shape[1],img.shape[0],img.shape[1],img.shape[0]]],dtype=np.float32)
+        bboxes = bboxes*scales
     masks = masks.astype(np.uint8)
     for i,bbox in enumerate(bboxes):
         if color_fn is not None:
@@ -270,13 +324,47 @@ def draw_bboxes_and_maskv2(img,classes,scores,bboxes,masks,color_fn=None,text_fn
             continue
         mask = masks[i]
         img = smv.draw_mask_on_image_array(img,mask,color=color,alpha=0.4)
+    
+    return img
+
+'''
+mask include the area of whole image
+'''
+def draw_maskv2_xy(img,classes,bboxes=None,masks=None,
+                           color_fn=fixed_color_large_fn,
+                           is_relative_coordinate=False,
+                           ):
+    bboxes = odb.npchangexyorder(bboxes)
+    img = draw_maskv2(img=img,
+                    classes=classes,bboxes=bboxes,
+                    masks=masks,color_fn=color_fn,
+                    is_relative_coordinate=is_relative_coordinate)
+    return img
+'''
+mask include the area of whole image
+'''
+def draw_bboxes_and_maskv2(img,classes,scores=None,bboxes=None,masks=None,
+                           color_fn=fixed_color_large_fn,
+                           text_fn=default_text_fn,
+                           thickness=4,
+                           show_text=False,
+                           is_relative_coordinate=True,
+                           font_scale=0.8):
+    if not isinstance(masks,np.ndarray):
+        masks = np.array(masks)
+    masks = masks.astype(np.uint8)
+    img = draw_maskv2(img=img,
+                    classes=classes,bboxes=bboxes,
+                    masks=masks,color_fn=color_fn,
+                    is_relative_coordinate=is_relative_coordinate)
 
     img = draw_bboxes(img,classes,scores,bboxes,
                                color_fn=color_fn,
                                text_fn=text_fn,
                                thickness=thickness,
                                show_text=show_text,
-                               fontScale=fontScale)
+                               is_relative_coordinate=is_relative_coordinate,
+                               font_scale=font_scale)
     return img
 
 def convert_semantic_to_rgb(semantic,color_map,return_nparray=False):

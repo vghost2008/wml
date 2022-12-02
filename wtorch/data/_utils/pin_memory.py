@@ -96,6 +96,8 @@ def _pin_memory_loop_stream(in_queue, out_queue, device_id, done_event,stream):
 
 def pin_memory_stream(data):
     if isinstance(data, torch.Tensor):
+        if data.dtype==torch.int16: #hack: 不处理int16
+            return data
         return data.pin_memory().cuda(non_blocking=True)
     elif isinstance(data, string_classes):
         return data

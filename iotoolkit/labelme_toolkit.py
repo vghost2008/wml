@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import sys
 import cv2
 from object_detection2.standard_names import *
+from functools import partial
 import glob
 
 def trans_odresult_to_annotations_list(data):
@@ -73,7 +74,6 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),use_semantic=Tr
     annotations_list = []
     image = {}
     with open(file_path,"r",encoding="gb18030") as f:
-        print(file_path)
         data_str = f.read()
         try:
             json_data = json.loads(data_str)
@@ -147,20 +147,24 @@ def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=
     with open(file_path,"w") as f:
         json.dump(data,f)
 
-def get_labels_and_bboxes(image,annotations_list):
+def get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=False):
     labels = []
     bboxes = []
     width = image["width"]
     height = image["height"]
     for ann in annotations_list:
         t_box = ann["bbox"]
-        xmin = t_box[0]/width
-        ymin = t_box[1]/height
-        xmax = xmin+t_box[2]/width
-        ymax = ymin+t_box[3]/height
+        xmin = t_box[0]
+        ymin = t_box[1]
+        xmax = xmin+t_box[2]
+        ymax = ymin+t_box[3]
         bboxes.append([ymin,xmin,ymax,xmax])
         labels.append(ann["category_id"])
-    return np.array(labels),np.array(bboxes)
+    bboxes = np.array(bboxes,dtype=np.float32)
+    if is_relative_coordinate:
+        div = np.array([[height,width,height,width]],dtype=np.float32)
+        bboxes = bboxes/div
+    return np.array(labels),bboxes
 
 def get_labels_bboxes_and_masks(image,annotations_list):
     labels = []
@@ -400,7 +404,7 @@ def view_data(image_file,json_file,label_text_to_id=None,color_fn=None,alpha=0.4
         mask = np.expand_dims(mask,axis=-1)
         image_data  = (image_data*(np.array([[[1]]],dtype=np.float32) - mask * alpha)).astype(np.uint8) + (mask * color * alpha).astype(np.uint8)
 
-    labels,bboxes = get_labels_and_bboxes(image,annotation_list)
+    labels,bboxes = get_labels_and_bboxes(image,annotation_list,is_relative_coordinate=True)
     image_data = odv.bboxes_draw_on_imgv2(image_data,classes=labels,bboxes=bboxes,thickness=2)
 
     plt.figure(figsize=(10, 10))
@@ -412,41 +416,81 @@ def view_data_in_dir(dir_path):
     for img_file,json_file in files:
         view_data(img_file,json_file)
 
+def dict_label_text2id(name,dict_data):
+    return dict_data[name]
+
 class LabelMeData(object):
-    def __init__(self,label_text2id=None,shuffle=False):
+    def __init__(self,label_text2id=None,shuffle=False,is_relative_coordinate=False):
+        '''
+        label_text2id: func(name)->int
+        '''
         self.files = None
-        self.label_text2id = label_text2id
+        if isinstance(label_text2id,dict):
+            self.label_text2id = partial(dict_label_text2id,dict_data=label_text2id)
+        else:
+            self.label_text2id = label_text2id
         self.shuffle = shuffle
+        self.is_relative_coordinate = is_relative_coordinate
         
-    def read_data(self,dir_path):
-        self.files = get_files(dir_path)
+    def read_data(self,dir_path,img_suffix="jpg"):
+        self.files = get_files(dir_path,img_suffix=img_suffix)
         if self.shuffle:
             random.shuffle(self.files)
 
+    def __len__(self):
+        return len(self.files)
+
+    def get_ann_info(self,idx):
+        img_file,json_file = self.files[idx]
+        with open(json_file,"r",encoding="gb18030") as f:
+            data_str = f.read()
+            image = {}
+            try:
+                json_data = json.loads(data_str)
+                img_width = int(json_data["imageWidth"])
+                img_height = int(json_data["imageHeight"])
+                image["height"] = int(img_height)
+                image["width"] = int(img_width)
+                image["file_name"] = wmlu.base_name(json_file)
+            except:
+                pass
+        
+        return image
+    
     def get_items(self):
         '''
         :return: 
         full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
         '''
-        for i,(img_file, json_file) in enumerate(self.files):
+        for i in range(len(self.files)):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list)
-            masks = [ann["segmentation"] for ann in annotations_list]
-            if len(masks)>0:
-                try:
-                    masks = np.stack(masks,axis=0)
-                except:
-                    print("ERROR: stack masks faild.")
-                    masks = None
+            yield self.__getitem__(i)
+
+    def __getitem__(self,idx):
+        '''
+        :return: 
+        full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
+        '''
+        img_file, json_file = self.files[idx]
+        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
+        labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=self.is_relative_coordinate)
+        masks = [ann["segmentation"] for ann in annotations_list]
+        if len(masks)>0:
+            try:
+                masks = np.stack(masks,axis=0)
+            except:
+                img_height = image['height']
+                img_width = image['width']
+                masks = np.zeros(shape=[0,img_height,img_width],dtype=np.uint8)
+
+        
+        if self.label_text2id is not None:
+            labels = [self.label_text2id(x) for x in labels_names]
+        else:
+            labels = None
             
-            if self.label_text2id is not None:
-                labels = [self.label_text2id(x) for x in labels_names]
-            else:
-                labels = None
-                
-            yield img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, None,None 
+        return img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, None,None 
     
     def get_boxes_items(self):
         '''
@@ -457,7 +501,7 @@ class LabelMeData(object):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
             image, annotations_list = read_labelme_data(json_file, None)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list)
+            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=self.is_relative_coordinate)
             labels = [self.label_text2id(x) for x in labels_names]
             yield img_file,[image['height'],image['width']],labels, bboxes,  None
             

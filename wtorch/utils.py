@@ -18,6 +18,8 @@ def unnormalize(x:torch.Tensor,mean=[0.0,0.0,0.0],std=[1.0,1.0,1.0]):
         scale = np.reshape(np.array(std, dtype=np.float32), [3, 1, 1])
         offset = np.reshape(np.array(mean, dtype=np.float32), [3, 1, 1])
 
+    offset = torch.from_numpy(offset).to(x.device)
+    scale = torch.from_numpy(scale).to(x.device)
     x = x*scale+offset
     return x
 
@@ -341,3 +343,21 @@ def sparse_gather(data,index,return_tensor=True):
     
 def simple_model_device(model):
      return next(model.parameters()).device
+
+def resize_mask(mask,size):
+    '''
+    mask: [N,H,W]
+    size: (new_w,new_h)
+    '''
+    mask = torch.unsqueeze(mask,dim=0)
+    mask =  torch.nn.functional.interpolate(mask,size=(size[1],size[0]),mode='nearest')
+    mask = torch.squeeze(mask,dim=0)
+    return mask
+
+def npresize_mask(mask,size):
+    '''
+    mask: [N,H,W]
+    size: (new_w,new_h)
+    '''
+    mask = resize_mask(torch.from_numpy(mask),size)
+    return mask.numpy()

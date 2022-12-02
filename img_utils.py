@@ -186,6 +186,9 @@ def resize_img(img,size,keep_aspect_ratio=False,interpolation=cv2.INTER_LINEAR,a
     return cv2.resize(img,dsize=size,interpolation=interpolation)
 
 def resize_imgv2(img,size,interpolation=cv2.INTER_LINEAR,return_scale=False,align=None):
+    '''
+    size: (w,h)
+    '''
     old_shape = img.shape
     img = resize_img(img,size,keep_aspect_ratio=True,interpolation=interpolation)
 
@@ -505,7 +508,10 @@ def imread(filepath):
 def imsave(filename,img):
     imwrite(filename,img)
 
-def imwrite(filename, img):
+def imwrite(filename, img,size=None):
+    '''
+    size: (W,H)
+    '''
     if img.dtype != np.uint8:
         img = img.astype(np.uint8)
     dir_path = os.path.dirname(filename)
@@ -514,6 +520,8 @@ def imwrite(filename, img):
     if len(img.shape)==3 and img.shape[2]==3:
         img = copy.deepcopy(img)
         cv2.cvtColor(img, cv2.COLOR_RGB2BGR,img)
+    if size is not None:
+        img = resize_img(img,size=size,keep_aspect_ratio=True)
     cv2.imwrite(filename, img)
 
 def read_and_write_img(src_path,dst_path):

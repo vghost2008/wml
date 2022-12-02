@@ -477,7 +477,8 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
     @staticmethod
     def record_stream(data,stream):
         if torch.is_tensor(data):
-            data.record_stream(stream)
+            if data.dtype != torch.int16: #hack: 不处理int16
+                data.record_stream(stream)
         elif isinstance(data,container_abcs.Mapping):
             for k,v in data.items():
                 _MultiProcessingDataLoaderIter.record_stream(v,stream)
