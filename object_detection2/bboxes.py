@@ -657,3 +657,13 @@ def trans_mmdet_result(results,labels_trans=None):
     labels = np.array(labels)
 
     return bboxes,labels,scores
+
+def area(bboxes):
+    '''
+    bboxes: [...,4] (x0,y0,x1,y1) or (y0,x0,y1,x1)
+    '''
+
+    s0 = np.maximum(bboxes[...,2]-bboxes[...,0],0)
+    s1 = np.maximum(bboxes[...,3]-bboxes[...,1],0)
+    return s0*s1
+

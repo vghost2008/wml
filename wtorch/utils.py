@@ -349,6 +349,9 @@ def resize_mask(mask,size):
     mask: [N,H,W]
     size: (new_w,new_h)
     '''
+    if mask.numel()==0:
+        return mask.new_zeros([mask.shape[0],size[1],size[0]])
+
     mask = torch.unsqueeze(mask,dim=0)
     mask =  torch.nn.functional.interpolate(mask,size=(size[1],size[0]),mode='nearest')
     mask = torch.squeeze(mask,dim=0)

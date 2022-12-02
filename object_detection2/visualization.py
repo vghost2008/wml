@@ -311,6 +311,8 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
         scales = np.array([[img.shape[1],img.shape[0],img.shape[1],img.shape[0]]],dtype=np.float32)
         bboxes = bboxes*scales
     masks = masks.astype(np.uint8)
+    if masks.shape[1] < img.shape[0] or masks.shape[2]<img.shape[1]:
+        masks = np.pad(masks,[[0,0],[0,img.shape[0]-masks.shape[1]],[0,img.shape[1]-masks.shape[2]]])
     for i,bbox in enumerate(bboxes):
         if color_fn is not None:
             color = list(color_fn(classes[i]))

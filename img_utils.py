@@ -297,8 +297,49 @@ box:ymin,xmin,ymax,xmax, absolute corrdinate
 '''
 def crop_img_absolute(img,box):
     shape = img.shape
-    box = [box[0]/shape[0],box[1]/shape[1],box[2]/shape[0],box[3]/shape[1]]
-    return crop_img(img,box)
+    box = np.array(box)
+    box[0:4:2] = np.minimum(box[0:4:2],shape[0])
+    box[1:4:2] = np.minimum(box[1:4:2],shape[1])
+    box = np.maximum(box,0)
+    ymin = box[0]
+    ymax = box[2]
+    xmin = box[1]
+    xmax = box[3]
+    if len(shape)==2:
+        return img[ymin:ymax,xmin:xmax]
+    else:
+        return img[ymin:ymax,xmin:xmax,:]
+
+'''
+box:xmin,ymin,xmax,ymax, absolute corrdinate
+'''
+def crop_img_absolute_xy(img,box):
+    new_box = [box[1],box[0],box[3],box[2]]
+    return crop_img_absolute(img,new_box)
+
+'''
+box:ymin,xmin,ymax,xmax, absolute corrdinate
+mask: [NR,H,W]
+'''
+def crop_masks_absolute(masks,box):
+    shape = masks.shape[1:]
+    box = np.array(box)
+    box[0:4:2] = np.minimum(box[0:4:2],shape[0])
+    box[1:4:2] = np.minimum(box[1:4:2],shape[1])
+    box = np.maximum(box,0)
+    ymin = box[0]
+    ymax = box[2]
+    xmin = box[1]
+    xmax = box[3]
+    return masks[:,ymin:ymax,xmin:xmax]
+
+'''
+box:xmin,ymin,xmax,ymax, absolute corrdinate
+mask: [NR,H,W]
+'''
+def crop_masks_absolute_xy(img,box):
+    new_box = [box[1],box[0],box[3],box[2]]
+    return crop_masks_absolute(img,new_box)
 '''
 box:[ymin,xmin,ymax,xmax], relative coordinate
 crop_size:[heigh,width] absolute pixel size.
