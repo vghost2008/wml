@@ -178,7 +178,7 @@ class DataLoader(Generic[T_co]):
                  multiprocessing_context=None, generator=None,
                  *, prefetch_factor: int = 2,
                  persistent_workers: bool = True,
-                 batch_split_nr:int =1):
+                 batch_split_nr:int =2):
         torch._C._log_api_usage_once("python.data_loader")  # type: ignore
 
         self.batch_split_nr = max(1,batch_split_nr)

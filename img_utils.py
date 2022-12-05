@@ -153,6 +153,8 @@ def merge_hotgraph_image(src,dst,alpha):
         return scipy.ndimage.zoom(img, [h_scale, w_scale,1])'''
 '''
 size:(w,h)
+return:
+ resized img, resized_img.size <= size
 '''
 def resize_img(img,size,keep_aspect_ratio=False,interpolation=cv2.INTER_LINEAR,align=None):
 

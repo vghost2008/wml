@@ -434,8 +434,13 @@ class LabelMeData(object):
         
     def read_data(self,dir_path,img_suffix="jpg"):
         self.files = get_files(dir_path,img_suffix=img_suffix)
+        print(f"Total find {len(self.files)} in {dir_path}")
         if self.shuffle:
             random.shuffle(self.files)
+        print("Files")
+        wmlu.show_list(self.files[:100])
+        if len(self.files)>100:
+            print("...")
 
     def __len__(self):
         return len(self.files)

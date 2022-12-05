@@ -344,11 +344,13 @@ def sparse_gather(data,index,return_tensor=True):
 def simple_model_device(model):
      return next(model.parameters()).device
 
-def resize_mask(mask,size):
+def resize_mask(mask,size=None,r=None):
     '''
     mask: [N,H,W]
     size: (new_w,new_h)
     '''
+    if size is None:
+        size = (int(mask.shape[2]*r),int(mask.shape[1]*r))
     if mask.numel()==0:
         return mask.new_zeros([mask.shape[0],size[1],size[0]])
 
@@ -357,10 +359,10 @@ def resize_mask(mask,size):
     mask = torch.squeeze(mask,dim=0)
     return mask
 
-def npresize_mask(mask,size):
+def npresize_mask(mask,size=None,r=None):
     '''
     mask: [N,H,W]
     size: (new_w,new_h)
     '''
-    mask = resize_mask(torch.from_numpy(mask),size)
+    mask = resize_mask(torch.from_numpy(mask),size,r)
     return mask.numpy()
