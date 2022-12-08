@@ -113,6 +113,9 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                         is_relative_coordinate=True,
                         is_show_text=None,
                         fill_bboxes=False):
+    if bboxes is None:
+        return img
+
     bboxes = np.array(bboxes)
     if len(bboxes) == 0:
         return img
@@ -181,8 +184,8 @@ def draw_bboxes_xy(img, classes=None, scores=None, bboxes=None,
                 is_relative_coordinate=False,
                 is_show_text=None,
                 fill_bboxes=False):
-
-    bboxes = odb.npchangexyorder(bboxes)
+    if bboxes is not None:
+        bboxes = odb.npchangexyorder(bboxes)
     return draw_bboxes(img,classes,scores=scores,bboxes=bboxes,color_fn=color_fn,
                        text_fn=text_fn,get_text_pos_fn=get_text_pos_fn,thickness=thickness,
                        show_text=show_text,font_scale=font_scale,text_color=text_color,

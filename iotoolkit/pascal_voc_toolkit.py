@@ -470,6 +470,32 @@ class PascalVOCData(object):
         self.has_probs = has_probs
         self.absolute_coord = absolute_coord
 
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self,idx):
+        img_file,xml_file = self.files[idx]
+        #print(xml_file)
+        if not os.path.exists(xml_file):
+            return img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None
+        try:
+            data = read_voc_xml(xml_file,
+                                adjust=None,
+                                aspect_range=None,
+                                has_probs=self.has_probs,
+                                absolute_coord=self.absolute_coord)
+            shape, bboxes, labels_names, difficult, truncated,probs = data
+
+            if self.label_text2id is not None:
+                labels = [self.label_text2id(x) for x in labels_names]
+            else:
+                labels = None
+        except Exception as e:
+            print(f"Read {xml_file} {e} faild.")
+            return img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None
+        #使用difficult表示is_crowd
+        return img_file, shape[:2],labels, labels_names, bboxes, None, None, difficult, probs
+
     def read_data(self,dir_path,silent=False,img_suffix=".jpg",check_xml_file=True):
         print(f"Read {dir_path}")
         if not os.path.exists(dir_path):
@@ -492,28 +518,8 @@ class PascalVOCData(object):
         :return: 
         full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
         '''
-        for img_file, xml_file in self.files:
-            #print(xml_file)
-            if not os.path.exists(xml_file):
-                yield img_file,None,None,None,None,None,None,None,None
-                continue
-            try:
-                data = read_voc_xml(xml_file,
-                                    adjust=None,
-                                    aspect_range=None,
-                                    has_probs=self.has_probs,
-                                    absolute_coord=self.absolute_coord)
-                shape, bboxes, labels_names, difficult, truncated,probs = data
-
-                if self.label_text2id is not None:
-                    labels = [self.label_text2id(x) for x in labels_names]
-                else:
-                    labels = None
-            except Exception as e:
-                print(f"Read {xml_file} {e} faild.")
-                continue
-            #使用difficult表示is_crowd
-            yield img_file, shape[:2],labels, labels_names, bboxes, None, None, difficult, probs
+        for i in range(len(self.files)):
+            yield self.__getitem__(i)
 
     def get_boxes_items(self):
         '''
