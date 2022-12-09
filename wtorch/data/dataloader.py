@@ -369,6 +369,9 @@ class DataLoader(Generic[T_co]):
                 self._iterator._reset(self)
             return self._iterator
         else:
+            if self._iterator is not None:
+                del self._iterator
+                self._iterator = None
             return self._get_iterator()
 
     @property

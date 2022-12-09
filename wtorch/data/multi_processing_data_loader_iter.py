@@ -735,10 +735,26 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
 
         assert self._workers_done_event.is_set() == shutdown
 
+    def _clear_index_queue(self):
+        for index_queue in self._index_queues:
+            try:
+                while True:
+                    index_queue.get_nowait()
+            except:
+                pass
+    
+    def _clear_worker_results_queue(self):
+        try:
+            while True:
+                self._worker_result_queue.get_nowait()
+        except Exception as e:
+            pass
+
     def _shutdown_workers(self):
         # Called when shutting down this `_MultiProcessingDataLoaderIter`.
         # See NOTE [ Data Loader Multiprocessing Shutdown Logic ] for details on
         # the logic of this function.
+        print(f"Shutdown data loader workers")
         python_exit_status = _utils.python_exit_status
         if python_exit_status is True or python_exit_status is None:
             # See (2) of the note. If Python is shutting down, do no-op.
@@ -754,18 +770,16 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
                 # Exit `pin_memory_thread` first because exiting workers may leave
                 # corrupted data in `worker_result_queue` which `pin_memory_thread`
                 # reads from.
-                if hasattr(self, '_pin_memory_thread'):
-                    # Use hasattr in case error happens before we set the attribute.
-                    self._pin_memory_thread_done_event.set()
-                    # Send something to pin_memory_thread in case it is waiting
-                    # so that it can wake up and check `pin_memory_thread_done_event`
-                    self._worker_result_queue.put((None, None))
-                    self._pin_memory_thread.join()
-                    self._worker_result_queue.cancel_join_thread()
-                    self._worker_result_queue.close()
 
                 # Exit workers now.
+                self._clear_index_queue()
                 self._workers_done_event.set()
+                self._clear_worker_results_queue()
+                try:
+                    self._worker_result_queue.put_nowait((None, None))
+                except:
+                    pass
+
                 for worker_id in range(len(self._workers)):
                     # Get number of workers from `len(self._workers)` instead of
                     # `self._num_workers` in case we error before starting all
@@ -774,6 +788,17 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
                     # we have to shut it down because the worker is paused
                     if self._persistent_workers or self._workers_status[worker_id]:
                         self._mark_worker_as_unavailable(worker_id, shutdown=True)
+
+
+                if hasattr(self, '_pin_memory_thread'):
+                    # Use hasattr in case error happens before we set the attribute.
+                    self._pin_memory_thread_done_event.set()
+                    # Send something to pin_memory_thread in case it is waiting
+                    # so that it can wake up and check `pin_memory_thread_done_event`
+                    self._pin_memory_thread.join()
+                    self._worker_result_queue.cancel_join_thread()
+                    self._worker_result_queue.close()
+
                 for w in self._workers:
                     # We should be able to join here, but in case anything went
                     # wrong, we set a timeout and if the workers fail to join,
