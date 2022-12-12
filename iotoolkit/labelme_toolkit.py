@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import sys
 import cv2
 from object_detection2.standard_names import *
+import object_detection2.bboxes as odb
 from functools import partial
 import glob
 
@@ -48,18 +49,12 @@ def trans_absolute_coord_to_relative_coord(image_info,annotations_list):
 
 
 def get_files(data_dir, img_suffix="jpg"):
-    files = wmlu.recurse_get_filepath_in_dir(data_dir, suffix=".json")
+    img_files = wmlu.recurse_get_filepath_in_dir(data_dir, suffix=img_suffix)
     res = []
-    for file in files:
-        img_file = wmlu.change_suffix(file, img_suffix)
-        img_file1 = wmlu.change_suffix(file, "jpeg")
-        img_file2 = wmlu.change_suffix(file, "png")
-        if os.path.exists(img_file):
-            res.append((img_file, file))
-        elif os.path.exists(img_file1):
-            res.append((img_file1, file))
-        elif os.path.exists(img_file2):
-            res.append((img_file2, file))
+    for img_file in img_files:
+        json_file = wmlu.change_suffix(img_file, "json")
+        if os.path.exists(json_file):
+            res.append((img_file, json_file))
 
     return res
 
@@ -420,7 +415,7 @@ def dict_label_text2id(name,dict_data):
     return dict_data[name]
 
 class LabelMeData(object):
-    def __init__(self,label_text2id=None,shuffle=False,is_relative_coordinate=False):
+    def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True):
         '''
         label_text2id: func(name)->int
         '''
@@ -430,7 +425,7 @@ class LabelMeData(object):
         else:
             self.label_text2id = label_text2id
         self.shuffle = shuffle
-        self.is_relative_coordinate = is_relative_coordinate
+        self.absolute_coord = absolute_coord
         
     def read_data(self,dir_path,img_suffix="jpg"):
         self.files = get_files(dir_path,img_suffix=img_suffix)
@@ -479,7 +474,7 @@ class LabelMeData(object):
         '''
         img_file, json_file = self.files[idx]
         image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
-        labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=self.is_relative_coordinate)
+        labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         masks = [ann["segmentation"] for ann in annotations_list]
         if len(masks)>0:
             try:
@@ -506,7 +501,7 @@ class LabelMeData(object):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
             image, annotations_list = read_labelme_data(json_file, None)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=self.is_relative_coordinate)
+            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
             yield img_file,[image['height'],image['width']],labels, bboxes,  None
             
