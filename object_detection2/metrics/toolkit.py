@@ -379,7 +379,10 @@ class Accuracy:
         print(res)
 
     def to_string(self):
-        return f"{self.acc:.3f}({self.total_test_nr})"
+        try:
+            return f"{self.acc:.3f}({self.total_test_nr})"
+        except:
+            return "N.A."
 
 class PrecisionAndRecall:
     def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):
@@ -887,7 +890,11 @@ class ClassesWiseModelPerformace(object):
                 continue
             classes = i+self.clases_begin_value
             print(f"Classes:{classes}")
-            self.data[i].show()
+            try:
+                self.data[i].show()
+            except:
+                print("N.A.")
+                pass
         self.classes_wise_results = {}
         sys.stdout.flush()
         print(f"---------------------------------------------------------------")

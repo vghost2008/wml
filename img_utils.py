@@ -14,7 +14,7 @@ import random
 import itertools
 import time
 import glob
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 from object_detection2.basic_datadef import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 from object_detection2.basic_datadef import colors_tableau
 import object_detection2.visualization as odv
@@ -318,6 +318,30 @@ box:xmin,ymin,xmax,ymax, absolute corrdinate
 def crop_img_absolute_xy(img,box):
     new_box = [box[1],box[0],box[3],box[2]]
     return crop_img_absolute(img,new_box)
+
+'''
+box:xmin,ymin,xmax,ymax, absolute corrdinate
+size: (w,h)
+'''
+def crop_and_pad(img,bbox,size,pad_color):
+    img = crop_img_absolute_xy(img,bbox)
+    if img.shape[0]<size[1] or img.shape[1]<size[0]:
+        res = np.ones([size[1],size[0],3],dtype=img.dtype)
+        if not isinstance(pad_color,Iterable):
+            pad_color = (pad_color,pad_color,pad_color)
+        pad_color = np.array(list(pad_color),dtype=img.dtype)
+        pad_color = pad_color.reshape([1,1,3])
+        res = res*pad_color
+        offset_x = 0
+        offset_y = 0
+
+        w = img.shape[1]
+        h = img.shape[0]
+        res[offset_y:offset_y+h,offset_x:offset_x+w,:] = img
+        return res
+    else:
+        return img
+
 
 '''
 box:ymin,xmin,ymax,xmax, absolute corrdinate
