@@ -17,7 +17,7 @@ BOXES_REGS = "box_regs"
 SEMANTIC = "semantic"
 COEFFICIENT = "coefficient"
 
-GT_BOXES = 'gt_boxes'
+GT_BOXES = 'gt_bboxes'
 GT_LENGTH = 'gt_length'
 GT_LABELS = 'gt_labels'
 IMG_INDEX = 'idata_index'

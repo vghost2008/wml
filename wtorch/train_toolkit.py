@@ -144,14 +144,14 @@ def show_model_parameters_info(net):
     total_train_parameters = 0
     for name, param in net.named_parameters():
         if param.requires_grad:
-            print(name, list(param.size()), 'unfreeze')
+            print(name, list(param.size()), param.device,'unfreeze')
             total_train_parameters += param.numel()
     print(f"Total train parameters {total_train_parameters:,}")
     print("Not training parameters.")
     total_not_train_parameters = 0
     for name, param in net.named_parameters():
         if not param.requires_grad:
-            print(name, list(param.size()), 'freeze')
+            print(name, list(param.size()), param.device,'freeze')
             total_not_train_parameters += param.numel()
     print(f"Total not train parameters {total_not_train_parameters:,}")
 
@@ -240,7 +240,10 @@ def register_forward_hook(net,hook):
 
 def finetune_model(model,names_not2train=None,names2train=None):
     if names_not2train is not None:
-        return finetune_modelv2(model,names_not2train)
+        finetune_model_nottrain(model,names_not2train)
+        if names2train is not None:
+            finetune_model_train(model,names2train)
+        return
 
     def is_name_of(name, names):
         for x in names:
@@ -275,7 +278,29 @@ def finetune_model(model,names_not2train=None,names2train=None):
             _nr += 1
     print(f"Total freeze {_nr} batch normal layers.")
 
-def finetune_modelv2(model:torch.nn.Module,names_not2train):
+def finetune_model_train(model,names2train=None):
+
+    def is_name_of(name, names):
+        for x in names:
+            if name.startswith(x) or name.startswith("module."+x):
+                return True
+        return False
+
+    print(f"Finetune model.")
+    for name, param in model.named_parameters():
+        if is_name_of(name, names2train):
+            param.requires_grad = True
+
+    _nr = 0
+    for name, ms in model.named_modules():
+        if not isinstance(ms, nn.BatchNorm2d):
+            continue
+        if is_name_of(name, names2train):
+            ms.train()
+            _nr += 1
+    print(f"Total unfreeze {_nr} batch normal layers.")
+
+def finetune_model_nottrain(model:torch.nn.Module,names_not2train):
     def is_name_of(name, names):
         for x in names:
             if name.startswith(x) or name.startswith("module."+x):
