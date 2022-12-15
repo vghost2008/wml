@@ -427,7 +427,10 @@ class PrecisionAndRecall:
         print(res)
 
     def to_string(self):
-        return f"{self.precision:.3f}/{self.recall:.3f}({self.total_test_nr})"
+        try:
+            return f"{self.precision:.3f}/{self.recall:.3f}({self.total_test_nr})"
+        except:
+            return "N.A."
 
 class ROC:
     def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):

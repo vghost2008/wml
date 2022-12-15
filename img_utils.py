@@ -96,7 +96,7 @@ def npgray_to_rgbv2(img):
     return img
 
 def nprgb_to_gray(img,keep_channels=False):
-    img_gray = img * np.array([0.299, 0.587, 0.114], dtype=np.float32)
+    img_gray = img * np.reshape(np.array([0.299, 0.587, 0.114], dtype=np.float32),[1,1,3])
     img_gray = np.sum(img_gray,axis=-1)
     if keep_channels:
         img_gray = np.stack([img_gray,img_gray,img_gray],axis=-1)
