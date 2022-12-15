@@ -14,6 +14,7 @@ import random
 import itertools
 import time
 import glob
+import math
 from collections import OrderedDict
 from object_detection2.basic_datadef import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 from object_detection2.basic_datadef import colors_tableau
@@ -31,15 +32,18 @@ g_jpeg = None
     scipy.misc.imsave(output_file, pix)
     return pix.shape'''
 
-def normal_image(image,min=0,max=255,dtype=np.uint8):
+def normal_image(image,min_v=0,max_v=255,dtype=np.uint8):
+
     if not isinstance(image,np.ndarray):
         image = np.array(image)
+
     t = image.dtype
     if t!=np.float32:
         image = image.astype(np.float32)
-    i_min = image.min()
-    i_max = image.max()
-    image = (image-float(i_min))*float(max-min)/float(i_max-i_min)+float(min)
+
+    i_min = np.min(image)
+    i_max = np.max(image)
+    image = (image-float(i_min))*float(max_v-min_v)/max(float(i_max-i_min),1e-8)+float(min_v)
 
     if dtype!=np.float32:
         image = image.astype(dtype)
@@ -246,9 +250,14 @@ def resize_and_pad(img,size,interpolation=cv2.INTER_LINEAR,pad_color=(0,0,0),cen
             return img,r
         return img
     else:
-        res = np.ones([size[1],size[0],3],dtype=img.dtype)
-        pad_color = np.array(list(pad_color),dtype=img.dtype)
-        pad_color = pad_color.reshape([1,1,3])
+        if len(img.shape)==3:
+            res = np.ones([size[1],size[0],3],dtype=img.dtype)
+            pad_color = np.array(list(pad_color),dtype=img.dtype)
+            pad_color = pad_color.reshape([1,1,3])
+        else:
+            res = np.ones([size[1],size[0]],dtype=img.dtype)
+            pad_color = np.array(list(pad_color),dtype=img.dtype)
+            pad_color = pad_color.reshape([1,1])
         res = res*pad_color
         if center_pad:
             offset_x = (size[0]-img.shape[1])//2
@@ -259,7 +268,7 @@ def resize_and_pad(img,size,interpolation=cv2.INTER_LINEAR,pad_color=(0,0,0),cen
 
         w = img.shape[1]
         h = img.shape[0]
-        res[offset_y:offset_y+h,offset_x:offset_x+w,:] = img
+        res[offset_y:offset_y+h,offset_x:offset_x+w] = img
         if return_scale:
             return res,r
         else:
@@ -922,3 +931,44 @@ def get_standard_color(idx):
     idx = idx%len(colors_tableau)
     return colors_tableau[idx]
 
+
+def __get_discrete_palette(palette,nr=1000):
+    res = np.zeros([nr,3],dtype=np.float32)
+    pre_p = palette[0]
+    for cur_p in palette[1:]:
+        end_idx = min(math.ceil(cur_p[0]*nr),nr)
+        beg_idx = min(max(math.floor(pre_p[0]*nr),0),end_idx)
+        color0 = np.array(pre_p[1],dtype=np.float32)
+        color1 = np.array(cur_p[1],dtype=np.float32)
+        for i in range(beg_idx,end_idx):
+            cur_color = (i-beg_idx)*(color1-color0)/(end_idx-beg_idx)+color0
+            res[i] = cur_color
+    
+    res = np.clip(res,0,255)
+    res = res.astype(np.uint8)
+
+    return res
+
+def __get_discrete_img(img,nr=1000):
+    img = img.astype(np.float32)*(nr-1)
+    img = np.clip(img,0,nr-1)
+    img = img.astype(np.int32)
+    return img
+
+def pseudocolor_img(img,palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0))],auto_norm=True):
+    '''
+    img: (H,W)
+    '''
+    if auto_norm:
+        img = normal_image(img,0.0,1.0,dtype=np.float32)
+
+    img = __get_discrete_img(img)
+    palette = __get_discrete_palette(palette)
+    H,W = img.shape
+    img = np.reshape(img,[-1])
+    new_img = palette[img]
+    new_img = np.reshape(new_img,[H,W,3])
+
+    return new_img
+
+    
