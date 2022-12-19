@@ -54,6 +54,23 @@ def npnormalize(x:np.ndarray,mean=[0.0,0.0,0.0],std=[1.0,1.0,1.0]):
 
     return x
 
+def rgb2gray(img):
+    '''
+    img: [B,3,H,W]/[3,H,W] (R,G,B) order
+    '''
+    if len(img.shape)==3:
+        s = np.reshape(np.array([0.299, 0.587, 0.114], dtype=np.float32),[3,1,1])
+        s = img.new_tensor(s)
+        img = img*s
+        img = torch.sum(img,dim=0,keepdim=True)
+    else:
+        s = np.reshape(np.array([0.299, 0.587, 0.114], dtype=np.float32),[1,3,1,1])
+        s = img.new_tensor(s)
+        img = img*s
+        img = torch.sum(img,dim=1,keepdim=True)
+    
+    return img
+
 def remove_prefix_from_state_dict(state_dict,prefix="module."):
     res = {}
     for k,v in state_dict.items():

@@ -412,10 +412,10 @@ def view_data_in_dir(dir_path):
         view_data(img_file,json_file)
 
 def dict_label_text2id(name,dict_data):
-    return dict_data[name]
+    return dict_data.get(name,None)
 
 class LabelMeData(object):
-    def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True):
+    def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,filter_empty_files=False):
         '''
         label_text2id: func(name)->int
         '''
@@ -426,9 +426,15 @@ class LabelMeData(object):
             self.label_text2id = label_text2id
         self.shuffle = shuffle
         self.absolute_coord = absolute_coord
+        self.filter_empty_files = filter_empty_files
         
     def read_data(self,dir_path,img_suffix="jpg"):
-        self.files = get_files(dir_path,img_suffix=img_suffix)
+        _files = get_files(dir_path,img_suffix=img_suffix)
+        if self.filter_empty_files and self.label_text2id:
+            _files = self.apply_filter_empty_files(_files)
+        
+        self.files = _files
+
         print(f"Total find {len(self.files)} in {dir_path}")
         if self.shuffle:
             random.shuffle(self.files)
@@ -436,6 +442,21 @@ class LabelMeData(object):
         wmlu.show_list(self.files[:100])
         if len(self.files)>100:
             print("...")
+
+    def apply_filter_empty_files(self,files):
+        new_files = []
+        for fs in files:
+            img_file,json_file = fs
+            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
+            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
+            labels = [self.label_text2id(x) for x in labels_names]
+            is_none = [x is None for x in labels]
+            if not all(is_none):
+                new_files.append(fs)
+            else:
+                print(f"File {json_file} is empty, labels names {labels_names}, labels {labels}")
+
+        return new_files
 
     def __len__(self):
         return len(self.files)
@@ -487,6 +508,13 @@ class LabelMeData(object):
         
         if self.label_text2id is not None:
             labels = [self.label_text2id(x) for x in labels_names]
+            keep = [x is not None for x in labels]
+            labels = [x if x is not None else -1 for x in labels]
+            labels = np.array(labels,dtype=np.int32)
+            labels = labels[keep]
+            bboxes = bboxes[keep]
+            masks = masks[keep]
+            labels_names = np.array(labels_names)[keep]
         else:
             labels = None
             

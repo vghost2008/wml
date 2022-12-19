@@ -11,6 +11,7 @@ import sys
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 import wml_utils as wmlu
+from .build import METRICS_REGISTRY
 
 def __safe_persent(v0,v1):
     if v1==0:
@@ -336,6 +337,7 @@ def getPrecisionV2(gt_data,pred_data,pred_func,threshold,return_f1=False):
 
     return precision,recall
 
+@METRICS_REGISTRY.register()
 class Accuracy:
     def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):
         self.threshold = threshold
@@ -384,6 +386,7 @@ class Accuracy:
         except:
             return "N.A."
 
+@METRICS_REGISTRY.register()
 class PrecisionAndRecall:
     def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):
         self.threshold = threshold
@@ -421,17 +424,29 @@ class PrecisionAndRecall:
         labels = np.concatenate(self.labels,axis=0)
         self.precision,self.recall = getPrecision(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,
                                                   auto_scale_threshold=False, ext_info=False)
+    @property
+    def f1(self):
+        return 2*self.precision*self.recall/max(self.precision+self.recall,1e-8)
+
     def show(self,name=""):
         self.evaluate()
-        res = f"{name}: total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}"
+        res = f"{name}: {self}"
         print(res)
+
+    def value(self):
+        return self.f1
 
     def to_string(self):
         try:
-            return f"{self.precision:.3f}/{self.recall:.3f}({self.total_test_nr})"
+            return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1}/({self.total_test_nr})"
         except:
             return "N.A."
 
+    def __repr__(self):
+        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
+        return res
+
+@METRICS_REGISTRY.register()
 class ROC:
     def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):
         self.threshold = threshold
@@ -663,13 +678,25 @@ class GeneralCOCOEvaluation(object):
         else:
             return f"N.A."
 
+    def __repr__(self):
+        return self.to_string()
+    
+    def value(self):
+        if 'mAP' in self.cached_values:
+            return self.cached_values['mAP']
+        elif  'mAP@.50IOU' in self.cached_values:
+            return self.cached_values['mAP@.50IOU']
+        else:
+            return 0.0
+
+@METRICS_REGISTRY.register()
 class COCOBoxEvaluation(GeneralCOCOEvaluation):
     def __init__(self,categories_list=None,num_classes=None,label_trans=None):
         super().__init__(categories_list=categories_list,
                          num_classes=num_classes,
                          mask_on=False,
                          label_trans=label_trans)
-
+@METRICS_REGISTRY.register()
 class COCOMaskEvaluation(GeneralCOCOEvaluation):
     def __init__(self,categories_list=None,num_classes=None,label_trans=None):
         super().__init__(categories_list=categories_list,
@@ -677,7 +704,7 @@ class COCOMaskEvaluation(GeneralCOCOEvaluation):
                          mask_on=True,
                          label_trans=label_trans)
 
-
+@METRICS_REGISTRY.register()
 class COCOEvaluation(object):
     '''
     num_classes: 不包含背景 
@@ -717,7 +744,7 @@ class COCOEvaluation(object):
         else:
             return self.box_evaluator.to_string()
 
-
+@METRICS_REGISTRY.register()
 class COCOKeypointsEvaluation(object):
     def __init__(self,num_joints,categories="person",oks_sigmas=None):
         categories_keypoints = []
@@ -1023,7 +1050,7 @@ class SubsetsModelPerformace(object):
         elif item == "precision":
             return self.mp.precision
 
-
+@METRICS_REGISTRY.register()
 class  MeanIOU(object):
     def __init__(self,num_classes,*args,**kwargs):
         self.intersection = np.zeros(shape=[num_classes],dtype=np.int64)
