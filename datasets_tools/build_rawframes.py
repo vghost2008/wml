@@ -13,10 +13,10 @@ import img_utils as wmli
 import mmcv
 import numpy as np
 
-#img_process_fn = None
-def img_process_fn(img):
+img_process_fn = None
+'''def img_process_fn(img):
     img = wmli.sub_imagev2(img, [605, 80, 1605, 1080])
-    return img
+    return img'''
 
 def extract_frame(vid_item):
     """Generate optical flow using dense flow.
@@ -28,7 +28,7 @@ def extract_frame(vid_item):
     Returns:
         bool: Whether generate optical flow successfully.
     """
-    full_path, vid_path, vid_id, method, task,interval = vid_item
+    full_path, vid_path, vid_id, method, task,interval,begin_frame = vid_item
     if '/' in vid_path:
         act_name = osp.basename(osp.dirname(vid_path))
         out_full_path = osp.join(args.out_dir, act_name)
@@ -46,6 +46,8 @@ def extract_frame(vid_item):
             print(f"{full_path} fps {vr.fps}.")
             # for i in range(len(vr)):
             for i, vr_frame in enumerate(vr):
+                if i<begin_frame:
+                    continue
                 if interval>0 and i%interval != 0:
                     continue
                 if vr_frame is not None:
@@ -199,6 +201,11 @@ def parse_args():
         default=0,
         type=int,
         help='Save interval')
+    parser.add_argument(
+        '--begin-frame',
+        type=int,
+        default=0,
+        help='frame\'s idx begin to extra.')
     args = parser.parse_args()
 
     return args
@@ -259,6 +266,7 @@ if __name__ == '__main__':
             len(vid_list) * [args.flow_type],
             len(vid_list) * [args.task],
             len(vid_list) * [args.interval],
+            len(vid_list) * [args.begin_frame],
             ))
 
 '''
