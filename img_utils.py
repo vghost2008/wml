@@ -99,9 +99,15 @@ def npgray_to_rgbv2(img):
         img = np.concatenate([r(img), g(img), b(img)], axis=2)
     return img
 
-def nprgb_to_gray(img,keep_channels=False):
+def __nprgb_to_gray(img,keep_channels=False):
     img_gray = img * np.reshape(np.array([0.299, 0.587, 0.114], dtype=np.float32),[1,1,3])
     img_gray = np.sum(img_gray,axis=-1)
+    if keep_channels:
+        img_gray = np.stack([img_gray,img_gray,img_gray],axis=-1)
+    return img_gray
+
+def nprgb_to_gray(img,keep_channels=False):
+    img_gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
     if keep_channels:
         img_gray = np.stack([img_gray,img_gray,img_gray],axis=-1)
     return img_gray
@@ -189,7 +195,13 @@ def resize_img(img,size,keep_aspect_ratio=False,interpolation=cv2.INTER_LINEAR,a
         size = tuple(size)
     if size[0]==img_shape[0] and size[1]==img_shape[1]:
         return img
-    return cv2.resize(img,dsize=size,interpolation=interpolation)
+
+    img = cv2.resize(img,dsize=size,interpolation=interpolation)
+
+    if len(img_shape)==3 and len(img.shape)==2:
+        img = np.expand_dims(img,axis=-1)
+    
+    return img
 
 def resize_imgv2(img,size,interpolation=cv2.INTER_LINEAR,return_scale=False,align=None):
     '''

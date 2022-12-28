@@ -6,6 +6,12 @@ import torch.nn.functional as F
 import random
 import sys
 from functools import wraps
+from collections.abc import Mapping, Sequence
+import wml_utils as wmlu
+try:
+    from mmcv.parallel import DataContainer as DC
+except:
+    DC = None
 
 def unnormalize(x:torch.Tensor,mean=[0.0,0.0,0.0],std=[1.0,1.0,1.0]):
     if len(x.size())==4:
@@ -114,6 +120,7 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
     net_state_dict.update(new_loaded_dict)
     net.load_state_dict(net_state_dict)
     sys.stdout.flush()
+    print(f"Load checkpoint finish.")
     return net
 
 def sequence_mask(lengths,maxlen=None,dtype=torch.bool):
@@ -184,11 +191,13 @@ def concat_datas(datas,dim=0):
                 new_data[k].append(v)
         keys = list(new_data.keys())
         for k in keys:
-            new_data[k] = torch.cat(new_data[k],dim=dim)
+            new_data[k] = concat_datas(new_data[k],dim=dim)
         return new_data
 
     if torch.is_tensor(datas[0]):
         return torch.cat(datas,dim=dim)
+    elif isinstance(datas[0],DC):
+        return concat_dc_datas(datas,dim)
     elif isinstance(datas[0],Iterable):
         res = []
         try:
@@ -209,6 +218,53 @@ def concat_datas(datas,dim=0):
         return res
     else:
         return torch.cat(datas,dim=dim)
+
+def concat_dc_datas(datas,cat_dim=0):
+    if isinstance(datas[0], DC):
+        stacked = []
+        if datas[0].cpu_only:
+            for i in range(0, len(datas)):
+                for sample in datas[i].data:
+                    stacked.extend(sample)
+            return DC(
+                [stacked], datas[0].stack, datas[0].padding_value, cpu_only=True)
+        elif datas[0].stack:
+            batch = []
+            for d in datas:
+                batch.extend(d.data)
+            pad_dims = datas[0].pad_dims
+            padding_value =datas[0].padding_value
+            max_shape = [0 for _ in range(pad_dims)]
+            for sample in batch:
+                for dim in range(1, pad_dims + 1):
+                    max_shape[dim - 1] = max(max_shape[dim - 1],
+                                             sample.size(-dim))
+
+            for i in range(0, len(batch)):
+                assert isinstance(batch[i], torch.Tensor)
+
+                if pad_dims is not None:
+                    pad = [0 for _ in range(pad_dims * 2)]
+                    sample = batch[i]
+                    for dim in range(1, pad_dims + 1):
+                        pad[2 * dim - 1] = max_shape[dim - 1] - sample.size(-dim)
+                    stacked.append(
+                            F.pad(sample, pad, value=padding_value))
+                elif pad_dims is None:
+                    stacked.append(batch)
+                else:
+                    raise ValueError(
+                        'pad_dims should be either None or integers (1-3)')
+            stacked = torch.cat(stacked,dim=cat_dim)
+            return DC([stacked], datas[0].stack, datas[0].padding_value)
+        else:
+            for i in range(0, len(datas)):
+                for sample in datas[i].data:
+                    stacked.extend(sample)
+            return DC([stacked], datas[0].stack, datas[0].padding_value)
+    else:
+        raise RuntimeError(f"ERROR concat dc type {type(datas[0])}")
+
 
 def get_model(model):
     if hasattr(model, "module"):

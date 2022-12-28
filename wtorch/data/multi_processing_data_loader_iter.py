@@ -13,6 +13,7 @@ import time
 from . import IterableDataset, Sampler, SequentialSampler, RandomSampler, BatchSampler, Dataset
 from . import _utils, _BaseDataLoaderIter
 import wml_utils as wmlu
+import math
 
 class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
     r"""Iterates once over the DataLoader's dataset, as specified by the sampler"""
@@ -325,7 +326,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
     #     down.
 
     def __init__(self, loader,batch_split_nr=1):
-        print(f"Use _WMultiProcessingDataLoaderIter")
+        print(f"Use _WMultiProcessingDataLoaderIter, batch split nr = {batch_split_nr}")
         super(_MultiProcessingDataLoaderIter, self).__init__(loader)
 
         assert self._num_workers > 0
@@ -340,7 +341,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
         self._worker_init_fn = loader.worker_init_fn
         self._worker_queue_idx_cycle = itertools.cycle(range(self._num_workers))
         # No certainty which module multiprocessing_context is
-        self._worker_result_queue = multiprocessing_context.Queue(max(16,self._num_workers*self._prefetch_factor*2))  # type: ignore
+        self._worker_result_queue = multiprocessing_context.Queue(max(16,self._num_workers*self._prefetch_factor*batch_split_nr))  # type: ignore
         self._worker_pids_set = False
         self._shutdown = False
         self._workers_done_event = multiprocessing_context.Event()
@@ -427,7 +428,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
         # the worker will be reset to available in the next epoch.
         self._workers_status = [True for i in range(self._num_workers)]
         # prime the prefetch loop
-        self._try_put_index()
+        self._try_put_index_first()
 
     def _try_get_data(self, timeout=_utils.MP_STATUS_CHECK_INTERVAL):
         if self.batch_split_nr<=1:
@@ -459,12 +460,12 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
                 try_nr -= 1
             if len(self.datas_cache)>=self.batch_split_nr:
                 try:
-                    data = wtu.concat_datas(self.datas_cache,dim=0)
-                except:
-                    print(f"ERROR: Concat datas faild.")
+                    data = wtu.concat_datas(self.datas_cache[:self.batch_split_nr],dim=0)
+                    self.datas_cache = self.datas_cache[self.batch_split_nr:]
+                except Exception as e:
+                    print(f"ERROR: Concat datas faild, {e}.")
                     self.datas_cache = []
                     return False,None
-                self.datas_cache = []
                 return True,(0,data)
             if self.stop_iteration:
                 for q in self._index_queues:
@@ -685,10 +686,12 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
 
     def _try_put_index(self):
         try:
+            dnr = self._prefetch_factor
+            hdnr = max(1,dnr//2)
             for i,index_queue in enumerate(self._index_queues):
-                if self._workers_status[i] and index_queue.qsize()<self._prefetch_factor:
-                    nr = self._prefetch_factor-index_queue.qsize()
-                    for _ in range(nr*2+1):
+                if self._workers_status[i] and index_queue.qsize()<hdnr:
+                    nr = dnr-index_queue.qsize()
+                    for _ in range(nr):
                         index = self._next_index()
                         if self.batch_split_nr>1:
                             if len(index)%self.batch_split_nr!=0:
@@ -698,6 +701,25 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
                                 index_queue.put((0,index))
                         else:
                             index_queue.put((0,index))
+        except StopIteration:
+            self.stop_iteration = True
+            return
+
+    def _try_put_index_first(self):
+        try:
+            dnr = self._prefetch_factor
+            nr = max(1,math.ceil(dnr/len(self._index_queues)))
+            for i,index_queue in enumerate(self._index_queues):
+                for _ in range(nr):
+                    index = self._next_index()
+                    if self.batch_split_nr>1:
+                        if len(index)%self.batch_split_nr!=0:
+                            print(f"ERROR: batch_split_nr = {self.batch_split_nr}, batch size = {len(index)}")
+                        indexs = wmlu.list_to_2dlistv2(index,self.batch_split_nr)
+                        for index in indexs:
+                            index_queue.put((0,index))
+                    else:
+                        index_queue.put((0,index))
         except StopIteration:
             self.stop_iteration = True
             return
