@@ -326,7 +326,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
     #     down.
 
     def __init__(self, loader,batch_split_nr=1):
-        print(f"Use _WMultiProcessingDataLoaderIter, batch split nr = {batch_split_nr}")
+        print(f"Use _WMultiProcessingDataLoaderIter, batch split nr = {batch_split_nr}, pin memory= {loader.pin_memory}")
         super(_MultiProcessingDataLoaderIter, self).__init__(loader)
 
         assert self._num_workers > 0

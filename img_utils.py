@@ -332,6 +332,28 @@ def crop_img_absolute(img,box):
         return img[ymin:ymax,xmin:xmax]
     else:
         return img[ymin:ymax,xmin:xmax,:]
+'''
+box:xmin,ymin,xmax,ymax, absolute corrdinate
+'''
+def crop_img_absolute_xy(img,box):
+    shape = img.shape
+    box = np.array(box)
+    box[0:4:2] = np.minimum(box[0:4:2],shape[1])
+    box[1:4:2] = np.minimum(box[1:4:2],shape[0])
+    box = np.maximum(box,0)
+    ymin = box[1]
+    ymax = box[3]
+    xmin = box[0]
+    xmax = box[2]
+    return img[ymin:ymax,xmin:xmax]
+
+def set_subimg(img,sub_img,p0):
+    '''
+    p0:(x,y)
+    '''
+    img[p0[1]:p0[1]+sub_img.shape[0],p0[0]:p0[0]+sub_img.shape[1]] = sub_img
+
+    return img
 
 '''
 box:xmin,ymin,xmax,ymax, absolute corrdinate

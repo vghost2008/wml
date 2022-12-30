@@ -159,8 +159,16 @@ class TimeThis():
             fps = 1000/(te+1e-8)
             print(f"{self.name}: total time {te:.3f}ms, FPS={fps:.3f}.")
 
-    def time(self):
-        return self.end_time-self.begin_time
+    def time(self,reset=False):
+        self.end_time = time.time()
+        r = self.end_time-self.begin_time
+        if reset:
+            self.reset()
+        return r
+
+    def reset(self):
+        self.begin_time = time.time()
+
 
     def log_and_restart(self,sub_name=""):
         self.end_time = time.time()

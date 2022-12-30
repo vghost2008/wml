@@ -8,6 +8,8 @@ import sys
 from functools import wraps
 from collections.abc import Mapping, Sequence
 import wml_utils as wmlu
+import img_utils as wmli
+import cv2
 try:
     from mmcv.parallel import DataContainer as DC
 except:
@@ -437,5 +439,83 @@ def npresize_mask(mask,size=None,r=None):
     mask: [N,H,W]
     size: (new_w,new_h)
     '''
+    if mask.shape[0]==0:
+        return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
+    if mask.shape[0]==1:
+        cur_m = cv2.resize(mask[0],dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
+        return np.expand_dims(cur_m,axis=0)
     mask = resize_mask(torch.from_numpy(mask),size,r)
     return mask.numpy()
+
+def __npresize_mask(mask,size=None,r=None):
+    '''
+    mask: [N,H,W]
+    size: (new_w,new_h)
+    '''
+    if mask.shape[0]==0:
+        return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
+    new_mask = []
+    for i in range(mask.shape[0]):
+        cur_m = cv2.resize(mask[i],dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
+        new_mask.append(cur_m)
+    new_mask = np.stack(new_mask,axis=0)
+    return new_mask
+
+def __correct_bboxes(bboxes,h,w):
+    old_type = bboxes.dtype
+    bboxes = np.maximum(bboxes,0)
+    bboxes = np.minimum(bboxes,np.array([[w,h,w,h]]))
+    return bboxes.astype(old_type)
+
+def npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
+    '''
+    mask: [N,H,W]
+    bboxes: [N,4](x0,y0,x1,y1)
+    size: (new_w,new_h)
+    '''
+    if mask.shape[0]==0:
+        return np.zeros([0,size[1],size[0]],dtype=mask.dtype),np.zeros([0,4],dtype=bboxes.dtype)
+    x_scale = size[0]/mask.shape[2]
+    y_scale = size[1]/mask.shape[1]
+    bboxes = __correct_bboxes(bboxes,h=mask.shape[1],w=mask.shape[2])
+    resized_bboxes = (bboxes*np.array([[x_scale,y_scale,x_scale,y_scale]])).astype(np.int32)
+    resized_bboxes = __correct_bboxes(resized_bboxes,h=size[1],w=size[0])
+    bboxes = np.array(bboxes).astype(np.int32)
+    res_mask = np.zeros([mask.shape[0],size[1],size[0]],dtype=mask.dtype)
+    for i in range(mask.shape[0]):
+        dbbox = resized_bboxes[i]
+        dsize = (dbbox[2]-dbbox[0],dbbox[3]-dbbox[1])
+        if dsize[0]<=1 or dsize[1]<=1:
+            continue
+        sub_mask = wmli.crop_img_absolute_xy(mask[i],bboxes[i])
+        cur_m = cv2.resize(sub_mask,dsize=dsize,interpolation=cv2.INTER_NEAREST)
+        wmli.set_subimg(res_mask[i],cur_m,dbbox[:2])
+    return res_mask,resized_bboxes
+
+def __time_npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
+    t = wmlu.TimeThis()
+    b = npresize_mask(mask,size,r)
+    t0 = t.time(reset=True)
+    a = npresize_mask_in_bboxes(mask,bboxes,size,r)
+    t1 = t.time(reset=True)
+    c = __npresize_mask(mask,size,r)
+    t2 = t.time(reset=True)
+    print(f"RM,{t0},{t1},{t2}")
+    return a
+
+def find_contours_in_bbox(mask,bbox):
+    bbox = np.array(bbox).astype(np.int32)
+    sub_mask = wmli.crop_img_absolute_xy(mask,bbox)
+    if sub_mask.shape[0]<=1 or sub_mask.shape[1]<=1:
+        return []
+    contours,hierarchy = cv2.findContours(sub_mask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+    if len(contours) == 0:
+        return []
+    offset = np.array([bbox[0],bbox[1]],dtype=np.int32)
+    offset = np.reshape(offset,[1,1,2])
+    res = []
+    for x in contours:
+        res.append(x+offset)
+    return res
+
+
