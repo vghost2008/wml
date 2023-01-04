@@ -170,7 +170,7 @@ def show_async_norm_states(module):
     for name, child in module.named_modules():
         if isinstance(child, _NORMS):
             info = ""
-            for k,v in child.state_dict().items():
+            for k,v in child.named_parameters():
                 if hasattr(v,"requires_grad"):
                     info += f"{k}:{v.requires_grad}, "
             print(f"{name}: {type(child)}: training: {child.training}, requires_grad: {info}")
