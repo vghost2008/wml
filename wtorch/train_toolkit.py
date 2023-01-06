@@ -251,18 +251,14 @@ def finetune_model(model,names_not2train=None,names2train=None):
                 return True
         return False
 
-    print(f"Finetune model.")
     for name, param in model.named_parameters():
         if is_name_of(name, names2train):
             continue
-        print(name, param.size(), "freeze")
         param.requires_grad = False
 
     param_to_update = []
-    print("Training parameters.")
     for name, param in model.named_parameters():
         if param.requires_grad:
-            print(name, list(param.size()), 'unfreeze')
             param_to_update.append(param)
 
     _nr = 0
@@ -270,13 +266,10 @@ def finetune_model(model,names_not2train=None,names2train=None):
         if not isinstance(ms, nn.BatchNorm2d):
             continue
         if is_name_of(name, names2train):
-            print(f"{name}:{ms} unfreeze.")
             continue
         else:
-            print(f"{name}:{ms} freeze.")
             ms.eval()
             _nr += 1
-    print(f"Total freeze {_nr} batch normal layers.")
 
 def finetune_model_train(model,names2train=None):
 
@@ -286,7 +279,6 @@ def finetune_model_train(model,names2train=None):
                 return True
         return False
 
-    print(f"Finetune model.")
     for name, param in model.named_parameters():
         if is_name_of(name, names2train):
             param.requires_grad = True
@@ -298,7 +290,6 @@ def finetune_model_train(model,names2train=None):
         if is_name_of(name, names2train):
             ms.train()
             _nr += 1
-    print(f"Total unfreeze {_nr} batch normal layers.")
 
 def finetune_model_nottrain(model:torch.nn.Module,names_not2train):
     def is_name_of(name, names):
@@ -307,17 +298,13 @@ def finetune_model_nottrain(model:torch.nn.Module,names_not2train):
                 return True
         return False
 
-    print(f"Finetune model.")
     for name, param in model.named_parameters():
         if is_name_of(name, names_not2train):
-            print(name, param.size(), "freeze")
             param.requires_grad = False
 
     param_to_update = []
-    print("Training parameters.")
     for name, param in model.named_parameters():
         if param.requires_grad:
-            print(name, list(param.size()), 'unfreeze')
             param_to_update.append(param)
 
     _nr = 0
@@ -325,11 +312,8 @@ def finetune_model_nottrain(model:torch.nn.Module,names_not2train):
         if not isinstance(ms, nn.BatchNorm2d):
             continue
         if is_name_of(name, names_not2train):
-            print(f"{name}:{ms} freeze.")
             ms.eval()
             _nr += 1
         else:
-            print(f"{name}:{ms} unfreeze.")
             continue
-    print(f"Total freeze {_nr} batch normal layers.")
     sys.stdout.flush()
