@@ -339,7 +339,7 @@ def getPrecisionV2(gt_data,pred_data,pred_func,threshold,return_f1=False):
 
 @METRICS_REGISTRY.register()
 class Accuracy:
-    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):
+    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
         self.threshold = threshold
         self.gtboxes = []
         self.gtlabels = []
@@ -350,6 +350,7 @@ class Accuracy:
         self.total_test_nr = 0
         self.num_classes = num_classes
         self.label_trans = label_trans
+        del classes_begin_value
 
     def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
                  gtmasks=None,
@@ -388,7 +389,7 @@ class Accuracy:
 
 @METRICS_REGISTRY.register()
 class PrecisionAndRecall:
-    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):
+    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
         self.threshold = threshold
         self.gtboxes = []
         self.gtlabels = []
@@ -399,6 +400,7 @@ class PrecisionAndRecall:
         self.total_test_nr = 0
         self.num_classes = num_classes
         self.label_trans = label_trans
+        del classes_begin_value
 
     def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
                  gtmasks=None,
@@ -448,7 +450,7 @@ class PrecisionAndRecall:
 
 @METRICS_REGISTRY.register()
 class ROC:
-    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,*args,**kwargs):
+    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
         self.threshold = threshold
         self.gtboxes = []
         self.gtlabels = []
@@ -461,6 +463,7 @@ class ROC:
         self.num_classes = num_classes
         self.label_trans = label_trans
         self.results = None
+        del classes_begin_value
 
     def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
                  gtmasks=None,
@@ -565,10 +568,10 @@ class ModelPerformance:
             return self.safe_div(self.total_precision,self.test_nr)
 
 class GeneralCOCOEvaluation(object):
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1):
         if categories_list is None:
             print(f"WARNING: Use default categories list, start classes is 1")
-            self.categories_list = [{"id":x+1,"name":str(x+1)} for x in range(num_classes)]
+            self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(num_classes)]
         else:
             self.categories_list = categories_list
         if not mask_on:
@@ -691,33 +694,37 @@ class GeneralCOCOEvaluation(object):
 
 @METRICS_REGISTRY.register()
 class COCOBoxEvaluation(GeneralCOCOEvaluation):
-    def __init__(self,categories_list=None,num_classes=None,label_trans=None):
+    def __init__(self,categories_list=None,num_classes=None,label_trans=None,classes_begin_value=1):
         super().__init__(categories_list=categories_list,
                          num_classes=num_classes,
                          mask_on=False,
-                         label_trans=label_trans)
+                         label_trans=label_trans,
+                         classes_begin_value=classes_begin_value)
 @METRICS_REGISTRY.register()
 class COCOMaskEvaluation(GeneralCOCOEvaluation):
-    def __init__(self,categories_list=None,num_classes=None,label_trans=None):
+    def __init__(self,categories_list=None,num_classes=None,label_trans=None,classes_begin_value=1):
         super().__init__(categories_list=categories_list,
                          num_classes=num_classes,
                          mask_on=True,
-                         label_trans=label_trans)
+                         label_trans=label_trans,
+                         classes_begin_value=classes_begin_value)
 
 @METRICS_REGISTRY.register()
 class COCOEvaluation(object):
     '''
     num_classes: 不包含背景 
     '''
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1):
         self.box_evaluator = COCOBoxEvaluation(categories_list=categories_list,
                                                num_classes=num_classes,
-                                               label_trans=label_trans)
+                                               label_trans=label_trans,
+                                               classes_begin_value=classes_begin_value)
         self.mask_evaluator = None
         if mask_on:
             self.mask_evaluator = COCOMaskEvaluation(categories_list=categories_list,
                                                      num_classes=num_classes,
-                                                     label_trans=label_trans)
+                                                     label_trans=label_trans,
+                                                     classes_begin_value=classes_begin_value)
     def __call__(self, *args, **kwargs):
         self.box_evaluator(*args,**kwargs)
         if self.mask_evaluator is not None:
@@ -862,6 +869,7 @@ class ClassesWiseModelPerformace(object):
                  **kwargs):
         self.num_classes = num_classes
         self.clases_begin_value = classes_begin_value
+        model_args['classes_begin_value'] = classes_begin_value
         self.data = []
         for i in range(self.num_classes):
             self.data.append(model_type(num_classes=num_classes,**model_args))
@@ -968,7 +976,7 @@ class ClassesWiseModelPerformace(object):
             return self.mp.precision
 
 class SubsetsModelPerformace(object):
-    def __init__(self, num_classes, sub_sets,threshold=0.5, model_type=COCOEvaluation, model_args={},
+    def __init__(self, num_classes, sub_sets,threshold=0.5, model_type=COCOEvaluation, classes_begin_value=1,model_args={},
                  label_trans=None,
                  **kwargs):
         '''
@@ -981,6 +989,7 @@ class SubsetsModelPerformace(object):
         :param model_args:
         :param label_trans:
         '''
+        model_args['classes_begin_value'] = classes_begin_value
         self.num_classes = num_classes
         self.data = []
         self.sub_sets = sub_sets
