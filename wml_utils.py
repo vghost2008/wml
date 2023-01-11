@@ -248,9 +248,12 @@ class EstimateTimeCost(object):
     def __repr__(self):
         left_time = ((time.time() - self.begin_time) / max(self.process_nr, 1)) * (
                     self.total_nr- self.process_nr)
-        d = datetime.datetime.now() + datetime.timedelta(seconds=left_time)
+        finish_time = datetime.datetime.now() + datetime.timedelta(seconds=left_time)
+        cur_str = datetime.datetime.now().strftime("%d %H:%M")
+        ft_str = finish_time.strftime("%d %H:%M")
         #res = f"used {(time.time() - self.begin_time) / 3600:.3f}h, {left_time / 3600:.3f}h left, exp finish {str(d)}"
-        res = f"{(time.time() - self.begin_time) / 3600:.3f}h/{left_time / 3600:.3f}h/{str(d)}"
+        #res = f"{(time.time() - self.begin_time) / 3600:.3f}h/{left_time / 3600:.3f}h/{str(d)}"
+        res = f"{(time.time() - self.begin_time) / 3600:.3f}h/{left_time / 3600:.3f}h/{cur_str}/{ft_str}"
         return res
 
 def time_this(func):

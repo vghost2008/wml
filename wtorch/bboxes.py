@@ -57,8 +57,8 @@ def bboxes_ious(bboxesa, bboxesb):
     union_vol = -inter_vol \
                 + (bboxesa[2] - bboxesa[0]) * (bboxesa[3] - bboxesa[1]) \
                 + (bboxesb[2] - bboxesb[0]) * (bboxesb[3] - bboxesb[1])
-    min_value = torch.full_like(union_vol,1e-8)
-    jaccard = inter_vol/torch.maximum(union_vol, min_value)
+    union_vol.clamp_(min=1e-8)
+    jaccard = inter_vol/union_vol
     return jaccard
 
 def bboxes_ious_matrix(bboxesa,bboxesb):
