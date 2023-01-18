@@ -9,7 +9,10 @@ import random
 import os
 import time
 from dataclasses import dataclass
-from torch._six import queue
+if torch.__version__ < "1.9.0":
+    from torch._six import queue
+else:
+    import queue
 from torch._utils import ExceptionWrapper
 from typing import Union
 from . import signal_handling, MP_STATUS_CHECK_INTERVAL, IS_WINDOWS

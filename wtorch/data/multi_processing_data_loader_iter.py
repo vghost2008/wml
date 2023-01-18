@@ -7,7 +7,11 @@ import multiprocessing as python_multiprocessing
 import torch
 import torch.multiprocessing as multiprocessing
 from torch._utils import ExceptionWrapper
-from torch._six import queue, string_classes,container_abcs
+if torch.__version__ < "1.9.0":
+    from torch._six import queue, container_abcs
+else:
+    import queue
+    import collections as container_abcs
 import wtorch.utils as wtu
 import time
 from . import IterableDataset, Sampler, SequentialSampler, RandomSampler, BatchSampler, Dataset
@@ -406,7 +410,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
         all_pids = f"{os.getpid()}"
         for x in self._workers:
             all_pids += f" {x.ident}"
-        print(f"All data workers process ids: {all_pids}")
+        print(f"All data workers process PID: {all_pids}")
         print(all_pids.replace(" ",","))
 
     def _reset(self, loader, first_iter=False):

@@ -33,7 +33,6 @@ import multiprocessing as python_multiprocessing
 import torch
 import torch.multiprocessing as multiprocessing
 from torch._utils import ExceptionWrapper
-from torch._six import queue, string_classes,container_abcs
 import wtorch.utils as wtu
 import time
 from . import IterableDataset, Sampler,InfiniteSequentialSampler, SequentialSampler, RandomSampler, BatchSampler, Dataset
@@ -41,6 +40,7 @@ from . import _utils
 import wml_utils as wmlu
 from . import _MultiProcessingDataLoaderIter, _SingleProcessDataLoaderIter, _DatasetKind
 
+string_classes = (str, bytes)
 T_co = TypeVar('T_co', covariant=True)
 T = TypeVar('T')
 _worker_init_fn_t = Callable[[int], None]

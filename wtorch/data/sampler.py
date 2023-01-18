@@ -1,5 +1,5 @@
 import torch
-from torch._six import int_classes as _int_classes
+#from torch._six import int_classes as _int_classes
 from torch import Tensor
 
 from typing import Iterator, Optional, Sequence, List, TypeVar, Generic, Sized
@@ -7,6 +7,7 @@ import time
 import itertools
 
 T_co = TypeVar('T_co', covariant=True)
+_int_classes = (int,bool)
 
 class Sampler(Generic[T_co]):
     r"""Base class for all Samplers.

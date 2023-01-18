@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-from torch._six import queue, container_abcs, string_classes
 from collections import Iterable
 import torch.nn.functional as F
 import random
@@ -184,7 +183,7 @@ def module_parameters_numel(net,only_training=False):
 
 
 def concat_datas(datas,dim=0):
-    if isinstance(datas[0], container_abcs.Mapping):
+    if isinstance(datas[0], Mapping):
         new_data = {}
         for k,v in datas[0].items():
             new_data[k] = [v]

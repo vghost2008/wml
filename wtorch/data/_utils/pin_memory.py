@@ -7,7 +7,13 @@ static methods.
 
 import time
 import torch
-from torch._six import queue, container_abcs, string_classes
+if torch.__version__ < "1.9.0":
+    from torch._six import queue, container_abcs, string_classes
+else:
+    import queue
+    import collections as container_abcs
+    string_classes = (str, bytes)
+
 from . import MP_STATUS_CHECK_INTERVAL
 import os
 from torch._utils import ExceptionWrapper
