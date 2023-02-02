@@ -106,10 +106,12 @@ def __nprgb_to_gray(img,keep_channels=False):
         img_gray = np.stack([img_gray,img_gray,img_gray],axis=-1)
     return img_gray
 
-def nprgb_to_gray(img,keep_channels=False):
+def nprgb_to_gray(img,keep_channels=False,keep_dim=False):
     img_gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
     if keep_channels:
         img_gray = np.stack([img_gray,img_gray,img_gray],axis=-1)
+    elif keep_dim:
+        img_gray = np.expand_dims(img_gray,axis=-1)
     return img_gray
 
 def npbatch_rgb_to_gray(img,keep_channels=False):

@@ -261,7 +261,7 @@ def time_this(func):
     def wraps_func(*args,**kwargs):
         begin_t = time.time()
         res = func(*args,**kwargs)
-        print(f"Time cost {time.time()-begin_t}.")
+        print(f"Time cost {time.time()-begin_t}s.")
         return res
     return wraps_func
 

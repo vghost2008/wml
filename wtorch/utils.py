@@ -9,10 +9,13 @@ from collections.abc import Mapping, Sequence
 import wml_utils as wmlu
 import img_utils as wmli
 import cv2
+from thirdparty.config import CfgNode 
 try:
     from mmcv.parallel import DataContainer as DC
+    from mmcv.utils.config import ConfigDict
 except:
     DC = None
+    ConfigDict = wmlu.AlwaysNullObj
 
 def unnormalize(x:torch.Tensor,mean=[0.0,0.0,0.0],std=[1.0,1.0,1.0]):
     if len(x.size())==4:
@@ -356,6 +359,8 @@ def split_forward_batch32(func):
 def to(data,device=torch.device("cpu")):
     if torch.is_tensor(data):
         return data.to(device)
+    elif isinstance(data,(CfgNode,ConfigDict)):
+        return data
     elif isinstance(data,dict):
         keys = list(data.keys())
         new_data = {}
@@ -367,8 +372,10 @@ def to(data,device=torch.device("cpu")):
             new_data.append(to(v,device))
         new_data = type(data)(new_data)
     elif not isinstance(data,Iterable):
+        if not isinstance(data,torch.nn.Module) and hasattr(data,"to"):
+            data = data.to(device)
         return data
-    elif isinstance(data,np.ndarray):
+    elif isinstance(data,(np.ndarray,str,bytes)):
         return data
     else:
         print(f"Unsupport type {type(data)}")
@@ -379,7 +386,26 @@ def cpu(data):
     return to(data,device=torch.device("cpu"))
 
 def cuda(data):
-    return to(data,device=torch.device("cuda:0"))
+    return to(data,device=torch.device("cuda"))
+
+def cpu_wraps(func):
+    @wraps(func)
+    def wraps_func(*args,**kwargs):
+        args = cpu(args)
+        kwargs = cpu(kwargs)
+        res = func(*args,**kwargs)
+        res = cuda(res)
+        return res
+    return wraps_func
+
+def cpu_cpu_wraps(func):
+    @wraps(func)
+    def wraps_func(*args,**kwargs):
+        args = cpu(args)
+        kwargs = cpu(kwargs)
+        res = func(*args,**kwargs)
+        return res
+    return wraps_func
 
 def numpy(data):
     if torch.is_tensor(data):
