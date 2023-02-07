@@ -12,7 +12,7 @@ def parse_args():
     parser.add_argument('--beg_score_thr', type=float,default=0.1,help='begin test thr')
     parser.add_argument('--end_score_thr', type=float,default=1.0, help='end test thr')
     parser.add_argument('--score_step', type=float,default=0.05, help='score step')
-    parser.add_argument('--classes_wise', type=bool,default=False, help='score step')
+    parser.add_argument('--classes_wise', action='store_true', help='score step')
     args = parser.parse_args()
     return args
 

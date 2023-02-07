@@ -290,6 +290,27 @@ def get_norm(norm, out_channels):
         }[norm]
     return norm(out_channels)
 
+class SiLU(nn.Module):
+    """export-friendly version of nn.SiLU()"""
+
+    @staticmethod
+    def forward(x):
+        return x * torch.sigmoid(x)
+
+
+def get_activation(name="SiLU", inplace=True):
+    if name == "SiLU":
+        module = nn.SiLU(inplace=inplace)
+    elif name == "ReLU":
+        module = nn.ReLU(inplace=inplace)
+    elif name == "LeakyReLU":
+        module = nn.LeakyReLU(0.1, inplace=inplace)
+    elif name == "Hardswish":
+        module = nn.Hardswish(inplace=inplace)
+    else:
+        raise AttributeError("Unsupported act type: {}".format(name))
+    return module
+
 class Conv2d(torch.nn.Conv2d):
     """
     A wrapper around :class:`torch.nn.Conv2d` to support empty inputs and more features.
