@@ -52,6 +52,9 @@ if __name__ == "__main__":
             print(f"ERROR: can't specify total nr for video.")
         for file in files:
             trans_one(file,args.out_dir,args.fps,args.beg_idx,args.total_nr,args.step)
+    if os.path.isfile(args.src_dir):
+        for file in [args.src_dir]:
+            trans_one(file,args.out_dir,args.fps,args.beg_idx,args.total_nr,args.step)
     else:
         _sub_dirs = wmlu.recurse_get_subdir_in_dir(args.src_dir,append_self=True)
         sub_dirs = []

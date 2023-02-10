@@ -31,6 +31,29 @@ class LayerNorm(nn.Module):
                 x = self.weight[:, None] * x + self.bias[:, None]
             return x
 
+class LayerNorm2d(nn.LayerNorm):
+    """LayerNorm on channels for 2d images.
+
+    Args:
+        num_channels (int): The number of channels of the input tensor.
+        eps (float): a value added to the denominator for numerical stability.
+            Defaults to 1e-5.
+        elementwise_affine (bool): a boolean value that when set to ``True``,
+            this module has learnable per-element affine parameters initialized
+            to ones (for weights) and zeros (for biases). Defaults to True.
+    """
+
+    def __init__(self, num_features: int, **kwargs) -> None:
+        super().__init__(num_features, **kwargs)
+        self.num_channels = self.normalized_shape[0]
+
+    def forward(self, x):
+        assert x.dim() == 4, 'LayerNorm2d only supports inputs with shape ' \
+            f'(N, C, H, W), but got tensor with shape {x.shape}'
+        return F.layer_norm(
+            x.permute(0, 2, 3, 1).contiguous(), self.normalized_shape,
+            self.weight, self.bias, self.eps).permute(0, 3, 1, 2).contiguous()
+
 class SEBlock(nn.Module):
     def __init__(self,channels,r=16):
         super().__init__()
@@ -287,6 +310,7 @@ def get_norm(norm, out_channels):
             "GN": lambda channels: nn.GroupNorm(32, channels),
             # for debugging:
             "nnSyncBN": nn.SyncBatchNorm,
+            "LayerNorm2d":LayerNorm2d,
         }[norm]
     return norm(out_channels)
 
@@ -307,6 +331,8 @@ def get_activation(name="SiLU", inplace=True):
         module = nn.LeakyReLU(0.1, inplace=inplace)
     elif name == "Hardswish":
         module = nn.Hardswish(inplace=inplace)
+    elif name == "GELU":
+        module = nn.GELU()
     else:
         raise AttributeError("Unsupported act type: {}".format(name))
     return module
