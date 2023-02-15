@@ -354,6 +354,16 @@ def get_unused_path(path):
         i += 1
     return path
 
+def get_unused_path_with_suffix(path):
+    if not os.path.exists(path):
+        return path
+    parts = osp.splitext(path)
+    i = 0
+    while os.path.exists(path):
+        path = parts[0]+ f"_{i}"+parts[1]
+        i += 1
+    return path
+
 def make_dir_for_file(file_path):
     dir_name = osp.dirname(file_path)
     os.makedirs(dir_name,exist_ok=True)

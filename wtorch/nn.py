@@ -309,7 +309,7 @@ def get_norm(norm, out_channels):
             "FrozenBN": FrozenBatchNorm2d,
             "GN": lambda channels: nn.GroupNorm(32, channels),
             # for debugging:
-            "nnSyncBN": nn.SyncBatchNorm,
+            "SyncBatchNorm": nn.SyncBatchNorm,
             "LayerNorm2d":LayerNorm2d,
         }[norm]
     return norm(out_channels)

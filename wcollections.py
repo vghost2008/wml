@@ -77,9 +77,22 @@ class MDict(dict):
             self.default_value = kwargs.pop("dvalue")
         super().__init__(*args,**kwargs)
 
+    @classmethod
+    def from_dict(cls,data:dict):
+        x = data.values()
+        assert len(x)>0, "error dict data"
+        dtype = type(x[0])
+        ret = cls(dtype=dtype)
+        for k,v in data.items():
+            ret[k] = v
+        return ret
+
     def __getattr__(self, key):
         if key in self.__dict__:
             return self.__dict__[key]
+        return self.__getitem__(key)
+
+    def __call__(self,key):
         return self.__getitem__(key)
 
     def __getitem__(self, key):

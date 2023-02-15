@@ -142,6 +142,64 @@ def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=
     with open(file_path,"w") as f:
         json.dump(data,f)
 
+def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_text=lambda x:str(x)):
+    '''
+    mask 仅包含bboxes中的部分
+    annotations_list[i]['bbox'] (x0,y0,x1,y1) 绝对坐标
+    annotations_list[i]["segmentation"] (H,W)
+    '''
+    data={}
+    shapes = []
+    data["version"] = "3.10.1"
+    data["flags"] = {}
+    if isinstance(label_to_text,dict):
+        label_to_text = wmlu.MDict.from_dict(label_to_text)
+    for ann in annotations_list:
+        shape = {}
+        shape["label"] = label_to_text(ann["category_id"])
+        #shape["line_color"]=None
+        #shape["fill_color"]=None
+        shape["shape_type"]="polygon"
+        mask = ann["segmentation"]
+        x0,y0,x1,y1 = ann['bbox']
+        scale = np.reshape(np.array([(x1-x0)/mask.shape[1],(y1-y0)/mask.shape[0]],dtype=np.float32),[1,2])
+        offset = np.reshape(np.array([x0,y0],dtype=np.float32),[1,2])
+
+        contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+        
+        for cont in contours:
+            points = cont
+            if len(cont.shape)==3 and cont.shape[1]==1:
+                points = np.squeeze(points,axis=1)
+            points = points*scale+offset
+            points = points.astype(np.int32).tolist()
+            shape["points"] = points
+            shapes.append(shape)
+
+    data["shapes"] = shapes
+    data["imagePath"] = os.path.basename(image_path)
+    data["imageWidth"] = image["width"]
+    data["imageHeight"] = image["height"]
+    with open(file_path,"w") as f:
+        json.dump(data,f)
+'''
+使用目标检测输出保存文件
+'''
+def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_text=lambda x:str(x)):
+    '''
+    labels:[N]
+    bboxes:[N,4](x0,y0,x1,y1)
+    masks:[N,]
+    '''
+    annotatios_list = []
+    for i in range(labels):
+        annotatios = {"category_id":labels[i],
+        'segmentation':masks[i],
+        'bbox':bboxes[i]}
+        annotatios_list.append(annotatios)
+    save_labelme_datav2(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)
+
+
 def get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=False):
     labels = []
     bboxes = []
