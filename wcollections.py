@@ -81,7 +81,7 @@ class MDict(dict):
     def from_dict(cls,data:dict):
         x = data.values()
         assert len(x)>0, "error dict data"
-        dtype = type(x[0])
+        dtype = type(list(x)[0])
         ret = cls(dtype=dtype)
         for k,v in data.items():
             ret[k] = v

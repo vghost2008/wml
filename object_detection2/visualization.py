@@ -236,6 +236,8 @@ def draw_legend(labels,text_fn,img_size,color_fn,thickness=4,font_scale=1.2,text
 
 '''
 mask only include the area within bbox
+bboxes: [N,4](y0,x0,y1,x1)
+mask: [N,H,W]
 '''
 def draw_mask(img,classes,bboxes,masks,
               color_fn=fixed_color_large_fn,

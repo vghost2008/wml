@@ -117,6 +117,9 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),use_semantic=Tr
     return image,annotations_list
 
 def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=lambda x:str(x)):
+    '''
+    annotations_list[i]['segmentation'] [H,W] 全图mask
+    '''
     data={}
     shapes = []
     data["version"] = "3.10.1"
@@ -189,10 +192,10 @@ def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_
     '''
     labels:[N]
     bboxes:[N,4](x0,y0,x1,y1)
-    masks:[N,]
+    masks:[N,H,W] 仅包含bbox内的部分
     '''
     annotatios_list = []
-    for i in range(labels):
+    for i in range(len(labels)):
         annotatios = {"category_id":labels[i],
         'segmentation':masks[i],
         'bbox':bboxes[i]}
