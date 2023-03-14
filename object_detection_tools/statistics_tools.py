@@ -341,7 +341,8 @@ def coco2014_val_dataset():
 def labelme_dataset():
     data = LabelMeData(label_text2id=None)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
-    data.read_data("/home/vghost/ai/mldata2/mnistgeood_data/test")
+    #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/train_s0",img_suffix="bmp")
+    data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
     return data.get_items()
 
 
@@ -390,8 +391,8 @@ if __name__ == "__main__":
             k = min_size/ img_size[1]
         return [k*img_size[0],k*img_size[1]]'''
 
-    statics = statistics_boxes_with_datas(pascal_voc_dataset(),
-                                          #labelme_dataset(),
+    statics = statistics_boxes_with_datas(#pascal_voc_dataset(),
+                                          labelme_dataset(),
                                         #mapillary_vistas_dataset(),
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
