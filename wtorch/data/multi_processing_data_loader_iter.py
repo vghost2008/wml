@@ -345,7 +345,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
         self._worker_init_fn = loader.worker_init_fn
         self._worker_queue_idx_cycle = itertools.cycle(range(self._num_workers))
         # No certainty which module multiprocessing_context is
-        self._worker_result_queue = multiprocessing_context.Queue(max(16,self._num_workers*self._prefetch_factor*batch_split_nr))  # type: ignore
+        self._worker_result_queue = multiprocessing_context.Queue(max(self._prefetch_factor*batch_split_nr*2,min(self._num_workers,6)*self._prefetch_factor*batch_split_nr))  # type: ignore
         self._worker_pids_set = False
         self._shutdown = False
         self._workers_done_event = multiprocessing_context.Event()

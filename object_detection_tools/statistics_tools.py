@@ -218,6 +218,10 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     print(f"Max element size {np.max(example_nrs)}, element min {np.min(example_nrs)}, element mean {np.mean(example_nrs)}, element var {np.var(example_nrs)}.")
     labels_counter = list(labels_counter.items())
     labels_counter.sort(key=lambda x:x[1],reverse=True)
+
+    classes = [x[0] for x in labels_counter]
+    print(tuple(classes))
+
     total_nr = 0
     for k,v in labels_counter:
         total_nr += v
@@ -311,6 +315,10 @@ def pascal_voc_dataset():
     data_path = "/home/wj/ai/mldata1/take_photo/train/coco"
     data_path = "/mnt/data1/wj/ai/mldata/MOT/MOT17/train/MOT17-09-SDP/img1"
     data_path = "/home/wj/ai/mldata1/B11ACT/datas/labeled"
+    data_path = "/home/wj/ai/mldata1/B7mura/datas/data/ML3U"
+    data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MV1U"
+    data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MU4U"
+    data_path = "/home/wj/ai/mldata1/B7mura/datas/data"
     #data_path = "/home/wj/0day/wt_06"
     #data_path = '/home/wj/0day/pyz'
     data.read_data(data_path,silent=True,img_suffix=".bmp;;.jpg")
@@ -391,8 +399,8 @@ if __name__ == "__main__":
             k = min_size/ img_size[1]
         return [k*img_size[0],k*img_size[1]]'''
 
-    statics = statistics_boxes_with_datas(#pascal_voc_dataset(),
-                                          labelme_dataset(),
+    statics = statistics_boxes_with_datas(pascal_voc_dataset(),
+                                          #labelme_dataset(),
                                         #mapillary_vistas_dataset(),
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,

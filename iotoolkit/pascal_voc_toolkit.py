@@ -10,6 +10,7 @@ import object_detection2.visualization as odv
 import wml_utils
 import logging
 import shutil
+from functools import partial
 import wml_utils as wmlu
 import img_utils as wmli
 import copy
@@ -453,8 +454,11 @@ def split_voc_files(files,nr=1):
 
     return files0,files1
 
+def dict_label_text2id(name,dict_data):
+    return dict_data.get(name,None)
+
 class PascalVOCData(object):
-    def __init__(self, label_text2id=None, shuffle=False,image_sub_dir=None,xml_sub_dir=None,has_probs=False,absolute_coord=False):
+    def __init__(self, label_text2id=None, shuffle=False,image_sub_dir=None,xml_sub_dir=None,has_probs=False,absolute_coord=False,filter_empty_files=False):
         '''
 
         :param label_text2id: trans a single label text to id:  int func(str)
@@ -463,12 +467,16 @@ class PascalVOCData(object):
         :param xml_sub_dir:
         '''
         self.files = None
-        self.label_text2id = label_text2id
         self.shuffle = shuffle
         self.xml_sub_dir = xml_sub_dir
         self.image_sub_dir = image_sub_dir
         self.has_probs = has_probs
         self.absolute_coord = absolute_coord
+        self.filter_empty_files = filter_empty_files
+        if isinstance(label_text2id,dict):
+            self.label_text2id = partial(dict_label_text2id,dict_data=label_text2id)
+        else:
+            self.label_text2id = label_text2id
 
     def __len__(self):
         return len(self.files)
@@ -506,12 +514,33 @@ class PascalVOCData(object):
                                  img_suffix=img_suffix,
                                  silent=silent,
                                  check_xml_file=check_xml_file)
+        if self.filter_empty_files and self.label_text2id:
+            self.files = self.apply_filter_empty_files(self.files)
         if len(self.files) == 0:
             return False
 
         if self.shuffle:
             random.shuffle(self.files)
         return True
+    
+    def apply_filter_empty_files(self,files):
+        new_files = []
+        for fs in files:
+            img_file,xml_file = fs
+            data = read_voc_xml(xml_file,
+                                adjust=None,
+                                aspect_range=None,
+                                has_probs=self.has_probs,
+                                absolute_coord=self.absolute_coord)
+            shape, bboxes, labels_names, difficult, truncated,probs = data
+            labels = [self.label_text2id(x) for x in labels_names]
+            is_none = [x is None for x in labels]
+            if not all(is_none):
+                new_files.append(fs)
+            else:
+                print(f"File {xml_file} is empty, labels names {labels_names}, labels {labels}")
+
+        return new_files
 
     def get_items(self):
         '''

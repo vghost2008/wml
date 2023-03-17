@@ -75,4 +75,19 @@ def bboxes_ious_matrix(bboxesa,bboxesb):
     return torch.stack(ious,dim=0)
 
 
+def correct_bbox(bboxes,w,h):
+    '''
+    bboxes: [N,4](x0,y0,x1,y1)
+    '''
+    bboxes[:,0:4:2] = torch.clamp(bboxes[:,0:4:2],min=0,max=w)
+    bboxes[:,1:4:2] = torch.clamp(bboxes[:,1:4:2],min=0,max=h)
+
+    return bboxes
+
+def area(bboxes):
+    ws = bboxes[:,2]-bboxes[:,0]
+    hs = bboxes[:,3]-bboxes[:,1]
+    area = ws*hs
+    return area
+
 
