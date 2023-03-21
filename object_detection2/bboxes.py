@@ -392,6 +392,33 @@ def expand_bbox_by_size(bboxes,size,format="xyminwh"):
         nxmax = cx+nw
 
         return np.stack([nymin,nxmin,nymax,nxmax],axis=-1)
+
+'''
+bbox:(x0,y0,x1,y1)
+size:[W,H]
+return a list of new bbox with the minimum size 'size' 
+'''
+def clamp_bboxes(bboxes,min_size):
+    if not isinstance(min_size,Iterable):
+        min_size = (min_size,min_size)
+    if not isinstance(bboxes,np.ndarray):
+        bboxes = np.array(bboxes)
+    xmin = bboxes[...,0]
+    ymin = bboxes[...,1]
+    xmax = bboxes[...,2]
+    ymax = bboxes[...,3]
+    cy = (ymax + ymin) / 2
+    cx = (xmax + xmin) / 2
+    h = ymax-ymin
+    w = xmax-xmin
+    nh = np.maximum(h,min_size[1])
+    nw = np.maximum(w,min_size[0])
+    nymin = cy-nh
+    nymax = cy+nh
+    nxmin = cx-nw
+    nxmax = cx+nw
+
+    return np.stack([nxmin,nymin,nxmax,nymax],axis=-1)
 '''
 bboxes:[N,4]
 '''

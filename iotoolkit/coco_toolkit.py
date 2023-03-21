@@ -329,8 +329,10 @@ class TorchCOCOData(COCOData):
 def load_coco_results(json_path):
     with open(json_path,"r") as f:
         data = json.load(f)
-    res = defaultdict(defaultdict(list))
-    r_res = defaultdict(defaultdict(list))
+    res = wmlu.MDict(dvalue=wmlu.MDict(dtype=list))
+    r_res = wmlu.MDict(dvalue=wmlu.MDict(dtype=list))
+    if not isinstance(data,list) and 'annotations' in data:
+        data = data['annotations']
     """
           {
                         "image_id": original_id,
@@ -343,7 +345,7 @@ def load_coco_results(json_path):
         image_id = re["image_id"]
         category_id = re["category_id"]
         bbox = re["bbox"]
-        score = re["score"]
+        score = re.get("score",1.0)
         res[image_id]["bbox"].append(bbox)
         res[image_id]["category_id"].append(category_id)
         res[image_id]["score"].append(score)
@@ -356,7 +358,7 @@ def load_coco_results(json_path):
 
 if __name__ == "__main__":
     import img_utils as wmli
-    import object_detection_tools.visualization as odv
+    import object_detection2.visualization as odv
     import matplotlib.pyplot as plt
     data = COCOData()
     data.read_data("/data/mldata/coco/annotations/instances_train2014.json",image_dir="/data/mldata/coco/train2014")

@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import copy
 
 class ExperienceBuffer():
     def __init__(self, buffer_size = 100000):

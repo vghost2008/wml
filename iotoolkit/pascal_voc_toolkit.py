@@ -14,6 +14,7 @@ from functools import partial
 import wml_utils as wmlu
 import img_utils as wmli
 import copy
+from .common import resample
 
 def get_shape_from_img(xml_path,img_path):
     if not os.path.exists(img_path):
@@ -458,7 +459,11 @@ def dict_label_text2id(name,dict_data):
     return dict_data.get(name,None)
 
 class PascalVOCData(object):
-    def __init__(self, label_text2id=None, shuffle=False,image_sub_dir=None,xml_sub_dir=None,has_probs=False,absolute_coord=False,filter_empty_files=False):
+    def __init__(self, label_text2id=None, shuffle=False,image_sub_dir=None,xml_sub_dir=None,
+                 has_probs=False,
+                 absolute_coord=False,
+                 filter_empty_files=False,
+                 resample_parameters=None):
         '''
 
         :param label_text2id: trans a single label text to id:  int func(str)
@@ -478,6 +483,18 @@ class PascalVOCData(object):
         else:
             self.label_text2id = label_text2id
 
+        if resample_parameters is not None:
+            self.resample_parameters = {}
+            for k,v in resample_parameters.items():
+                if isinstance(k,(str,bytes)):
+                    k = self.label_text2id(k)
+                self.resample_parameters[k] = v
+            print("resample parameters")
+            wmlu.show_dict(self.resample_parameters)
+        else:
+            self.resample_parameters = None
+
+
     def __len__(self):
         return len(self.files)
 
@@ -496,8 +513,15 @@ class PascalVOCData(object):
 
             if self.label_text2id is not None:
                 labels = [self.label_text2id(x) for x in labels_names]
+                keep = [x is not None for x in labels]
+                labels = [x if x is not None else -1 for x in labels]
+                labels = np.array(labels,dtype=np.int32)
+                labels = labels[keep]
+                bboxes = bboxes[keep]
+                labels_names = np.array(labels_names)[keep]
             else:
                 labels = None
+
         except Exception as e:
             print(f"Read {xml_file} {e} faild.")
             return img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None
@@ -516,6 +540,9 @@ class PascalVOCData(object):
                                  check_xml_file=check_xml_file)
         if self.filter_empty_files and self.label_text2id:
             self.files = self.apply_filter_empty_files(self.files)
+        if self.resample_parameters is not None and self.label_text2id:
+            self.files = self.resample(self.files)
+        
         if len(self.files) == 0:
             return False
 
@@ -541,6 +568,22 @@ class PascalVOCData(object):
                 print(f"File {xml_file} is empty, labels names {labels_names}, labels {labels}")
 
         return new_files
+    
+    def resample(self,files):
+        all_labels = []
+        for fs in files:
+            img_file,xml_file = fs
+            data = read_voc_xml(xml_file,
+                                adjust=None,
+                                aspect_range=None,
+                                has_probs=self.has_probs,
+                                absolute_coord=self.absolute_coord)
+            shape, bboxes, labels_names, difficult, truncated,probs = data
+            labels = [self.label_text2id(x) for x in labels_names]
+            all_labels.append(labels)
+
+        return resample(files,all_labels,self.resample_parameters)
+
 
     def get_items(self):
         '''

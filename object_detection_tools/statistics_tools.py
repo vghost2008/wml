@@ -17,6 +17,14 @@ import wml_utils as wmlu
 from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
 from sklearn.cluster import KMeans
 from functools import partial
+from argparse import ArgumentParser
+from itertools import count
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
+    args = parser.parse_args()
+    return args
 '''
 ratio: h/w
 '''
@@ -306,8 +314,14 @@ def test_dataset():
 
     return data.get_items()
 
-def pascal_voc_dataset():
-    data = PascalVOCData(label_text2id=None)
+def pascal_voc_dataset(labels=None):
+    labels = ['MS7U', 'MP1U', 'MU2U', 'ML9U', 'MV1U', 'ML3U', 'MS1U', 'Other']
+    if labels is not None and len(labels)>0:
+        label_text2id = dict(zip(labels,count()))
+    else:
+        label_text2id = None
+    
+    data = PascalVOCData(label_text2id=label_text2id,resample_parameters={6:8,5:2,7:2})
 
     data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/train"
     data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/wt_06"
@@ -319,6 +333,7 @@ def pascal_voc_dataset():
     data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MV1U"
     data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MU4U"
     data_path = "/home/wj/ai/mldata1/B7mura/datas/data"
+    #data_path = "/home/wj/ai/mldata1/B7mura/datas/test_s0"
     #data_path = "/home/wj/0day/wt_06"
     #data_path = '/home/wj/0day/pyz'
     data.read_data(data_path,silent=True,img_suffix=".bmp;;.jpg")
@@ -398,8 +413,8 @@ if __name__ == "__main__":
         else:
             k = min_size/ img_size[1]
         return [k*img_size[0],k*img_size[1]]'''
-
-    statics = statistics_boxes_with_datas(pascal_voc_dataset(),
+    args = parse_args()
+    statics = statistics_boxes_with_datas(pascal_voc_dataset(labels=args.labels),
                                           #labelme_dataset(),
                                         #mapillary_vistas_dataset(),
                                           label_encoder=default_encode_label,
@@ -412,6 +427,7 @@ if __name__ == "__main__":
     statistics_boxes_by_different_ratio(statics[0],nr=nr,bin_size=5)
     #show_boxes_statistics(statics)
     show_classwise_boxes_statistics(statics[1],nr=nr)
+
     '''data = statics[1]
     boxes = []
     for k,v in data.items():
