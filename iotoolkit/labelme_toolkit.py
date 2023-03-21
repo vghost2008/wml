@@ -13,6 +13,7 @@ import cv2
 from object_detection2.standard_names import *
 import object_detection2.bboxes as odb
 from functools import partial
+from .common import resample
 import glob
 
 def trans_odresult_to_annotations_list(data):
@@ -65,7 +66,9 @@ image_info: {'height','width'}
 annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
 'segmentation' [H,W]
 '''
-def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),use_semantic=True):
+def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,use_semantic=True):
+    if mask_on == False:
+        use_semantic = False
     annotations_list = []
     image = {}
     with open(file_path,"r",encoding="gb18030") as f:
@@ -78,7 +81,6 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),use_semantic=Tr
             image["width"] = int(img_width)
             image["file_name"] = wmlu.base_name(file_path)
             for shape in json_data["shapes"]:
-                mask = np.zeros(shape=[img_height,img_width],dtype=np.uint8)
                 all_points = np.array([shape["points"]]).astype(np.int32)
                 if len(all_points)<1:
                     continue
@@ -92,7 +94,11 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),use_semantic=Tr
                 xmax = np.max(x)
                 ymin = np.min(y)
                 ymax = np.max(y)
-                segmentation = cv.drawContours(mask,all_points,-1,color=(1),thickness=cv.FILLED)
+                if mask_on:
+                    mask = np.zeros(shape=[img_height,img_width],dtype=np.uint8)
+                    segmentation = cv.drawContours(mask,all_points,-1,color=(1),thickness=cv.FILLED)
+                else:
+                    segmentation = None
                 if label_text_to_id is not None:
                     label = label_text_to_id(shape["label"])
                 else:
@@ -476,7 +482,9 @@ def dict_label_text2id(name,dict_data):
     return dict_data.get(name,None)
 
 class LabelMeData(object):
-    def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,filter_empty_files=False):
+    def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,
+                 filter_empty_files=False,
+                 resample_parameters=None):
         '''
         label_text2id: func(name)->int
         '''
@@ -488,11 +496,23 @@ class LabelMeData(object):
         self.shuffle = shuffle
         self.absolute_coord = absolute_coord
         self.filter_empty_files = filter_empty_files
+        if resample_parameters is not None:
+            self.resample_parameters = {}
+            for k,v in resample_parameters.items():
+                if isinstance(k,(str,bytes)):
+                    k = self.label_text2id(k)
+                self.resample_parameters[k] = v
+            print("resample parameters")
+            wmlu.show_dict(self.resample_parameters)
+        else:
+            self.resample_parameters = None
         
     def read_data(self,dir_path,img_suffix="jpg"):
         _files = get_files(dir_path,img_suffix=img_suffix)
         if self.filter_empty_files and self.label_text2id:
             _files = self.apply_filter_empty_files(_files)
+        if self.resample_parameters is not None and self.label_text2id:
+            _files = self.resample(_files)
         
         self.files = _files
 
@@ -508,7 +528,7 @@ class LabelMeData(object):
         new_files = []
         for fs in files:
             img_file,json_file = fs
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
+            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
             is_none = [x is None for x in labels]
@@ -518,6 +538,17 @@ class LabelMeData(object):
                 print(f"File {json_file} is empty, labels names {labels_names}, labels {labels}")
 
         return new_files
+
+    def resample(self,files):
+        all_labels = []
+        for fs in files:
+            img_file,json_file = fs
+            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False)
+            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
+            labels = [self.label_text2id(x) for x in labels_names]
+            all_labels.append(labels)
+
+        return resample(files,all_labels,self.resample_parameters)
 
     def __len__(self):
         return len(self.files)

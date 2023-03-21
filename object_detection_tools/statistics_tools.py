@@ -315,13 +315,14 @@ def test_dataset():
     return data.get_items()
 
 def pascal_voc_dataset(labels=None):
-    labels = ['MS7U', 'MP1U', 'MU2U', 'ML9U', 'MV1U', 'ML3U', 'MS1U', 'Other']
+    #labels = ['MS7U', 'MP1U', 'MU2U', 'ML9U', 'MV1U', 'ML3U', 'MS1U', 'Other']
     if labels is not None and len(labels)>0:
         label_text2id = dict(zip(labels,count()))
     else:
         label_text2id = None
     
-    data = PascalVOCData(label_text2id=label_text2id,resample_parameters={6:8,5:2,7:2})
+    #data = PascalVOCData(label_text2id=label_text2id,resample_parameters={6:8,5:2,7:2})
+    data = PascalVOCData(label_text2id=label_text2id)
 
     data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/train"
     data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/wt_06"
@@ -364,8 +365,8 @@ def coco2014_val_dataset():
 def labelme_dataset():
     data = LabelMeData(label_text2id=None)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
-    #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/train_s0",img_suffix="bmp")
-    data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
+    data.read_data("/home/wj/ai/mldata1/B11ACT/datas/train_s0",img_suffix="bmp")
+    #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
     return data.get_items()
 
 
@@ -414,8 +415,8 @@ if __name__ == "__main__":
             k = min_size/ img_size[1]
         return [k*img_size[0],k*img_size[1]]'''
     args = parse_args()
-    statics = statistics_boxes_with_datas(pascal_voc_dataset(labels=args.labels),
-                                          #labelme_dataset(),
+    statics = statistics_boxes_with_datas(#pascal_voc_dataset(labels=args.labels),
+                                          labelme_dataset(),
                                         #mapillary_vistas_dataset(),
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
