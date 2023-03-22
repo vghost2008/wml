@@ -294,6 +294,86 @@ def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshol
     else:
         return precision,recall
 
+def getEasyPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.05,auto_scale_threshold=True,ext_info=False):
+    '''
+    :param gtboxes: [N,4]
+    :param gtlabels: [N]
+    :param boxes: [M,4]
+    :param labels: [M]
+    :param threshold: nms_threshold,float
+    :return: precision,recall float
+    '''
+    if not isinstance(gtboxes,np.ndarray):
+        gtboxes = np.array(gtboxes)
+    if not isinstance(gtlabels,np.ndarray):
+        gtlabels = np.array(gtlabels)
+    gt_shape = gtboxes.shape
+    #indict if there have some box match with this ground-truth box
+    gt_mask = np.zeros([gt_shape[0]],dtype=np.int32)
+    boxes_shape = boxes.shape
+    #indict if there have some ground-truth box match with this box
+    boxes_mask = np.zeros(boxes_shape[0],dtype=np.int32)
+    gt_size = gtlabels.shape[0]
+    boxes_size = labels.shape[0]
+    MIN_VOL = 0.005
+    #print(">>>>",gtboxes,gtlabels)
+    for i in range(gt_size):
+        max_index = -1
+        max_jaccard = 0.0
+
+        t_threshold = threshold
+        if auto_scale_threshold:
+            #print(i,gtboxes,gtlabels)
+            vol = npod.box_vol(gtboxes[i])
+            if vol < MIN_VOL:
+                t_threshold = vol*threshold/MIN_VOL
+        #iterator on all boxes to find one have the most maximum jacard value with current ground-truth box
+        for j in range(boxes_size):
+            if gtlabels[i] != labels[j] or boxes_mask[j] != 0:
+                continue
+
+            jaccard = npod.box_jaccard(gtboxes[i],boxes[j])
+            if jaccard>t_threshold and jaccard > max_jaccard:
+                max_jaccard = jaccard
+                max_index = j
+
+        if max_index < 0:
+            continue
+
+        gt_mask[i] = 1
+        boxes_mask[max_index] = 1
+    
+    pred_labels = set(labels[boxes_mask.astype(np.bool)].tolist())
+    for j in range(boxes_size):
+        if boxes_mask[j] != 0:
+            continue
+        if labels[j] in pred_labels:
+            boxes_mask[j] = 1
+        
+
+    correct_num = np.sum(gt_mask)
+    correct_num1 = np.sum(boxes_mask)
+
+    recall = __safe_persent(correct_num,gt_size)
+    precision = __safe_persent(correct_num1,boxes_size)
+    P_v = gt_size
+    TP_v = correct_num
+    FP_v = boxes_size-correct_num1
+
+
+    if ext_info:
+        gt_label_list = []
+        for i in range(gt_mask.shape[0]):
+            if gt_mask[i] != 1:
+                gt_label_list.append(gtlabels[i])
+        pred_label_list = []
+        for i in range(boxes_size):
+            if boxes_mask[i] != 1:
+                pred_label_list.append(labels[i])
+        return precision,recall,gt_label_list,pred_label_list,TP_v,FP_v,P_v
+    else:
+        return precision,recall
+
 def getPrecisionV2(gt_data,pred_data,pred_func,threshold,return_f1=False):
     '''
     :param gt_data: N objects
@@ -425,6 +505,67 @@ class PrecisionAndRecall:
         boxes = np.concatenate(self.boxes,axis=0)
         labels = np.concatenate(self.labels,axis=0)
         self.precision,self.recall = getPrecision(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,
+                                                  auto_scale_threshold=False, ext_info=False)
+    @property
+    def f1(self):
+        return 2*self.precision*self.recall/max(self.precision+self.recall,1e-8)
+
+    def show(self,name=""):
+        self.evaluate()
+        res = f"{name}: {self}"
+        print(res)
+
+    def value(self):
+        return self.f1
+
+    def to_string(self):
+        try:
+            return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1}/({self.total_test_nr})"
+        except:
+            return "N.A."
+
+    def __repr__(self):
+        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
+        return res
+
+@METRICS_REGISTRY.register()
+class EasyPrecisionAndRecall:
+    def __init__(self,threshold=0.05,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
+        self.threshold = threshold
+        self.gtboxes = []
+        self.gtlabels = []
+        self.boxes = []
+        self.labels = []
+        self.precision = None
+        self.recall = None
+        self.total_test_nr = 0
+        self.num_classes = num_classes
+        self.label_trans = label_trans
+        del classes_begin_value
+
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
+                 gtmasks=None,
+                 masks=None,is_crowd=None,use_relative_coord=True):
+        if self.label_trans is not None:
+            gtlabels = self.label_trans(gtlabels)
+            labels = self.label_trans(labels)
+        if gtboxes.shape[0]>0:
+            self.gtboxes.append(gtboxes)
+            self.gtlabels.append(np.array(gtlabels)+self.total_test_nr*self.num_classes)
+        if boxes.shape[0]>0:
+            self.boxes.append(boxes)
+            self.labels.append(np.array(labels)+self.total_test_nr*self.num_classes)
+        self.total_test_nr += 1
+
+    def evaluate(self):
+        if self.total_test_nr==0 or len(self.boxes)==0 or len(self.labels)==0:
+            self.precision,self.recall = 0,0
+            return
+        gtboxes = np.concatenate(self.gtboxes,axis=0)
+        gtlabels = np.concatenate(self.gtlabels,axis=0)
+        boxes = np.concatenate(self.boxes,axis=0)
+        labels = np.concatenate(self.labels,axis=0)
+        self.precision,self.recall = getEasyPrecision(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,
                                                   auto_scale_threshold=False, ext_info=False)
     @property
     def f1(self):
