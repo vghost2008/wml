@@ -584,6 +584,8 @@ class LabelMeData(object):
         '''
         :return: 
         full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
+        binary_masks:[N,H,W]
+        bboxes:[N,4] (ymin,xmin,ymax,xmax)
         '''
         img_file, json_file = self.files[idx]
         image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)

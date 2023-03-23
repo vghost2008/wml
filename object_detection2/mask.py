@@ -71,3 +71,31 @@ def dense_mask_to_sparse_maskv3(mask:np.ndarray,labels,default_label=0):
             pos_mask = mask[i].astype(np.bool)
             res_mask[pos_mask] = labels[i]
         return res_mask
+
+def get_bboxes_by_mask(masks):
+    '''
+    masks: [N,H,W]
+    return :
+    [N,4] (xmin,ymin,xmax,ymax)
+    '''
+    if len(masks) == 0:
+        return np.zeros([0,4],dtype=np.float32)
+
+    bboxes = []
+    for i in range(masks.shape[0]):
+        cur_mask = masks[i]
+        idx = np.nonzero(cur_mask)
+        xs = idx[1]
+        ys = idx[0]
+        if len(xs)==0:
+            bboxes.append(np.zeros([4],dtype=np.float32))
+        else:
+            x0 = np.min(xs)
+            y0 = np.min(ys)
+            x1 = np.max(xs)
+            y1 = np.max(ys)
+            bboxes.append(np.array([x0,y0,x1,y1],dtype=np.float32))
+    
+    bboxes = np.array(bboxes)
+
+    return bboxes

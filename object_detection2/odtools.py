@@ -2,6 +2,8 @@
 import numpy as np
 import object_detection2.bboxes as odb
 import img_utils as wmli
+import copy
+from .mask import get_bboxes_by_mask
 
 
 '''
@@ -129,3 +131,90 @@ def filter_by_classeswise_thresholds(labels,bboxes,probs,thresholds):
             n_probs.append(p)
 
     return np.array(n_labels),np.array(n_bboxes),np.array(n_probs)
+
+class WCrop:
+    '''
+    '''
+
+    def __init__(self,
+                 img_pad_value=127,
+                 mask_pad_value=0,
+                 bbox_keep_ratio=0.2,
+                 mask_domina=True):
+                 
+        self.img_pad_value = img_pad_value
+        self.mask_pad_value = mask_pad_value
+        self.bbox_keep_ratio = bbox_keep_ratio
+        self.mask_domina = mask_domina
+
+    def apply(self, results,crop_bbox):
+        """Random crop and around padding the original image.
+
+        Args:
+            results (dict): Image infomations in the augment pipeline.
+
+        Returns:
+            results (dict): The updated dict.
+        """
+        img = results['img']
+        patch = crop_bbox
+        try:
+            cropped_img = wmli.crop_and_pad(img, patch,pad_color=self.img_pad_value)
+        except:
+            print("Crop error:",patch)
+
+        x_offset = patch[0]
+        y_offset = patch[1]
+        new_w = patch[2]-x_offset
+        new_h = patch[3]-y_offset
+        results['img'] = cropped_img
+        results['img_shape'] = cropped_img.shape
+        results['pad_shape'] = cropped_img.shape
+
+        # crop bboxes accordingly and clip to the image boundary
+        for key in results.get('bbox_fields', ['gt_bboxes']):
+            bboxes = results[key]
+            old_bboxes = copy.deepcopy(bboxes)
+            old_area = odb.area(old_bboxes)
+            bboxes[:, 0:4:2] -= x_offset
+            bboxes[:, 1:4:2] -= y_offset
+            bboxes[:, 0:4:2] = np.clip(bboxes[:, 0:4:2], 0, new_w)
+            bboxes[:, 1:4:2] = np.clip(bboxes[:, 1:4:2], 0, new_h)
+            keep0 = (bboxes[:, 2] > bboxes[:, 0]) & (
+                bboxes[:, 3] > bboxes[:, 1])
+            new_area = odb.area(bboxes)
+            area_ratio = new_area/(old_area+1e-6)
+            keep1 = area_ratio>self.bbox_keep_ratio
+            keep = np.logical_and(keep0,keep1)
+            bboxes = bboxes[keep]
+            results[key] = bboxes
+            if key in ['gt_bboxes']:
+                if 'gt_labels' in results:
+                    labels = results['gt_labels']
+                    labels = labels[keep]
+                    results['gt_labels'] = labels
+                if 'gt_masks' in results:
+                    gt_masks = results['gt_masks']
+                    gt_masks = gt_masks[keep]
+                    gt_masks = wmli.crop_masks_absolute_xy(gt_masks,patch)
+                    results['gt_masks'] = gt_masks
+
+                    if self.mask_domina:
+                        old_area = old_area[keep]
+                        bboxes = get_bboxes_by_mask(gt_masks)
+                        new_area = odb.area(bboxes)
+                        area_ratio = new_area/(old_area+1e-6)
+                        keep = area_ratio>self.bbox_keep_ratio
+                        bboxes = bboxes[keep]
+                        results[key] = bboxes
+                        if 'gt_labels' in results:
+                            labels = results['gt_labels']
+                            labels = labels[keep]
+                            results['gt_labels'] = labels
+                        gt_masks = gt_masks[keep]
+                        results['gt_masks'] = gt_masks
+
+            return results
+
+    def __call__(self, results,crop_bbox):
+        return self.apply(results,crop_bbox)

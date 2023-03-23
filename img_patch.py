@@ -59,6 +59,9 @@ class ImagePatch:
         bboxes = bboxes+offset
         return bboxes
 
+    def cur_bbox(self):
+        return self.bboxes[self.cur_idx]
+
     def remove_boundary_bboxes(self,bboxes,boundary=None):
         '''
         bboxes: [N,4] (x0,y0,x1,y1), in patch img

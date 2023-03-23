@@ -368,14 +368,17 @@ def crop_img_absolute_xy(img,box):
 box:xmin,ymin,xmax,ymax, absolute corrdinate
 size: (w,h)
 '''
-def crop_and_pad(img,bbox,size,pad_color):
+def crop_and_pad(img,bbox,size=None,pad_color=127):
+    if size is None:
+        size = (bbox[2]-bbox[0],bbox[3]-bbox[1])
     img = crop_img_absolute_xy(img,bbox)
+    channels = img.shape[-1]
     if img.shape[0]<size[1] or img.shape[1]<size[0]:
         res = np.ones([size[1],size[0],3],dtype=img.dtype)
         if not isinstance(pad_color,Iterable):
-            pad_color = (pad_color,pad_color,pad_color)
+            pad_color = (pad_color,)*channels
         pad_color = np.array(list(pad_color),dtype=img.dtype)
-        pad_color = pad_color.reshape([1,1,3])
+        pad_color = pad_color.reshape([1,1,channels])
         res = res*pad_color
         offset_x = 0
         offset_y = 0
