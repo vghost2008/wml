@@ -408,6 +408,26 @@ def draw_semantic_on_image(image,semantic,color_map,alpha=0.4,ignored_label=0):
     new_img = np.where(pred,new_img,image)
     return new_img
 
+def draw_heatmap_on_image(image,scores,color=(255,0,0),alpha=0.4):
+    '''
+    draw semantic on image
+    Args:
+        image:
+        scores: [H,W] scores value
+        color_map: list[int], [r,g,b]
+        alpha: mask percent
+        ignored_label:
+    Returns:
+        return image*(1-alpha)+semantic+alpha
+    '''
+
+    color = np.reshape(np.array(color),[1,1,3])
+    color = color*np.ones_like(image).astype(np.float32)
+    scores = np.expand_dims(scores,axis=-1)*alpha
+    new_img = image.astype(np.float32)*(1-scores)+color*scores
+    new_img = np.clip(new_img,0,255).astype(np.uint8)
+    return new_img
+
 def add_jointsv1(image, joints, color, r=5,line_thickness=2,no_line=False,joints_pair=None,left_node=None):
 
     def link(a, b, color):

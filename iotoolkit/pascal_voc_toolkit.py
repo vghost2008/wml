@@ -218,7 +218,7 @@ def write_voc_xml(save_path,file_path,shape, bboxes, labels_text, difficult=None
             object.appendChild(create_text_element(doc, "pose", "Unspecified"))
             object.appendChild(create_text_element(doc, "truncated", trun))
             object.appendChild(create_text_element(doc, "difficult", dif))
-            object.appendChild(create_text_element(doc, "prob", prob))
+            object.appendChild(create_text_element(doc, "confidence", prob))
             bndbox = doc.createElement("bndbox")
             if is_relative_coordinate:
                 bndbox.appendChild(create_text_element(doc, "xmin", int(box[1] * shape[1])))

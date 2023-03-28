@@ -23,12 +23,15 @@ if __name__ == "__main__":
     num_classes = args.num_classes
     if num_classes == 0:
         for d in data:
-            gtlabels = d['gtlabels']
-            max_label = np.max(gtlabels)
-            num_classes = max(num_classes,max_label+1)
-            labels = d['labels']
-            max_label = np.max(labels)
-            num_classes = max(num_classes,max_label+1)
+            try:
+                gtlabels = d['gtlabels']
+                max_label = np.max(gtlabels)
+                num_classes = max(num_classes,max_label+1)
+                labels = d['labels']
+                max_label = np.max(labels)
+                num_classes = max(num_classes,max_label+1)
+            except:
+                pass
     if args.classes_wise:
         metrics_cfg = dict(model_type=METRICS_REGISTRY.get(args.metrics),num_classes=num_classes,classes_begin_value=0)
         metrics = ClassesWiseModelPerformace(**metrics_cfg)
