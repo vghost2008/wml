@@ -408,7 +408,7 @@ def draw_semantic_on_image(image,semantic,color_map,alpha=0.4,ignored_label=0):
     new_img = np.where(pred,new_img,image)
     return new_img
 
-def draw_heatmap_on_image(image,scores,color=(255,0,0),alpha=0.4):
+def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,255),alpha=0.4):
     '''
     draw semantic on image
     Args:
@@ -421,10 +421,13 @@ def draw_heatmap_on_image(image,scores,color=(255,0,0),alpha=0.4):
         return image*(1-alpha)+semantic+alpha
     '''
 
-    color = np.reshape(np.array(color),[1,1,3])
-    color = color*np.ones_like(image).astype(np.float32)
+    color_pos = np.reshape(np.array(color_pos),[1,1,3])
+    color_neg = np.reshape(np.array(color_neg),[1,1,3])
+    color_pos = color_pos*np.ones_like(image).astype(np.float32)
+    color_neg = color_neg*np.ones_like(image).astype(np.float32)
     scores = np.expand_dims(scores,axis=-1)*alpha
-    new_img = image.astype(np.float32)*(1-scores)+color*scores
+    color = color_pos*scores+color_neg*(1-scores)
+    new_img = image.astype(np.float32)*(1-alpha)+color*alpha
     new_img = np.clip(new_img,0,255).astype(np.uint8)
     return new_img
 
