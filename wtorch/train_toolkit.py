@@ -196,6 +196,9 @@ def occupy_mem(cuda_device, mem_ratio=0.9):
     time.sleep(5)
 
 def isfinite_hook(module,fea_in,fea_out):
+    '''
+    register_forward_hook(net,isfinite_hook)
+    '''
     if isinstance(fea_in,(tuple,list)):
         if len(fea_in)==1:
             fea_in = fea_in[0]

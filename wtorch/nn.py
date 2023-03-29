@@ -287,7 +287,7 @@ class BCNorm(nn.Module):
         x = self.bn(x)
         return self.gn(x)
 
-def get_norm(norm, out_channels):
+def get_norm(norm, out_channels,norm_args={}):
     """
     Args:
         norm (str or callable): either one of BN, SyncBN, FrozenBN, GN;
@@ -299,6 +299,8 @@ def get_norm(norm, out_channels):
     """
     if norm is None:
         return None
+    if norm == "GN" and len(norm_args)==0:
+        norm_args = {"num_groups":32}
     if isinstance(norm, str):
         if len(norm) == 0:
             return None
@@ -307,7 +309,7 @@ def get_norm(norm, out_channels):
             # Fixed in https://github.com/pytorch/pytorch/pull/36382
             "SyncBN": nn.SyncBatchNorm,
             "FrozenBN": FrozenBatchNorm2d,
-            "GN": lambda channels: nn.GroupNorm(32, channels),
+            "GN": lambda channels: nn.GroupNorm(num_channels=channels,**norm_args),
             # for debugging:
             "SyncBatchNorm": nn.SyncBatchNorm,
             "LayerNorm2d":LayerNorm2d,
