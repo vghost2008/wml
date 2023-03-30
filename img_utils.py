@@ -944,41 +944,48 @@ def _jpegflag(flag='color', channel_order='bgr'):
     else:
         raise ValueError('flag must be "color" or "grayscale"')
 
-def decode_img(buffer):
+def decode_img(buffer,fmt='rgb'):
     if TurboJPEG is not None:
         global g_jpeg
         if g_jpeg is None:
             g_jpeg = TurboJPEG()
-        img = g_jpeg.decode(buffer,TJCS_RGB)
+        if fmt == 'rgb':
+            img = g_jpeg.decode(buffer,TJCS_RGB)
+        elif fmt=='gray':
+            img = g_jpeg.decode(buffer,TJPF_GRAY)
         if img.shape[-1] == 1:
             img = img[:, :, 0]
         return img
+
     buff = io.BytesIO(buffer)
     img = PIL.Image.open(buff)
 
-    img = pillow2array(img, 'color')
+    if fmt=='rgb':
+        img = pillow2array(img, 'color')
+    else:
+        img = pillow2array(img, 'grayscale')
 
     return img
 
 def pillow2array(img,flag='color'):
     # Handle exif orientation tag
-    if flag in ['color', 'grayscale']:
-        img = ImageOps.exif_transpose(img)
+    #if flag in ['color', 'grayscale']:
+        #img = ImageOps.exif_transpose(img)
     # If the image mode is not 'RGB', convert it to 'RGB' first.
-    if img.mode != 'RGB':
-        if img.mode != 'LA':
-            # Most formats except 'LA' can be directly converted to RGB
-            img = img.convert('RGB')
-        else:
-            # When the mode is 'LA', the default conversion will fill in
-            #  the canvas with black, which sometimes shadows black objects
-            #  in the foreground.
-            #
-            # Therefore, a random color (124, 117, 104) is used for canvas
-            img_rgba = img.convert('RGBA')
-            img = Image.new('RGB', img_rgba.size, (124, 117, 104))
-            img.paste(img_rgba, mask=img_rgba.split()[3])  # 3 is alpha
     if flag in ['color', 'color_ignore_orientation']:
+        if img.mode != 'RGB':
+            if img.mode != 'LA':
+                # Most formats except 'LA' can be directly converted to RGB
+                img = img.convert('RGB')
+            else:
+                # When the mode is 'LA', the default conversion will fill in
+                #  the canvas with black, which sometimes shadows black objects
+                #  in the foreground.
+                #
+                # Therefore, a random color (124, 117, 104) is used for canvas
+                img_rgba = img.convert('RGBA')
+                img = Image.new('RGB', img_rgba.size, (124, 117, 104))
+                img.paste(img_rgba, mask=img_rgba.split()[3])  # 3 is alpha
         array = np.array(img)
     elif flag in ['grayscale', 'grayscale_ignore_orientation']:
         img = img.convert('L')
