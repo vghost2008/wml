@@ -11,6 +11,7 @@ Machine learning tools library.
 - OpenCV
 - pycocotools
 - gcc & g++ ≥ 4.9
+- libturbojpeg
 
 ##Installation
 
