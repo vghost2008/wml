@@ -58,6 +58,7 @@ class EvoNormS0(nn.Module):
     def __init__(self, num_groups,num_features, eps=1e-6, scale=True):
         super().__init__()
         self.num_groups = num_groups
+        self.num_features = num_features
         if scale:
             self.gamma = nn.Parameter(torch.ones([1,num_groups,num_features//num_groups,1,1]))
         self.beta = nn.Parameter(torch.zeros([1,num_groups,num_features//num_groups,1,1]))
@@ -77,6 +78,9 @@ class EvoNormS0(nn.Module):
         x = x+torch.sigmoid(x*self.v1)*gain+self.beta
 
         return x.view([N,C,H,W]).contiguous()
+
+    def __repr__(self):
+        return f"EvoNormS0 (num_features={self.num_features}, num_groups={self.num_groups}, eps={self.eps})"
 
 class SEBlock(nn.Module):
     def __init__(self,channels,r=16):
