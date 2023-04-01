@@ -54,6 +54,30 @@ class LayerNorm2d(nn.LayerNorm):
             x.permute(0, 2, 3, 1).contiguous(), self.normalized_shape,
             self.weight, self.bias, self.eps).permute(0, 3, 1, 2).contiguous()
 
+class EvoNormS0(nn.Module):
+    def __init__(self, num_groups,num_features, eps=1e-6, scale=True):
+        super().__init__()
+        self.num_groups = num_groups
+        if scale:
+            self.gamma = nn.Parameter(torch.ones([1,num_groups,num_features//num_groups,1,1]))
+        self.beta = nn.Parameter(torch.zeros([1,num_groups,num_features//num_groups,1,1]))
+        self.v1 = nn.Parameter(torch.ones([1,num_groups,num_features//num_groups,1,1]))
+        self.eps = eps
+        self.scale = scale
+    
+    def forward(self, x):
+        N,C,H,W = x.shape
+        G = self.num_groups
+        x = x.view([N,G,C//G,H,W])
+        var = x.std(dim=(2,3,4),keepdim=True)
+        gain = torch.rsqrt(var+self.eps)
+        if self.scale:
+            gain = gain*self.gamma
+        
+        x = x+torch.sigmoid(x*self.v1)*gain+self.beta
+
+        return x.view([N,C,H,W]).contiguous()
+
 class SEBlock(nn.Module):
     def __init__(self,channels,r=16):
         super().__init__()
@@ -299,8 +323,12 @@ def get_norm(norm, out_channels,norm_args={}):
     """
     if norm is None:
         return None
-    if norm == "GN" and len(norm_args)==0:
+    if norm in ["GN","EvoNormS0"] and len(norm_args)==0:
         norm_args = {"num_groups":32}
+
+    if norm == 'GN':
+        return nn.GroupNorm(num_channels=out_channels,**norm_args)
+
     if isinstance(norm, str):
         if len(norm) == 0:
             return None
@@ -309,12 +337,12 @@ def get_norm(norm, out_channels,norm_args={}):
             # Fixed in https://github.com/pytorch/pytorch/pull/36382
             "SyncBN": nn.SyncBatchNorm,
             "FrozenBN": FrozenBatchNorm2d,
-            "GN": lambda channels: nn.GroupNorm(num_channels=channels,**norm_args),
             # for debugging:
             "SyncBatchNorm": nn.SyncBatchNorm,
             "LayerNorm2d":LayerNorm2d,
+            "EvoNormS0": EvoNormS0,
         }[norm]
-    return norm(out_channels)
+    return norm(num_features=out_channels,**norm_args)
 
 class SiLU(nn.Module):
     """export-friendly version of nn.SiLU()"""
