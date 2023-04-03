@@ -75,7 +75,7 @@ class EvoNormS0(nn.Module):
         if self.scale:
             gain = gain*self.gamma
         
-        x = x+torch.sigmoid(x*self.v1)*gain+self.beta
+        x = x*torch.sigmoid(x*self.v1)*gain+self.beta
 
         return x.view([N,C,H,W]).contiguous()
 

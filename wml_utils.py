@@ -226,12 +226,14 @@ class EstimateTimeCost(object):
         self.process_nr = 0
         self.begin_step = 0
         self._time_datas = None
+        self.t0 = None
         self.reset()
         self.auto_log = auto_log
         self.avg_step = avg_step
 
     def reset(self,total_nr = None):
         self.begin_time = time.time()
+        self.t0 = time.time()
         if total_nr is not None:
             self.total_nr = total_nr
         self.process_nr = 0
@@ -268,7 +270,7 @@ class EstimateTimeCost(object):
         ft_str = finish_time.strftime("%d %H:%M")
         #res = f"used {(time.time() - self.begin_time) / 3600:.3f}h, {left_time / 3600:.3f}h left, exp finish {str(d)}"
         #res = f"{(time.time() - self.begin_time) / 3600:.3f}h/{left_time / 3600:.3f}h/{str(d)}"
-        res = f"{(time.time() - self.begin_time) / 3600:.3f}h/{left_time / 3600:.3f}h/{cur_str}/{ft_str}"
+        res = f"{(time.time() - self.t0) / 3600:.3f}h/{left_time / 3600:.3f}h/{cur_str}/{ft_str}"
         return res
 
 def time_this(func):
