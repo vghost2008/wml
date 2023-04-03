@@ -1272,3 +1272,87 @@ def coco_bbox_eval_file(gt_file, res_file):
         info_str.append((name, coco_eval.stats[ind]))
 
     return info_str
+
+class WMAP(object):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,threshold=0.5):
+        if categories_list is None:
+            print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
+            self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(num_classes)]
+        else:
+            self.categories_list = categories_list
+        self.label_trans = label_trans
+        self.image_id = 0
+        self.num_classes = num_classes
+        self.cached_values = {}
+        self.a_gtbboxes = []
+        self.a_gtlabels = []
+        self.a_bboxes = []
+        self.a_labels = []
+        self.a_scores = []
+        self.threshold = 0.5
+        self.map = None
+    '''
+    gtboxes:[N,4]
+    gtlabels:[N]
+    img_size:[H,W]
+    gtmasks:[N,H,W]
+    '''
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
+                 gtmasks=None,
+                 masks=None,is_crowd=None,use_relative_coord=False):
+        if probability is None:
+            probability = np.ones_like(labels,dtype=np.float32)
+        if not isinstance(gtboxes,np.ndarray):
+            gtboxes = np.array(gtboxes)
+        if not isinstance(gtlabels,np.ndarray):
+            gtlabels = np.array(gtlabels)
+        if not isinstance(boxes,np.ndarray):
+            boxes = np.array(boxes)
+        if not isinstance(labels,np.ndarray):
+            labels = np.array(labels)
+        if self.label_trans is not None:
+            gtlabels = self.label_trans(gtlabels)
+            labels = self.label_trans(labels)
+        if probability is not None and not isinstance(probability,np.ndarray):
+            probability = np.array(probability)
+        if gtlabels.shape[0]>0:
+            if use_relative_coord:
+                gtboxes = gtboxes*[[img_size[0],img_size[1],img_size[0],img_size[1]]]
+            gtlabels = gtlabels+self.image_id*self.num_classes
+            self.a_gtbboxes.append(gtboxes)
+            self.a_gtlabels.append(gtlabels)
+        if labels.shape[0]>0 and gtlabels.shape[0]>0:
+            if use_relative_coord:
+                boxes = boxes*[[img_size[0],img_size[1],img_size[0],img_size[1]]]
+            labels = gtlabels+self.image_id*self.num_classes
+            self.a_bboxes.append(boxes)
+            self.a_labels.append(labels)
+            self.a_scores.append(probability)
+        self.image_id += 1
+
+    def num_examples(self):
+        return self.image_id
+
+    def evaluate(self):
+        print(f"Test size {self.num_examples()}")
+        gtlabels = np.stack(self.a_gtbboxes,axis=0)
+        gtbboxes = np.stack(self.a_gtbboxes,axis=0)
+        labels = np.stack(self.a_labels,axis=0)
+        bboxes = np.stack(self.a_bboxes,axis=0)
+        scores = np.stack(self.a_scores,axis=0)
+        self.map = getmAP(gtbboxes,gtlabels,bboxes,labels,scores,threshold=self.threshold)
+
+    def show(self,name=""):
+        sys.stdout.flush()
+        print(f"Test size {self.num_examples()}")
+        print(f"mAP={self.map}")
+        return self.map
+
+    def to_string(self):
+        return self.map
+
+    def __repr__(self):
+        return self.to_string()
+    
+    def value(self):
+        self.map

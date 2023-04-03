@@ -219,12 +219,16 @@ class MovingAvg(object):
 
 
 class EstimateTimeCost(object):
-    def __init__(self,total_nr=1,auto_log=False):
+    RECORD_STEP = 100
+    def __init__(self,total_nr=1,auto_log=False,avg_step=2000):
         self.begin_time = None
         self.total_nr = total_nr
         self.process_nr = 0
+        self.begin_step = 0
         self.reset()
         self.auto_log = auto_log
+        self.avg_step = avg_step
+        self._time_datas = None
 
     def reset(self,total_nr = None):
         self.begin_time = time.time()
@@ -244,9 +248,16 @@ class EstimateTimeCost(object):
         self.process_nr += 1
         if self.auto_log:
             print(self.__str__())
+        if self.process_nr%EstimateTimeCost.RECORD_STEP == EstimateTimeCost.RECORD_STEP-1 and self._time_datas is None:
+            self._time_datas = (self.process_nr,time.time())
 
     def __repr__(self):
-        left_time = ((time.time() - self.begin_time) / max(self.process_nr, 1)) * (
+        if self._time_datas is not None and self.process_nr-self._time_datas[0]>self.avg_step:
+            self.begin_step = self._time_datas[0]
+            self.begin_time = self._time_datas[1]
+            self._time_datas = None
+
+        left_time = ((time.time() - self.begin_time) / max(self.process_nr-self.begin_step, 1)) * (
                     self.total_nr- self.process_nr)
         finish_time = datetime.datetime.now() + datetime.timedelta(seconds=left_time)
         cur_str = datetime.datetime.now().strftime("%d %H:%M")
