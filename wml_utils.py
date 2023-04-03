@@ -225,31 +225,35 @@ class EstimateTimeCost(object):
         self.total_nr = total_nr
         self.process_nr = 0
         self.begin_step = 0
+        self._time_datas = None
         self.reset()
         self.auto_log = auto_log
         self.avg_step = avg_step
-        self._time_datas = None
 
     def reset(self,total_nr = None):
         self.begin_time = time.time()
         if total_nr is not None:
             self.total_nr = total_nr
         self.process_nr = 0
+        self.begin_step = 0
+        self._time_datas = None
 
     def add_count(self):
         self.process_nr += 1
+        if self.process_nr%EstimateTimeCost.RECORD_STEP == EstimateTimeCost.RECORD_STEP-1 and self._time_datas is None:
+            self._time_datas = (self.process_nr,time.time())
         return self.__repr__()
     
     def set_process_nr(self,process_nr):
         self.process_nr = process_nr
+        if self.process_nr%EstimateTimeCost.RECORD_STEP == EstimateTimeCost.RECORD_STEP-1 and self._time_datas is None:
+            self._time_datas = (self.process_nr,time.time())
         return self.__repr__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.process_nr += 1
+        info = self.add_count()
         if self.auto_log:
-            print(self.__str__())
-        if self.process_nr%EstimateTimeCost.RECORD_STEP == EstimateTimeCost.RECORD_STEP-1 and self._time_datas is None:
-            self._time_datas = (self.process_nr,time.time())
+            print(info)
 
     def __repr__(self):
         if self._time_datas is not None and self.process_nr-self._time_datas[0]>self.avg_step:
