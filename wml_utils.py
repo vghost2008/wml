@@ -356,9 +356,16 @@ def add_dict(lhv,rhv):
             res[k] = v
     return res
 
+def sleep_for(hours):
+    finish_time = datetime.datetime.now() + datetime.timedelta(seconds=int(hours*3600))
+    sleep_until(finish_time)
 
 def sleep_until(runtime):
-    target_datetime = datetime.datetime.strptime(runtime, "%Y-%m-%d %H:%M:%S")
+    if isinstance(runtime,(str,bytes)):
+        target_datetime = datetime.datetime.strptime(runtime, "%Y-%m-%d %H:%M:%S")
+    else:
+        target_datetime = runtime
+
     while True:
         wait_time = (target_datetime - datetime.datetime.now()).total_seconds() / 3600.0
         sys.stdout.write(
