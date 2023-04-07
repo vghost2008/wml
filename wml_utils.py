@@ -220,7 +220,7 @@ class MovingAvg(object):
 
 class EstimateTimeCost(object):
     RECORD_STEP = 100
-    def __init__(self,total_nr=1,auto_log=False,avg_step=2000):
+    def __init__(self,total_nr,auto_log=False,avg_step=2000):
         self.begin_time = None
         self.total_nr = total_nr
         self.process_nr = 0

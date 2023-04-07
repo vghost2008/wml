@@ -54,7 +54,7 @@ def statistics_boxes(boxes,nr=100,name=""):
     #pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
     #pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', density=True, label = "hist")
     pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', label = "hist")
-    pd_sizes.plot(kind = 'kde', color = 'red', label ="kde")
+    #pd_sizes.plot(kind = 'kde', color = 'red', label ="kde")
     plt.grid(axis='y', alpha=0.75)
     plt.grid(axis='x', alpha=0.75)
     plt.title(name+" area")
@@ -63,7 +63,7 @@ def statistics_boxes(boxes,nr=100,name=""):
     #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
     #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', desnsity= True, label = "hist")
     pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black',  label = "hist")
-    pd_ratios.plot(kind = 'kde', color = 'red', label ="kde")
+    #pd_ratios.plot(kind = 'kde', color = 'red', label ="kde")
     plt.grid(axis='y', alpha=0.75)
     plt.grid(axis='x', alpha=0.75)
     plt.title(name+" ratio")
@@ -367,10 +367,10 @@ def coco2014_val_dataset():
 
     return data.get_items()
 
-def labelme_dataset():
+def labelme_dataset(data_dir,labels):
     data = LabelMeData(label_text2id=None)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
-    data.read_data("/home/wj/ai/mldata1/B11ACT/datas/train_s0",img_suffix="bmp")
+    data.read_data(data_dir,img_suffix="bmp;;jpg;;jpeg")
     #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
     return data.get_items()
 
