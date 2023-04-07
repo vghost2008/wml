@@ -22,6 +22,8 @@ from itertools import count
 
 def parse_args():
     parser = ArgumentParser()
+    parser.add_argument('src_dir', type=str, help='source video directory')
+    parser.add_argument('--type', type=str, default="xml",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     args = parser.parse_args()
     return args
@@ -314,7 +316,7 @@ def test_dataset():
 
     return data.get_items()
 
-def pascal_voc_dataset(labels=None):
+def pascal_voc_dataset(data_dir,labels=None):
     #labels = ['MS7U', 'MP1U', 'MU2U', 'ML9U', 'MV1U', 'ML3U', 'MS1U', 'Other']
     if labels is not None and len(labels)>0:
         label_text2id = dict(zip(labels,count()))
@@ -324,7 +326,7 @@ def pascal_voc_dataset(labels=None):
     #data = PascalVOCData(label_text2id=label_text2id,resample_parameters={6:8,5:2,7:2})
     data = PascalVOCData(label_text2id=label_text2id)
 
-    data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/train"
+    '''data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/train"
     data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/wt_06"
     data_path = "/home/wj/ai/mldata1/GDS1Crack/train"
     data_path = "/home/wj/ai/mldata1/take_photo/train/coco"
@@ -334,10 +336,13 @@ def pascal_voc_dataset(labels=None):
     data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MV1U"
     data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MU4U"
     data_path = "/home/wj/ai/mldata1/B7mura/datas/data"
+    data_path = "/home/wj/下载/_数据集"'''
     #data_path = "/home/wj/ai/mldata1/B7mura/datas/test_s0"
     #data_path = "/home/wj/0day/wt_06"
     #data_path = '/home/wj/0day/pyz'
-    data.read_data(data_path,silent=True,img_suffix=".bmp;;.jpg")
+    data.read_data(data_dir,
+                   silent=True,
+                   img_suffix=".bmp;;.jpg")
 
     return data.get_items()
 
@@ -415,9 +420,17 @@ if __name__ == "__main__":
             k = min_size/ img_size[1]
         return [k*img_size[0],k*img_size[1]]'''
     args = parse_args()
-    statics = statistics_boxes_with_datas(#pascal_voc_dataset(labels=args.labels),
-                                          labelme_dataset(),
-                                        #mapillary_vistas_dataset(),
+    data_dir = args.src_dir
+    dataset_type = args.type
+    if dataset_type == "xml":
+        dataset = pascal_voc_dataset(data_dir=data_dir,
+                                     labels=args.labels,
+                                     )
+    elif dataset_type=="json":
+        dataset = labelme_dataset(data_dir=data_dir,
+                                  labels=args.labels
+                                  )
+    statics = statistics_boxes_with_datas(dataset,
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
                                           max_aspect=None,absolute_size=True,

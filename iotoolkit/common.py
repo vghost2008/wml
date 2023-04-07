@@ -12,13 +12,18 @@ def resample(files,labels,resample_parameters):
     resample_parameters: {labels:resample_nr}
     '''
     new_files = []
+    repeat_files_nr = 0
+    repeat_nr = 0
     for f,l in zip(files,labels):
         nr = __get_resample_nr(l,resample_parameters)
         if nr>1:
             new_files = new_files+[f]*nr
-            print(f"Repeat {f} {nr} times.")
+            #print(f"Repeat {f} {nr} times.")
+            repeat_files_nr += 1
+            repeat_nr += nr
         elif nr==1:
             new_files.append(f)
+    print(f"Total repeat {repeat_files_nr} files, total repeat {repeat_nr} times.")
     print(f"{len(files)} old files --> {len(new_files)} new files")
 
     return new_files

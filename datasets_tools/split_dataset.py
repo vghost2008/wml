@@ -27,6 +27,11 @@ def parse_args():
         nargs="+",
         default=[0.9,0.1],
         help='split percent')
+    parser.add_argument("--labels",
+                        type=str,
+                        nargs="+",
+                        default=None,
+                        help="split by labels.")
     parser.add_argument(
         '--allow-empty',
         action='store_true',
@@ -48,6 +53,9 @@ def copy_files(files,save_dir,add_nr):
         suffix = osp.splitext(annf)[1]
         print(annf,"--->",osp.join(save_dir,basename+suffix))
         wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
+
+
+
 
 if __name__ == "__main__":
     args = parse_args()
