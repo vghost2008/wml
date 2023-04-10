@@ -28,7 +28,8 @@ def process_dir(data_dir,prefix,suffix):
     ckpt_files = []
     for x in files:
         try:
-            name = osp.splitext(osp.basename(x))[0]
+            #name = osp.splitext(osp.basename(x))[0]
+            name = osp.basename(x)[:-len(suffix)]
             idx = int(name[prefix_len:])
             if idx>max_idx:
                 max_idx = idx
