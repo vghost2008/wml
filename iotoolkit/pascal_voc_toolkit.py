@@ -282,7 +282,7 @@ def writeVOCXml(file_path,bboxes, labels, save_path=None,difficult=None, truncat
     if save_path is None:
         dir_path  = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        base_name = base_name[:-4]+".xml"
+        base_name = wml_utils.base_name(base_name)+".xml"
         save_path = os.path.join(dir_path,base_name)
 
     write_voc_xml(save_path,file_path,img_shape,bboxes,labels,difficult,truncated,probs=probs,
@@ -307,7 +307,7 @@ def writeVOCXmlV2(file_path,shape,bboxes, labels, save_path=None,difficult=None,
     if save_path is None:
         dir_path  = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        base_name = base_name[:-4]+".xml"
+        base_name = wml_utils.base_name(base_name)+".xml"
         save_path = os.path.join(dir_path,base_name)
 
     write_voc_xml(save_path,file_path,shape,bboxes,labels,difficult,truncated,probs=probs,
@@ -331,7 +331,7 @@ def writeVOCXmlByImg(img,img_save_path,bboxes, labels, difficult=None, truncated
 
     dir_path  = os.path.dirname(img_save_path)
     base_name = os.path.basename(img_save_path)
-    base_name = base_name[:-4]+".xml"
+    base_name = wml_utils.base_name(base_name)+".xml"
     save_path = os.path.join(dir_path,base_name)
     wmli.imwrite(img_save_path,img)
     write_voc_xml(save_path,img_save_path,img_shape,bboxes,labels,difficult,truncated,probs=probs,
@@ -363,7 +363,7 @@ def getVOCFiles(dir_path,image_sub_dir="JPEGImages",xml_sub_dir="Annotations",im
     img_file_paths = []
     xml_file_paths = []
     for file in inputfilenames:
-        base_name = os.path.basename(file)[:-4]+".xml"
+        base_name = wml_utils.base_name(file)+".xml"
         if xml_sub_dir is not None:
             xml_path = os.path.join(xml_dir,base_name)
         else:

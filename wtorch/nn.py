@@ -82,6 +82,34 @@ class EvoNormS0(nn.Module):
     def __repr__(self):
         return f"EvoNormS0 (num_features={self.num_features}, num_groups={self.num_groups}, eps={self.eps})"
 
+class EvoNormS01D(nn.Module):
+    def __init__(self, num_groups,num_features, eps=1e-6, scale=True):
+        super().__init__()
+        self.num_groups = num_groups
+        self.num_features = num_features
+        if scale:
+            self.gamma = nn.Parameter(torch.ones([1,num_groups,num_features//num_groups]))
+        self.beta = nn.Parameter(torch.zeros([1,num_groups,num_features//num_groups]))
+        self.v1 = nn.Parameter(torch.ones([1,num_groups,num_features//num_groups]))
+        self.eps = eps
+        self.scale = scale
+    
+    def forward(self, x):
+        N,C = x.shape
+        G = self.num_groups
+        x = x.view([N,G,C//G])
+        var = x.std(dim=(2),keepdim=True)
+        gain = torch.rsqrt(var+self.eps)
+        if self.scale:
+            gain = gain*self.gamma
+        
+        x = x*torch.sigmoid(x*self.v1)*gain+self.beta
+
+        return x.view([N,C]).contiguous()
+
+    def __repr__(self):
+        return f"EvoNormS01D (num_features={self.num_features}, num_groups={self.num_groups}, eps={self.eps})"
+
 class SEBlock(nn.Module):
     def __init__(self,channels,r=16):
         super().__init__()
@@ -343,8 +371,36 @@ def get_norm(norm, out_channels,norm_args={}):
             "FrozenBN": FrozenBatchNorm2d,
             # for debugging:
             "SyncBatchNorm": nn.SyncBatchNorm,
-            "LayerNorm2d":LayerNorm2d,
+            "LayerNorm":LayerNorm2d,
             "EvoNormS0": EvoNormS0,
+        }[norm]
+    return norm(num_features=out_channels,**norm_args)
+
+def get_norm1d(norm, out_channels,norm_args={}):
+    """
+    Args:
+        norm (str or callable): either one of BN, SyncBN, FrozenBN, GN;
+            or a callable that takes a channel number and returns
+            the normalization layer as a nn.Module.
+
+    Returns:
+        nn.Module or None: the normalization layer
+    """
+    if norm is None:
+        return None
+    if norm in ["GN","EvoNormS0"] and len(norm_args)==0:
+        norm_args = {"num_groups":32}
+
+    if norm == 'GN':
+        return nn.GroupNorm(num_channels=out_channels,**norm_args)
+
+    if isinstance(norm, str):
+        if len(norm) == 0:
+            return None
+        norm = {
+            "BN": torch.nn.BatchNorm1d,
+            "LayerNorm":nn.LayerNorm,
+            "EvoNormS0": EvoNormS01D,
         }[norm]
     return norm(num_features=out_channels,**norm_args)
 

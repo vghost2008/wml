@@ -5,6 +5,8 @@ import os
 import math
 import random
 import time
+from iotoolkit.pascal_voc_toolkit import read_voc_xml
+from iotoolkit.labelme_toolkit import read_labelme_data
 
 def parse_args():
     parser = argparse.ArgumentParser(description='split dataset')
@@ -22,12 +24,6 @@ def parse_args():
         default=".jpg;;.jpeg;;.bmp;;.png",
         help='img suffix')
     parser.add_argument(
-        '--split',
-        type=float,
-        nargs="+",
-        default=[0.9,0.1],
-        help='split percent')
-    parser.add_argument(
         '--allow-empty',
         action='store_true',
         help='include img files without annotation')
@@ -35,32 +31,32 @@ def parse_args():
 
     return args
 
-def copy_files(files,save_dir,add_nr):
+def copy_files(imgf,annf,save_dir,add_nr):
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
-    for i,(imgf,annf) in enumerate(files):
-        basename = wmlu.base_name(imgf)
-        if add_nr:
-            basename = basename+f"_{i}"
-        suffix = osp.splitext(imgf)[1]
-        print(imgf,"--->",osp.join(save_dir,basename+suffix))
-        wmlu.try_link(imgf,osp.join(save_dir,basename+suffix))
-        suffix = osp.splitext(annf)[1]
-        print(annf,"--->",osp.join(save_dir,basename+suffix))
-        wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
 
+    basename = wmlu.base_name(imgf)
+    if add_nr:
+        basename = basename+f"_{i}"
+    suffix = osp.splitext(imgf)[1]
+    print(imgf,"--->",osp.join(save_dir,basename+suffix))
+    wmlu.try_link(imgf,osp.join(save_dir,basename+suffix))
+    suffix = osp.splitext(annf)[1]
+    print(annf,"--->",osp.join(save_dir,basename+suffix))
+    wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
+
+def get_labels(ann_file,suffix):
+    if suffix == "xml":
+        return read_voc_xml(ann_file)[2]
+    elif suffix == "json":
+        image,annotation_list = read_labelme_data(ann_file,label_text_to_id=None,mask_on=False)
+        labels = [x['category_id'] for x in annotation_list]
+        return labels
 
 
 
 if __name__ == "__main__":
     args = parse_args()
-    splits = args.split
-    sum = 0.0
-    for x in splits:
-        sum += x
-    if math.fabs(sum-1.0)>0.01:
-        print(f"Error split, sum(split)==1")
-        exit(-1)
     img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
     ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
     basenames = [wmlu.base_name(x) for x in img_files]
@@ -69,6 +65,7 @@ if __name__ == "__main__":
     else:
         add_nr = True
     all_files = list(zip(img_files,ann_files))
+    wmlu.show_list(all_files)
     if not args.allow_empty:
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
     save_dir = wmlu.get_unused_path(args.out_dir)
@@ -77,16 +74,11 @@ if __name__ == "__main__":
     random.shuffle(all_files)
     print(f"Find {len(all_files)} files")
 
-    for i,v in enumerate(splits):
-        t_save_dir = osp.join(save_dir,"data_"+str(v))
-        if i<len(splits)-1:
-            t_nr = int(v*len(all_files)+0.5)
-            tmp_files = all_files[:t_nr]
-            all_files = all_files[t_nr:]
-        else:
-            tmp_files = all_files
-            t_nr = len(tmp_files)
-        print(f"split {v} {t_nr} files")
-        wmlu.show_list(tmp_files)
-        copy_files(tmp_files,t_save_dir,add_nr)
+    for i,(img_f,ann_f) in enumerate(all_files):
+        labels = get_labels(ann_f,args.suffix)
+        for l in labels:
+            t_save_dir = osp.join(save_dir,l)
+            os.makedirs(t_save_dir,exist_ok=True)
+            copy_files(img_f,ann_f,t_save_dir,add_nr)
+
 
