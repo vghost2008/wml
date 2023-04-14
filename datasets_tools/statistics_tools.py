@@ -433,8 +433,8 @@ if __name__ == "__main__":
     statics = statistics_boxes_with_datas(dataset,
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
-                                          max_aspect=None,absolute_size=True,
-                                          trans_img_size=partial(trans_img_long_size_to,long_size=8192))
+                                          max_aspect=None,absolute_size=True)
+                                          #trans_img_size=partial(trans_img_long_size_to,long_size=8192))
 
     statistics_boxes(statics[0], nr=nr)
     statistics_boxes_by_different_area(statics[0],nr=nr,bin_size=5)

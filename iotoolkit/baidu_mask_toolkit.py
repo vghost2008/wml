@@ -196,7 +196,7 @@ if __name__ == "__main__":
     id = 0
     # data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
     import img_utils as wmli
-    import object_detection_tools.visualization as odv
+    import object_detection2.visualization as odv
     import matplotlib.pyplot as plt
 
     ID2NAME = {1:"person",2:"seat_belt"}
