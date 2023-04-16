@@ -168,6 +168,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     example_nrs = []
     classeswise_boxes = {}
     total_file_nr = 0
+    classes_nr_per_img = []
 
     for data in datas:
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
@@ -179,6 +180,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             if trans_img_size is not None:
                 img_size = trans_img_size(img_size)
             bboxes = odb.relative_boxes_to_absolutely_boxes(bboxes,width=img_size[1],height=img_size[0])
+        classes_nr_per_img.append(len(set(labels_text)))
         file = os.path.basename(file)
         if len(labels_text)==0:
             continue
@@ -256,7 +258,11 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     if labels_to_remove is not None:
         all_boxes,encoded_labels = odu.removeLabels(all_boxes,encoded_labels,labels_to_remove)
 
-    return [all_boxes,classeswise_boxes,labels_to_file]
+    #show classes per img info
+    classes_nr_per_img = np.array(classes_nr_per_img)
+    print(f"Classes per img, min={np.minimum(classes_nr_per_img)}, max={np.maximum(classes_nr_per_img)}, std={np.std(classes_nr_per_img)}")
+
+    return [all_boxes,classeswise_boxes,labels_to_file,classes_nr_per_img]
 
 def show_boxes_statistics(statics):
     plt.figure(0,figsize=(10,10))
