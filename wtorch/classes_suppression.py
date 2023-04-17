@@ -12,7 +12,7 @@ def classes_suppression(bboxes,labels,scores,test_nr=1):
     for l in u_labels:
         m = labels==l
         idx = np.argsort(-scores[m])[:test_nr]
-        t_scores = np.mean(scores[idx])
+        t_scores = np.mean(scores[m][idx])
         if t_scores>max_scores:
             max_scores = t_scores
             max_l = l
