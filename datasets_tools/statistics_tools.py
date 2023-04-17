@@ -71,6 +71,18 @@ def statistics_boxes(boxes,nr=100,name=""):
     print(max(ratios))
     return _statistics_value(sizes,nr),_statistics_value(ratios,nr)
 
+def statistics_classes_per_img(data,nr=100):
+    pd_sizes = pd.Series(data)
+    plt.figure(0,figsize=(15,10))
+    #pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
+    #pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', density=True, label = "hist")
+    pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', label = "hist")
+    #pd_sizes.plot(kind = 'kde', color = 'red', label ="kde")
+    plt.grid(axis='y', alpha=0.75)
+    plt.grid(axis='x', alpha=0.75)
+    plt.title("classes nr per img")
+    plt.show()
+
 def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     min_size = min(sizes)
@@ -260,7 +272,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
 
     #show classes per img info
     classes_nr_per_img = np.array(classes_nr_per_img)
-    print(f"Classes per img, min={np.minimum(classes_nr_per_img)}, max={np.maximum(classes_nr_per_img)}, std={np.std(classes_nr_per_img)}")
+    print(f"Classes per img, min={np.min(classes_nr_per_img)}, max={np.max(classes_nr_per_img)}, mean={np.mean(classes_nr_per_img)}, std={np.std(classes_nr_per_img)}")
 
     return [all_boxes,classeswise_boxes,labels_to_file,classes_nr_per_img]
 
@@ -441,8 +453,8 @@ if __name__ == "__main__":
                                           labels_to_remove=None,
                                           max_aspect=None,absolute_size=True)
                                           #trans_img_size=partial(trans_img_long_size_to,long_size=8192))
-
     statistics_boxes(statics[0], nr=nr)
+    statistics_classes_per_img(statics[3])
     statistics_boxes_by_different_area(statics[0],nr=nr,bin_size=5)
     statistics_boxes_by_different_ratio(statics[0],nr=nr,bin_size=5)
     #show_boxes_statistics(statics)

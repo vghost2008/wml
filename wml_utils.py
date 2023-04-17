@@ -204,7 +204,7 @@ class AvgTimeThis():
         return np.mean(np.array(self.datas))
 
     def __str__(self):
-        return "AVG: "+str(self.get_time())+ f", test_nr = {self.step}, {self.datas}"
+        return "AVG: "+str(self.get_time())+ f", test_nr = {self.step}"
 
 class MovingAvg(object):
     def __init__(self,init_val = 0.0,momentum=0.99):
