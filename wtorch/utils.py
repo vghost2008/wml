@@ -111,16 +111,16 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
             new_loaded_dict[k] = loaded_dict['module.'+new_k]
             used_loaded_dict_key.append('module.'+new_k)
         elif ".num_batches_tracked" not in k:
-            print("Skipped loading parameter {}".format(k))
+            print(f"Skipped loading parameter {k} {net_state_dict[k].shape}")
 
     print(f"---------------------------------------------------")
     for k in loaded_dict:
         if k not in new_loaded_dict and k not in used_loaded_dict_key:
-            print(f"Skip {k} in loaded dict")
+            print(f"Skip {k} in loaded dict, shape={loaded_dict[k].shape}")
     if verbose:
         print(f"---------------------------------------------------")
         for k in new_loaded_dict:
-            print(f"Load {k}")
+            print(f"Load {k}, shape={new_loaded_dict[k].shape}")
     net_state_dict.update(new_loaded_dict)
     net.load_state_dict(net_state_dict)
     sys.stdout.flush()

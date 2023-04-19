@@ -371,6 +371,7 @@ def get_norm(norm, out_channels,norm_args={}):
             "FrozenBN": FrozenBatchNorm2d,
             # for debugging:
             "SyncBatchNorm": nn.SyncBatchNorm,
+            "LayerNorm2d": LayerNorm2d,
             "LayerNorm":LayerNorm2d,
             "EvoNormS0": EvoNormS0,
         }[norm]
@@ -413,7 +414,7 @@ class SiLU(nn.Module):
 
 
 def get_activation(name="SiLU", inplace=True):
-    if name == "SiLU":
+    if name == "SiLU" or name == "Swish":
         module = nn.SiLU(inplace=inplace)
     elif name == "ReLU":
         module = nn.ReLU(inplace=inplace)

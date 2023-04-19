@@ -155,7 +155,7 @@ class ConvModule(nn.Module):
             ]:
                 act_cfg_.setdefault('inplace', inplace)
             act_type = act_cfg_.pop('type')
-            inplace = act_cfg_.pop('inplace')
+            inplace = act_cfg_.get('inplace',True)
             self.activate = wnn.get_activation(act_type,inplace)
 
 

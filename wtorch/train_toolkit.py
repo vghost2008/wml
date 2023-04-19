@@ -8,6 +8,7 @@ import inspect
 import sys
 from .wlr_scheduler import *
 from collections import OrderedDict
+from .nn import LayerNorm,LayerNorm2d,EvoNormS0,EvoNormS01D
 
 _NORMS = (
     nn.BatchNorm1d,
@@ -17,6 +18,11 @@ _NORMS = (
     nn.InstanceNorm2d,
     nn.InstanceNorm3d,
     nn.SyncBatchNorm,
+    nn.GroupNorm,
+    LayerNorm,
+    LayerNorm2d,
+    EvoNormS0,
+    EvoNormS01D
 )
 
 def grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
@@ -36,6 +42,7 @@ def grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
 def simple_split_parameters(model,filter=None):
     bn_weights, weights, biases = [], [], []
     parameters_set = set()
+    print(f"Split model parameters")
     print(f"------------------------------------------")
     total_skip = 0
     for k, v in model.named_modules():
@@ -48,7 +55,7 @@ def simple_split_parameters(model,filter=None):
             else:
                 biases.append(v.bias)  # biases
                 parameters_set.add(k+".bias")
-        if isinstance(v, nn.BatchNorm2d) or "bn" in k:
+        if isinstance(v, _NORMS) or "bn" in k and hasattr(v,'weight'):
             if v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
                 total_skip += 1
