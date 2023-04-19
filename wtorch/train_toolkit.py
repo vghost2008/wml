@@ -40,6 +40,15 @@ def grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
     return total_norm
 
 def simple_split_parameters(model,filter=None):
+    '''
+    Example:
+    bn_weights,weights,biases = simple_split_parameters(model)
+    optimizer = optim.AdamW(weights, lr=lr,weight_decay=1e-4)
+    optimizer.add_param_group(
+                    {"params": bias, "weight_decay": 0.0}
+                )  # add pg1 with weight_decay
+    optimizer.add_param_group({"params": bn_weights,"weight_decay":0.0})
+    '''
     bn_weights, weights, biases = [], [], []
     parameters_set = set()
     print(f"Split model parameters")
@@ -96,13 +105,6 @@ def simple_split_parameters(model,filter=None):
         if k not in parameters_set:
             print(f"ERROR: {k} not in any parameters set.")
     #batch norm weight, weight, bias
-    '''
-    optimizer = optim.AdamW(pg0, lr=lr,weight_decay=0.0)
-    optimizer.add_param_group(
-                    {"params": pg1, "weight_decay": 4e-5}
-                )  # add pg1 with weight_decay
-    optimizer.add_param_group({"params": pg2,"weight_decay":0.0})
-    '''
     print(f"Total have {len(list(model.named_parameters()))} parameters.")
     print(f"Finaly find {len(bn_weights)} bn weights, {len(weights)} weights, {len(biases)} biases, total {len(bn_weights)+len(weights)+len(biases)}, total skip {total_skip}.")
     return bn_weights,weights,biases
