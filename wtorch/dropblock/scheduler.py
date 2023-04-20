@@ -3,7 +3,12 @@ from torch import nn
 
 
 class LinearScheduler(nn.Module):
-    def __init__(self, dropblock, start_value=-1.0, stop_value=-1.0, begin_step=0,end_step=-1):
+    '''
+    在指定的步数范围内将dropblock的prob设置为相应的值
+    如果start_value>0,stop_value>0则设置为对应的插值
+    否则设置为dropblock的默认值
+    '''
+    def __init__(self, dropblock, start_value=-1.0, stop_value=-1.0, begin_step=0,end_step=-1,enable_prob=None):
         super(LinearScheduler, self).__init__()
         self.dropblock = dropblock
         self.i = 0
@@ -18,8 +23,13 @@ class LinearScheduler(nn.Module):
                 end_step = 1e9
         self.begin_step = begin_step
         self.end_step = end_step
+        self.enable_prob = enable_prob
 
     def forward(self, x):
+        if self.enable_prob is not None and self.enable_prob > 0:
+            if np.random.rand() > self.enable_prob:
+                self.dropblock.cur_drop_prob = 0.0
+                return x
         return self.dropblock(x)
 
     def step(self,step=None):
