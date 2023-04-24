@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from .conv_ws import ConvWS2d
+
 
 class LayerNorm(nn.Module):
     r""" LayerNorm that supports two data formats: channels_last (default) or channels_first. 
@@ -404,6 +406,12 @@ def get_norm1d(norm, out_channels,norm_args={}):
             "EvoNormS0": EvoNormS01D,
         }[norm]
     return norm(num_features=out_channels,**norm_args)
+
+def get_conv_type(conv_cfg):
+    if conv_cfg is None:
+        return nn.Conv2d
+    elif conv_cfg['type'] == "ConvWS":
+        return ConvWS2d
 
 class SiLU(nn.Module):
     """export-friendly version of nn.SiLU()"""

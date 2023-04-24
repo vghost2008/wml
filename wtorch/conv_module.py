@@ -3,6 +3,7 @@ import copy
 import torch.nn as nn
 import wtorch.nn as wnn
 from mmcv.utils import _BatchNorm, _InstanceNorm
+from .nn import get_conv_type
 
 
 class ConvModule(nn.Module):
@@ -105,7 +106,7 @@ class ConvModule(nn.Module):
         # reset padding to 0 for conv module
         conv_padding = 0 if self.with_explicit_padding else padding
         # build convolution layer
-        self.conv = nn.Conv2d(
+        self.conv = get_conv_type(conv_cfg)(
             in_channels,
             out_channels,
             kernel_size,
