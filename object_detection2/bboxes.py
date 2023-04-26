@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(__file__))
 import math
 import object_detection2.wmath as wmath
 import cv2 as cv
+import torch
 
 '''
 bbox_ref:[1,4], [[ymin,xmin,ymax,xmax]]
@@ -694,3 +695,12 @@ def area(bboxes):
     s1 = np.maximum(bboxes[...,3]-bboxes[...,1],0)
     return s0*s1
 
+
+def torch_area(bboxes):
+    '''
+    bboxes: [...,4] (x0,y0,x1,y1) or (y0,x0,y1,x1)
+    '''
+
+    s0 = torch.clamp(bboxes[...,2]-bboxes[...,0],min=0)
+    s1 = torch.clamp(bboxes[...,3]-bboxes[...,1],min=0)
+    return s0*s1

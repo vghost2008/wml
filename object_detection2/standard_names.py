@@ -16,6 +16,7 @@ LOGITS = "logits"
 BOXES_REGS = "box_regs"
 SEMANTIC = "semantic"
 COEFFICIENT = "coefficient"
+IMG_METAS = "img_metas"
 
 GT_BOXES = 'gt_bboxes'
 GT_LENGTH = 'gt_length'
