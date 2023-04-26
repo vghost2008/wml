@@ -42,3 +42,16 @@ class DataList:
         if isinstance(data,DataUnit):
             data = data.sample()
         return data
+
+class DataResample:
+    def __init__(self,data,nr):
+        if not isinstance(data,(list,tuple)):
+            raise RuntimeError("Error data type")
+        self.data = data
+        self.nr = max(nr,1)
+
+    def __len__(self):
+        return self.nr
+    
+    def __item__(self,idx):
+        return random.choice(self.data)

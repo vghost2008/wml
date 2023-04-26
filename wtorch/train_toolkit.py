@@ -57,7 +57,7 @@ def simple_split_parameters(model,filter=None):
     for k, v in model.named_modules():
         if filter is not None and not(filter(k,v)):
             continue
-        if hasattr(v, "bias") and isinstance(v.bias, nn.Parameter):
+        if hasattr(v, "bias") and isinstance(v.bias, (torch.Tensor,nn.Parameter)):
             if v.bias.requires_grad is False:
                 print(f"{k}.bias requires grad == False, skip.")
                 total_skip += 1
@@ -71,7 +71,7 @@ def simple_split_parameters(model,filter=None):
             else:
                 bn_weights.append(v.weight)  # no decay
                 parameters_set.add(k+".weight")
-        elif hasattr(v, "weight") and isinstance(v.weight, nn.Parameter):
+        elif hasattr(v, "weight") and isinstance(v.weight, (torch.Tensor,nn.Parameter)):
             if v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
                 total_skip += 1
