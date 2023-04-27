@@ -421,6 +421,30 @@ def clamp_bboxes(bboxes,min_size):
 
     return np.stack([nxmin,nymin,nxmax,nymax],axis=-1)
 '''
+bbox:[N,4](x0,y0,x1,y1)
+min_size:[W,H]
+return a list of new bbox with the minimum size 'size' 
+'''
+def torch_clamp_bboxes(bboxes,min_size):
+    if not isinstance(min_size,Iterable):
+        min_size = (min_size,min_size)
+    xmin = bboxes[...,0]
+    ymin = bboxes[...,1]
+    xmax = bboxes[...,2]
+    ymax = bboxes[...,3]
+    cy = (ymax + ymin) / 2
+    cx = (xmax + xmin) / 2
+    h = ymax-ymin
+    w = xmax-xmin
+    nh = torch.clamp(h,min=min_size[1])
+    nw = torch.clamp(w,min=min_size[0])
+    nymin = cy-nh
+    nymax = cy+nh
+    nxmin = cx-nw
+    nxmax = cx+nw
+
+    return torch.stack([nxmin,nymin,nxmax,nymax],dim=-1)
+'''
 bboxes:[N,4]
 '''
 def shrink_box(bboxes,shrink_value=[0,0,0,0]):

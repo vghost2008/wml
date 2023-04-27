@@ -432,6 +432,8 @@ def get_activation(name="SiLU", inplace=True):
         module = nn.Hardswish(inplace=inplace)
     elif name == "GELU":
         module = nn.GELU()
+    elif name == "HSigmoid":
+        module = nn.Hardsigmoid(inplace=inplace)
     else:
         raise AttributeError("Unsupported act type: {}".format(name))
     return module
