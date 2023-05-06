@@ -49,13 +49,13 @@ def show_list(values,fmt=None,recurse=False):
     print("[")
     if fmt is None:
         for v in values:
-            if recurse and isinstance(v,(list,tuple)):
+            if recurse and isinstance(v,(list,tuple,np.ndarray)):
                 show_list(v)
             else:
                 print(v)
     else:
         for v in values:
-            if recurse and isinstance(v,(list,tuple)):
+            if recurse and isinstance(v,(list,tuple,np.ndarray)):
                 show_list(v)
             else:
                 print(fmt.format(v))

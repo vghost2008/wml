@@ -78,3 +78,16 @@ def remove_class_in_image(bboxes,labels,labels_to_remove,image,default_value=127
     remove_image = np.ones_like(image)*default_value
     image = np.where(img_mask,image,remove_image)
     return image,keep_bboxes,labels[keep_mask]
+
+def remove_class(bboxes,labels,scores=None,labels_to_remove=[]):
+    bboxes = bboxes.astype(np.int32)
+    mask = np.ones_like(labels,dtype=np.bool)
+    for i,l in enumerate(labels):
+        if l in labels_to_remove:
+            mask[i] = False
+    bboxes = bboxes[mask]
+    labels = labels[mask]
+    if scores is not None:
+        scores = scores[mask]
+    
+    return bboxes,labels,scores,mask

@@ -590,6 +590,71 @@ class EasyPrecisionAndRecall:
         return res
 
 @METRICS_REGISTRY.register()
+class ImgLevelPrecisionAndRecall:
+    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
+        self.threshold = threshold
+        self.gtboxes = []
+        self.gtlabels = []
+        self.boxes = []
+        self.labels = []
+        self.precision = None
+        self.recall = None
+        self.total_test_nr = 0
+        self.num_classes = num_classes
+        self.label_trans = label_trans
+        del classes_begin_value
+        self.tp = 0
+        self.fn = 0
+        self.fp = 0
+
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
+                 gtmasks=None,
+                 masks=None,is_crowd=None,use_relative_coord=True):
+        if self.label_trans is not None:
+            gtlabels = self.label_trans(gtlabels)
+            labels = self.label_trans(labels)
+        gtlabels = set(gtlabels)
+        labels = set(labels)
+        tp = len(gtlabels&labels)
+        fn = len(gtlabels)-tp
+        fp = len(labels)-tp
+        self.tp += tp
+        self.fn += fn
+        self.fp += fp
+        self.total_test_nr += 1
+
+        
+
+    def evaluate(self):
+        if self.total_test_nr==0:
+            self.precision,self.recall = 0,0
+            return
+        self.precision = self.tp/(self.fp+self.tp)
+        self.recall = self.tp/(self.fn+self.tp)
+
+    @property
+    def f1(self):
+        return 2*self.precision*self.recall/max(self.precision+self.recall,1e-8)
+
+    def show(self,name=""):
+        self.evaluate()
+        res = f"{name}: {self}"
+        print(res)
+
+    def value(self):
+        return self.f1
+
+    def to_string(self):
+        try:
+            return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1}/({self.total_test_nr})"
+        except:
+            return "N.A."
+
+    def __repr__(self):
+        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
+        return res
+
+@METRICS_REGISTRY.register()
 class ROC:
     def __init__(self,threshold=0.5,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
         self.threshold = threshold
@@ -1107,6 +1172,7 @@ class ClassesWiseModelPerformace(object):
         print("Summary")
         wmlu.show_dict(self.classes_wise_results)
         sys.stdout.flush()
+        return str2
 
     def __getattr__(self, item):
         if item=="mAP":

@@ -255,6 +255,22 @@ def home_dir(sub_path=None):
     else:
         return os.path.join(os.path.expandvars('$HOME'),sub_path)
 
+def get_relative_path(path,ref_path):
+    '''
+    Example:
+    path="/root/data/x.img", ref_path="/root"
+    return:
+    data/x.img
+    '''
+
+    path = osp.abspath(path)
+    ref_path = osp.abspath(ref_path)
+    res = path[len(ref_path):]
+    if res[0] == osp.sep:
+        return res[1:]
+    return res
+
+
 '''
 suffix: suffix name without dot
 '''

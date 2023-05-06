@@ -38,8 +38,13 @@ def grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
     else:
         total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), norm_type).to(device) for p in parameters]), norm_type)
     return total_norm
+def _add_to_dict(v,dicts):
+    for i,c in enumerate(dicts):
+        if v in c:
+            print(f"ERROR: {v} already in dict {i}")
+    dicts[0].add(v)
 
-def simple_split_parameters(model,filter=None):
+def simple_split_parameters(model,filter=None,return_unused=False):
     '''
     Example:
     bn_weights,weights,biases = simple_split_parameters(model)
@@ -50,7 +55,9 @@ def simple_split_parameters(model,filter=None):
     optimizer.add_param_group({"params": bn_weights,"weight_decay":0.0})
     '''
     bn_weights, weights, biases = [], [], []
+    unbn_weights, unweights, unbiases = [], [], []
     parameters_set = set()
+    unused_parameters_set = set()
     print(f"Split model parameters")
     print(f"------------------------------------------")
     total_skip = 0
@@ -60,6 +67,8 @@ def simple_split_parameters(model,filter=None):
         if hasattr(v, "bias") and isinstance(v.bias, (torch.Tensor,nn.Parameter)):
             if v.bias.requires_grad is False:
                 print(f"{k}.bias requires grad == False, skip.")
+                unbiases.append(v.bias)
+                _add_to_dict(k+".bias",[unused_parameters_set,parameters_set])
                 total_skip += 1
             else:
                 biases.append(v.bias)  # biases
@@ -67,6 +76,8 @@ def simple_split_parameters(model,filter=None):
         if isinstance(v, _NORMS) or "bn" in k and hasattr(v,'weight'):
             if v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
+                unbn_weights.append(v.weight)
+                _add_to_dict(k+".weight",[unused_parameters_set,parameters_set])
                 total_skip += 1
             else:
                 bn_weights.append(v.weight)  # no decay
@@ -74,6 +85,8 @@ def simple_split_parameters(model,filter=None):
         elif hasattr(v, "weight") and isinstance(v.weight, (torch.Tensor,nn.Parameter)):
             if v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
+                unweights.append(v.weight)
+                _add_to_dict(k+".weight",[unused_parameters_set,parameters_set])
                 total_skip += 1
             else:
                 weights.append(v.weight)  # apply decay
@@ -84,6 +97,19 @@ def simple_split_parameters(model,filter=None):
             if p.requires_grad == False:
                 print(f"{k}.{k1} requires grad == False, skip.")
                 total_skip += 1
+                if "weight" in k:
+                    unweights.append(p)
+                    _add_to_dict(k+f".{k1}",[unused_parameters_set,parameters_set])
+                elif "bias" in k:
+                    unbiases.append(p)
+                    _add_to_dict(k+f".{k1}",[unused_parameters_set,parameters_set])
+                else:
+                    if p.ndim>1:
+                        unweights.append(p)
+                        _add_to_dict(k+f".{k1}",[unused_parameters_set,parameters_set])
+                    else:
+                        unbiases.append(p)
+                        _add_to_dict(k+f".{k1}",[unused_parameters_set,parameters_set])
                 continue
             if "weight" in k:
                 weights.append(p)
@@ -107,7 +133,10 @@ def simple_split_parameters(model,filter=None):
     #batch norm weight, weight, bias
     print(f"Total have {len(list(model.named_parameters()))} parameters.")
     print(f"Finaly find {len(bn_weights)} bn weights, {len(weights)} weights, {len(biases)} biases, total {len(bn_weights)+len(weights)+len(biases)}, total skip {total_skip}.")
-    return bn_weights,weights,biases
+    if not return_unused:
+        return bn_weights,weights,biases
+    else:
+        return bn_weights,weights,biases,unbn_weights,unweights,unbiases
 
 def freeze_model(model,freeze_bn=True):
     if freeze_bn:
