@@ -4,6 +4,8 @@ import numpy as np
 '''
 mask: [N,H,W] value is 0 or 1
 labels: [N] labels of mask
+return:
+[H,W] value is labels' value
 '''
 def dense_mask_to_sparse_mask(mask:np.ndarray,labels,default_label=0):
     if len(labels) == 0 and not isinstance(mask,np.ndarray):
@@ -99,3 +101,20 @@ def get_bboxes_by_mask(masks):
     bboxes = np.array(bboxes)
 
     return bboxes
+
+def crop_masks_by_bboxes(masks,bboxes):
+    '''
+    masks: [N,H,W]
+    bboxes: [N,4] (x0,y0,x1,y1)
+    '''
+    shape = masks.shape[1:]
+    bboxes[:,0:4:2] = np.clip(bboxes[:,0:4:2],0.0,shape[1])
+    bboxes[:,1:4:2] = np.clip(bboxes[:,1:4:2],0.0,shape[0])
+    bboxes = bboxes.astype(np.int32)
+    res = []
+    for i in range(bboxes.shape[0]):
+        x0,y0,x1,y1 = bboxes[i]
+        m = masks[i,y0:y1,x0:x1].copy()
+        res.append(m)
+    
+    return res

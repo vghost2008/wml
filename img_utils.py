@@ -466,6 +466,25 @@ def one_to_one_crop_and_resize_imgs(imgs,boxes,crop_size):
 
     return np.stack(res_imgs,axis=0)
 
+def past_img(dst_img,src_img,pos):
+    '''
+    dst_img: [H,W,C]
+    src_img: [h,w,C]
+    pos: [x,y]
+    '''
+    x,y = pos
+    dst_img[y:y+src_img.shape[0],x:x+src_img.shape[1]] = src_img
+    return dst_img
+
+def crop_and_past_img(dst_img,src_img,src_bbox,pos):
+    '''
+    src_box:xmin,ymin,xmax,ymax, absolute corrdinate
+    pos: [x,y]
+    '''
+    src_img = crop_img_absolute_xy(src_img,src_bbox)
+    return past_img(dst_img,src_img,pos)
+
+
 '''
 img:[H,W]/[H,W,C]
 rect:[ymin,xmin,ymax,xmax] absolute coordinate

@@ -625,6 +625,31 @@ def get_fullsize_mask(boxes,masks,size,mask_bg_value=0):
         return np.zeros([0,size[0],size[1]],dtype=dtype)
     return np.stack(res_masks,axis=0)
 
+def generate_mask_by_boxes(boxes,masks,mask_value=1):
+    '''
+    boxes:[N,4],[x0,y0,x1,y1]
+    masks:[N,H,W]/[H,W]
+    '''
+    if len(masks.shape)==3:
+        shape = masks.shape[1:]
+    else:
+        shape = masks.shape
+
+    boxes[:,0:4:2] = np.clip(boxes[:,0:4:2],0.0,shape[1])
+    boxes[:,1:4:2] = np.clip(boxes[:,1:4:2],0.0,shape[0])
+    boxes = boxes.astype(np.int32)
+    for i,bbox in enumerate(boxes):
+        x0 = bbox[0]
+        y0 = bbox[1]
+        x1 = bbox[2]
+        y1 = bbox[3]
+        if len(masks.shape)==3:
+            masks[i,y0:y1,x0:x1] = mask_value
+        else:
+            masks[y0:y1,x0:x1] = mask_value
+
+    return masks
+
 def draw_polygon(img,polygon,color=(255,255,255),is_line=True,isClosed=True):
     if is_line:
         return cv2.polylines(img, [polygon], color=color,isClosed=isClosed)
