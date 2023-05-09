@@ -507,7 +507,7 @@ class LabelMeData(object):
         else:
             self.resample_parameters = None
         
-    def read_data(self,dir_path,img_suffix="jpg"):
+    def read_data(self,dir_path,img_suffix=".jpg;;.bmp;;.png;;.jpeg"):
         _files = get_files(dir_path,img_suffix=img_suffix)
         if self.filter_empty_files and self.label_text2id:
             _files = self.apply_filter_empty_files(_files)

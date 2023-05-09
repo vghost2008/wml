@@ -98,11 +98,21 @@ class BaiDuMaskData(object):
             bboxes = [ann['bbox'] for ann in annotations_list]
             #file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _
             yield img_file, [image['height'], image['width']], labels, labels_names,bboxes, None,None,None,None
+
     @staticmethod
     def write_json(save_path,mask,labels2name,labels2color,label_trans=None,epsilon=None):
+        '''
+        save_path: json save path
+        mask:[H,W] or [N,H,W] uint_8, N为目标个数, 分辨率为原图分辨率
+        labels2name: list(tuple) (label,label_name}, len(labels2name)为目标个数
+        labels2color: {label,label_color}/list of colors, len(labels2color)=类别数
+        '''
         shapes = []
-        for k,n in labels2name.items():
-            mask_tmp = (mask==k).astype(np.uint8)
+        for i,(k,n) in enumerate(labels2name):
+            if len(mask.shape)==2:
+                mask_tmp = (mask==k).astype(np.uint8)
+            else:
+                mask_tmp = mask[i]
             if np.sum(mask_tmp)==0:
                 continue
             contours, hierarchy = cv.findContours(mask_tmp, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
@@ -117,9 +127,9 @@ class BaiDuMaskData(object):
                     continue
                 tmp_data = {'name':n}
                 if label_trans is not None:
-                    tmp_data['labelIdx'] = label_trans[k]
+                    tmp_data['labelIdx'] = int(label_trans[k])
                 else:
-                    tmp_data['labelIdx'] = k
+                    tmp_data['labelIdx'] = int(k)
                 tmp_data["points"] = points
                 tmp_data['color'] = labels2color[k]
                 shapes.append(tmp_data)

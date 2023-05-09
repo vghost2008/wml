@@ -48,6 +48,15 @@
             "console": "integratedTerminal",
             "args":["--gpus" "1"  "--config-file" "gds1v2" "--save_pb_path" "model.pb"]
         },
+        {
+            "name": "Python: check split dataset",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "datasets_tools/check_split_dataset.py",
+            "console": "integratedTerminal",
+            "args":["/home/wj/ai/mldata1/B7mura/datas/new_anno/230506", "/home/wj/ai/mldata1/B7mura/datas/train_s0",  "/home/wj/ai/mldata1/B7mura/tmp/data"]
+        },
     ]
     
 }

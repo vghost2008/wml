@@ -15,7 +15,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def docalculate_scores(data,classes,exclude):
+def docalculate_scores(data,classes=[],exclude=[]):
     if len(classes)>0 and len(exclude)>0:
         print(f"set classes and exclude at the same time is not't allowd.")
         return
