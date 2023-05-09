@@ -38,6 +38,9 @@ def default_convert(data):
     else:
         return data
 
+def null_convert(data):
+    return data
+
 
 default_collate_err_msg_format = (
     "default_collate: batch must contain tensors, numpy arrays, numbers, "
