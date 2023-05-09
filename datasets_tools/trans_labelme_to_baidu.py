@@ -1,5 +1,4 @@
 import sys
-from itertools import count
 from iotoolkit.labelme_toolkit import *
 import img_utils as wmli
 import object_detection2.visualization as odv
@@ -25,7 +24,7 @@ def parse_args():
 
 
 def trans_data(data_dir,save_dir,labels):
-    name_to_id_dict = dict(zip(labels,count()))
+    name_to_id_dict = dict(zip(labels,list(range(1,len(labels)+1))))
     wmlu.show_dict(name_to_id_dict)
     wmlu.create_empty_dir(save_dir,remove_if_exists=False)
 
