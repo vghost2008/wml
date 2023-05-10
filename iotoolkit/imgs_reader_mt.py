@@ -2,17 +2,24 @@ import img_utils as wmli
 import wml_utils as wmlu
 from wtorch.data.dataloader import DataLoader
 from wtorch.data._utils.collate import null_convert
+import numpy as np
+import random
 
 class ImgsDataset:
-    def __init__(self,data_dir):
+    def __init__(self,data_dir,shuffle=True):
         self.files = wmlu.get_files(data_dir,suffix=".jpg;;.jpeg;;.bmp;;.png")
+        if shuffle:
+            random.shuffle(self.files)
 
     def __len__(self):
         return len(self.files)
 
     def __getitem__(self, item):
         path = self.files[item]
-        return path,wmli.imread(path)
+        try:
+            return path,wmli.imread(path)
+        except:
+            return path,np.zeros([0,0,1],dtype=np.uint8)
 
 class ImgsReader:
     def __init__(self, data_dir, thread_nr=8):
@@ -29,19 +36,8 @@ class ImgsReader:
         self.data_loader = data_loader
         self.data_loader_iter = iter(self.data_loader)
 
+    def __len__(self):
+        return len(self.dataset)
+
     def __iter__(self):
         return self.data_loader_iter
-
-
-if __name__ == "__main__":
-    import os.path as osp
-    import os
-    reader = ImgsReader("/home/vghost/pic1")
-    save_path = "/home/vghost/pic2"
-    os.makedirs(save_path,exist_ok=True)
-    for path,img in reader:
-        sp = osp.join(save_path,osp.basename(path))
-        wmlu.try_link(path,sp)
-        sp = wmlu.change_name(sp,suffix="_a")
-        wmli.imwrite(sp,img)
-
