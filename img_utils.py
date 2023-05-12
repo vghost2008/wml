@@ -265,10 +265,15 @@ def resize_and_pad(img,size,interpolation=cv2.INTER_LINEAR,pad_color=(0,0,0),cen
         return img
     else:
         if len(img.shape)==3:
-            res = np.ones([size[1],size[0],3],dtype=img.dtype)
+            channels = img.shape[-1]
+            if not isinstance(pad_color,Iterable):
+                pad_color = [pad_color]*channels
+            res = np.ones([size[1],size[0],channels],dtype=img.dtype)
             pad_color = np.array(list(pad_color),dtype=img.dtype)
-            pad_color = pad_color.reshape([1,1,3])
+            pad_color = pad_color.reshape([1,1,channels])
         else:
+            if not isinstance(pad_color,Iterable):
+                pad_color = [pad_color]
             res = np.ones([size[1],size[0]],dtype=img.dtype)
             pad_color = np.array(list(pad_color),dtype=img.dtype)
             pad_color = pad_color.reshape([1,1])
