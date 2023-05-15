@@ -263,8 +263,13 @@ def get_relative_path(path,ref_path):
     data/x.img
     '''
 
+    if ref_path is None or path is None:
+        return path
+
     path = osp.abspath(path)
     ref_path = osp.abspath(ref_path)
+    if not path.startswith(ref_path):
+        return path
     res = path[len(ref_path):]
     if res[0] == osp.sep:
         return res[1:]

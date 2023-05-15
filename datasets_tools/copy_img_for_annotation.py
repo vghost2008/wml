@@ -6,13 +6,14 @@ import wml_utils as wmlu
 def parse_args():
     parser = argparse.ArgumentParser(
         description='arguments')
-    parser.add_argument('xml_dir', default=None,type=str,help='xml_dir')
+    parser.add_argument('ann_dir', default=None,type=str,help='ann_dir')
     parser.add_argument('img_dir', default=None,type=str,help='img_dir')
+    parser.add_argument('--type', default=".xml",type=str,help='img_dir')
     args = parser.parse_args()
     return args
 
-def copy_imgfiles(xml_dir,img_dir,img_suffix=".jpg"):
-    xml_files = glob.glob(osp.join(xml_dir,"*.xml"))
+def copy_imgfiles(xml_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
+    xml_files = glob.glob(osp.join(xml_dir,"*"+ann_type))
     for xf in xml_files:
         base_name = wmlu.base_name(xf)
         img_name = base_name+img_suffix
@@ -23,4 +24,4 @@ def copy_imgfiles(xml_dir,img_dir,img_suffix=".jpg"):
 
 if __name__ == "__main__":
     args = parse_args()
-    copy_imgfiles(args.xml_dir,args.img_dir)
+    copy_imgfiles(args.ann_dir,args.img_dir,ann_type=args.suffix)

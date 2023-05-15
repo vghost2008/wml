@@ -181,12 +181,14 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     classeswise_boxes = {}
     total_file_nr = 0
     classes_nr_per_img = []
+    no_annotation_nr = 0
 
     for data in datas:
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
         total_file_nr += 1
         if bboxes.shape[0]<1:
             print(f"{file} no annotation, skip")
+            no_annotation_nr += 1
             continue
         if absolute_size:
             if trans_img_size is not None:
@@ -249,11 +251,14 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     total_nr = 0
     for k,v in labels_counter:
         total_nr += v
+
     print(f"Total bboxes count {total_nr}")
     print("\n--->BBoxes count:")
     for k,v in labels_counter:
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
+
     print(f"Total file count {total_file_nr}.")
+    print(f"Total no annotation file count {no_annotation_nr}.")
     print("\n--->File count:")
     label_file_count= list(label_file_count.items())
     label_file_count.sort(key=lambda x:x[1],reverse=True)

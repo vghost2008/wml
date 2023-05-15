@@ -207,11 +207,11 @@ def log_mask(tb,tag,images,masks,step,color_map,img_min=None,img_max=None,ignore
         tb.add_images(tag+"_raw",images,step,dataformats='NHWC')
 
 
-def log_optimizer(tb,optimizer,step):
+def log_optimizer(tb,optimizer,step,name=""):
     for i,data in enumerate(optimizer.param_groups):
-        name = f"optimizer/{i}_{len(data['params'])}"
-        tb.add_scalar(name+"_lr",data['lr'],step)
-        tb.add_scalar(name+"_wd",data['weight_decay'],step)
+        bname = f"{name} optimizer/{i}_{len(data['params'])}"
+        tb.add_scalar(bname+"_lr",data['lr'],step)
+        tb.add_scalar(bname+"_wd",data['weight_decay'],step)
 
 
 def log_imgs_with_bboxes(tb,name,imgs,targets,step,max_imgs=None):

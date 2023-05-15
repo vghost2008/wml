@@ -8,6 +8,7 @@ from functools import wraps
 import sys
 import datetime
 import hashlib
+import math
 
 
 def _to_chinese_num(i,numbers,unites):
@@ -387,4 +388,42 @@ def nparray(data,default_shape=[0],dtype=np.float):
     if res.size == 0:
         return np.zeros(default_shape,dtype=dtype)
     return res
+
+def is_int(v,eps=1e-6):
+    return math.fabs(v-int(v))<eps
+
+def to_fraction(v):
+    '''
+    将小数转化为分数
+    example:
+    v=0.4:
+    return:
+    2,5
+    '''
+    max_try = 20
+    if is_int(v):
+        return v
+    denominator = 1
+    for i in range(max_try):
+        v *= 10
+        denominator *= 10
+        if is_int(v):
+            break
+    if not is_int(v):
+        return v,denominator
+    
+    v = int(v)
+    for _ in range(max_try):
+        is_find = False
+        for i in range(2,v+1):
+            if v%i == 0 and denominator%i==0:
+                v = v//i
+                denominator = denominator//i
+                is_find = True
+                break
+        if not is_find:
+            break
+    return v,denominator
+
+
 

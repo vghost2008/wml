@@ -15,6 +15,7 @@ import wml_utils as wmlu
 import img_utils as wmli
 import copy
 from .common import resample
+import PIL
 
 def get_shape_from_img(xml_path,img_path):
     if not os.path.exists(img_path):
@@ -25,7 +26,9 @@ def get_shape_from_img(xml_path,img_path):
         print(f"Error find img {img_path} faild.")
         return [0,0,3]
     else:
-        return list(wmli.imread(img_path).shape)
+        with PIL.Image.open(img_path) as im:
+            return list(im.size)[::-1]
+        #return list(wmli.imread(img_path).shape)
 '''
 读取VOC xml文件
 file_path: xml文件路径
@@ -163,7 +166,7 @@ def write_voc_xml(save_path,file_path,shape, bboxes, labels_text, difficult=None
         print(f"Force update img shape, old={shape}, new={_shape}.")
         shape = list(_shape)
     
-    if is_relative_coordinate and np.max(bboxes)>1.01:
+    if len(bboxes)>0 and is_relative_coordinate and np.max(bboxes)>1.01:
         print(f"Use relative coordinate and max bboxes value is {np.max(bboxes)}.")
         
     if len(shape)==2:
@@ -455,7 +458,15 @@ def split_voc_files(files,nr=1):
 
     return files0,files1
 
+def ignore_case_dict_label_text2id(name,dict_data):
+    name = name.lower()
+    if name not in dict_data:
+        print(f"ERROR: trans {name} faild.")
+    return dict_data.get(name,None)
+
 def dict_label_text2id(name,dict_data):
+    if name not in dict_data:
+        print(f"ERROR: trans {name} faild.")
     return dict_data.get(name,None)
 
 class PascalVOCData(object):
@@ -463,7 +474,8 @@ class PascalVOCData(object):
                  has_probs=False,
                  absolute_coord=False,
                  filter_empty_files=False,
-                 resample_parameters=None):
+                 resample_parameters=None,
+                 ignore_case=True):
         '''
 
         :param label_text2id: trans a single label text to id:  int func(str)
@@ -479,7 +491,11 @@ class PascalVOCData(object):
         self.absolute_coord = absolute_coord
         self.filter_empty_files = filter_empty_files
         if isinstance(label_text2id,dict):
-            self.label_text2id = partial(dict_label_text2id,dict_data=label_text2id)
+            if ignore_case:
+                new_dict = dict([(k.lower(),v) for k,v in label_text2id.items()])
+                self.label_text2id = partial(ignore_case_dict_label_text2id,dict_data=new_dict)
+            else:
+                self.label_text2id = partial(dict_label_text2id,dict_data=label_text2id)
         else:
             self.label_text2id = label_text2id
 

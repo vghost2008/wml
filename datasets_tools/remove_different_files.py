@@ -5,7 +5,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")
-    parser.add_argument("exc_dir",type=str,help="src dir")
+    parser.add_argument("ref_dir",type=str,help="src dir")
     parser.add_argument("--ext",type=str,default=".jpg",help="img ext")
     args = parser.parse_args()
     return args
@@ -23,12 +23,12 @@ if __name__ == "__main__":
     args = parse_args()
     #要处理的文件夹
     src_dir = args.src_dir
-    #如果在exclude_dir和src_dir文件夹中同时出现，则从src_dir中删除
-    exclude_dir = args.exc_dir
+    #如果在ref_dir中没有，但在src_dir文件夹中出现，则从src_dir中删除
+    ref_dir = args.ref_dir
     suffix = args.ext
     
     files0 = wmlu.recurse_get_filepath_in_dir(src_dir,suffix=suffix)
-    files1 = wmlu.recurse_get_filepath_in_dir(exclude_dir,suffix=suffix)
+    files1 = wmlu.recurse_get_filepath_in_dir(ref_dir,suffix=suffix)
     files1 = [os.path.basename(file) for file in files1]
     total_skip = 0
     total_remove = 0
@@ -36,12 +36,12 @@ if __name__ == "__main__":
     for file in files0:
         base_name = os.path.basename(file)
         if base_name not in files1:
-            print(f"Skip {base_name}")
-            total_skip += 1
-        else:
             print(f"Remove {file}")
             total_remove += 1
             files_to_remove.append(file)
+        else:
+            print(f"Skip {base_name}")
+            total_skip += 1
     
     print(f"Files need to remove:")
     wmlu.show_list(files_to_remove)

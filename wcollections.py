@@ -110,3 +110,11 @@ class MDict(dict):
 
     def __delattr__(self, key):
         del self[key]
+
+
+class Counter(dict):
+    def add(self,key):
+        if key in self:
+            self[key] += 1
+        else:
+            self[key] = 1
