@@ -118,3 +118,4 @@ class Counter(dict):
             self[key] += 1
         else:
             self[key] = 1
+        return self[key]

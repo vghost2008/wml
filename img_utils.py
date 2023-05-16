@@ -493,6 +493,7 @@ def crop_and_past_img(dst_img,src_img,src_bbox,pos):
 '''
 img:[H,W]/[H,W,C]
 rect:[ymin,xmin,ymax,xmax] absolute coordinate
+与crop_img类似，但如果rect超出img边界会先pad再剪切
 '''
 def sub_image(img,rect,pad_value=127):
     if rect[0]<0 or rect[1]<0 or rect[2]>img.shape[0] or rect[3]>img.shape[1]:
@@ -501,8 +502,10 @@ def sub_image(img,rect,pad_value=127):
         px0 = -rect[1] if rect[1] < 0 else 0
         px1 = rect[3] - img.shape[1] if rect[3] > img.shape[1] else 0
         img = np.pad(img,[[py0,py1],[px0,px1],[0,0]],constant_values=pad_value)
-        rect[0] -= py0
-        rect[1] -= px0
+        rect[0] += py0
+        rect[1] += px0
+        rect[2] += py0
+        rect[3] += px0
 
     return copy.deepcopy(img[rect[0]:rect[2],rect[1]:rect[3]])
 
@@ -672,7 +675,7 @@ def imwrite(filename, img,size=None):
         img = img.astype(np.uint8)
     dir_path = os.path.dirname(filename)
     if dir_path != "" and not os.path.exists(dir_path):
-        os.makedirs(dir_path)
+        os.makedirs(dir_path,exist_ok=True)
     if len(img.shape)==3 and img.shape[2]==3:
         img = copy.deepcopy(img)
         cv2.cvtColor(img, cv2.COLOR_RGB2BGR,img)

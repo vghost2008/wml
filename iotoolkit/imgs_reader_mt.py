@@ -6,8 +6,11 @@ import numpy as np
 import random
 
 class ImgsDataset:
-    def __init__(self,data_dir,shuffle=True):
-        self.files = wmlu.get_files(data_dir,suffix=".jpg;;.jpeg;;.bmp;;.png")
+    def __init__(self,data_dir_or_files,shuffle=True):
+        if isinstance(data_dir_or_files,str):
+            self.files = wmlu.get_files(data_dir_or_files,suffix=".jpg;;.jpeg;;.bmp;;.png")
+        else:
+            self.files = data_dir_or_files
         if shuffle:
             random.shuffle(self.files)
 
@@ -22,8 +25,8 @@ class ImgsDataset:
             return path,np.zeros([0,0,1],dtype=np.uint8)
 
 class ImgsReader:
-    def __init__(self, data_dir, thread_nr=8):
-        self.dataset = ImgsDataset(data_dir,)
+    def __init__(self, data_dir_or_files, thread_nr=8,shuffle=True):
+        self.dataset = ImgsDataset(data_dir_or_files,shuffle=shuffle)
 
         dataloader_kwargs = {"num_workers": thread_nr, "pin_memory": False}
         dataloader_kwargs["sampler"] = list(range(len(self.dataset)))
