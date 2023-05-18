@@ -1,3 +1,8 @@
+import os
+import wml_utils as wmlu
+import PIL
+import img_utils as wmli
+
 def __get_resample_nr(labels,resample_parameters):
     nr = 1
     for l in labels:
@@ -27,3 +32,13 @@ def resample(files,labels,resample_parameters):
     print(f"{len(files)} old files --> {len(new_files)} new files")
 
     return new_files
+
+def get_shape_from_img(xml_path,img_path):
+    '''
+    return: [H,W]
+    '''
+    if not os.path.exists(img_path):
+        img_path = wmlu.change_suffix(xml_path, "jpg")
+        if not os.path.exists(img_path):
+            img_path = wmlu.change_suffix(xml_path, "jpeg")
+    return wmli.get_img_size(img_path)

@@ -14,21 +14,10 @@ from functools import partial
 import wml_utils as wmlu
 import img_utils as wmli
 import copy
-from .common import resample
-import PIL
+from .common import resample, get_shape_from_img
 
-def get_shape_from_img(xml_path,img_path):
-    if not os.path.exists(img_path):
-        img_path = wmlu.change_suffix(xml_path, "jpg")
-        if not os.path.exists(img_path):
-            img_path = wmlu.change_suffix(xml_path, "jpeg")
-    if not os.path.exists(img_path):
-        print(f"Error find img {img_path} faild.")
-        return [0,0,3]
-    else:
-        with PIL.Image.open(img_path) as im:
-            return list(im.size)[::-1]
-        #return list(wmli.imread(img_path).shape)
+
+
 '''
 读取VOC xml文件
 file_path: xml文件路径

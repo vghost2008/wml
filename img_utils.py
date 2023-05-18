@@ -660,7 +660,7 @@ def nprandom_crop(img,size):
     return sub_image(img,rect)
 
 def imread(filepath):
-    img = cv2.imread(filepath)
+    img = cv2.imread(filepath,cv2.IMREAD_COLOR)
     cv2.cvtColor(img,cv2.COLOR_BGR2RGB,img)
     return img
 
@@ -1086,3 +1086,14 @@ def pseudocolor_img(img,palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0
     return new_img
 
     
+def get_img_size(img_path):
+    '''
+    return: [H,W]
+    '''
+    if not os.path.exists(img_path):
+        print(f"ERROR: img file {img_path} not exists.")
+        return [0,0,3]
+    else:
+        with PIL.Image.open(img_path) as im:
+            return list(im.size)[::-1]
+        #return list(wmli.imread(img_path).shape)

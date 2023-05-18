@@ -43,7 +43,7 @@ if __name__ == "__main__":
             total_remove += 1
             files_to_remove.append(file)
     
-    print(f"Files need to remove:")
+    print(f"Files need to remove {len(files_to_remove)}:")
     wmlu.show_list(files_to_remove)
     res = input("remove [y/n]")
     if res != 'y':

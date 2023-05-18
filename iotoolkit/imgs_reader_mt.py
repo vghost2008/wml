@@ -4,6 +4,8 @@ from wtorch.data.dataloader import DataLoader
 from wtorch.data._utils.collate import null_convert
 import numpy as np
 import random
+import sys
+import os
 
 class ImgsDataset:
     def __init__(self,data_dir_or_files,shuffle=True):
@@ -20,7 +22,12 @@ class ImgsDataset:
     def __getitem__(self, item):
         path = self.files[item]
         try:
-            return path,wmli.imread(path)
+            print(f"{os.getpid()}: begin read {path}")
+            sys.stdout.flush()
+            res = path,wmli.imread(path)
+            print(f"{os.getpid()}: read {path} finish.")
+            sys.stdout.flush()
+            return res
         except:
             return path,np.zeros([0,0,1],dtype=np.uint8)
 
