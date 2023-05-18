@@ -19,6 +19,8 @@ from collections import OrderedDict, Iterable
 from object_detection2.basic_datadef import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 from object_detection2.basic_datadef import colors_tableau
 import object_detection2.visualization as odv
+import torchvision
+import torch
 
 try:
     from turbojpeg import TJCS_RGB, TJPF_BGR, TJPF_GRAY, TurboJPEG
@@ -663,6 +665,27 @@ def imread(filepath):
     img = cv2.imread(filepath,cv2.IMREAD_COLOR)
     cv2.cvtColor(img,cv2.COLOR_BGR2RGB,img)
     return img
+
+def hpimread(filepath):
+    #return gpu_imread(filepath)
+    if TurboJPEG is not None:
+        global g_jpeg
+        if g_jpeg is None:
+            g_jpeg = TurboJPEG()
+        if os.path.splitext(filepath)[1].lower() in [".jpg",".jpeg"]:
+            with open(filepath,"rb") as f:
+                return g_jpeg.decode(f.read(),TJCS_RGB)
+    return imread(filepath)
+
+def gpu_imread(filepath):
+    if os.path.splitext(filepath)[1].lower() not in [".jpg",".jpeg"]:
+        return imread(filepath)
+
+    datas = torchvision.io.read_file(filepath)
+    imgs = torchvision.io.decode_jpeg(datas,device="cuda")
+    imgs = imgs.cpu().numpy()
+    return imgs
+
 
 def imsave(filename,img):
     imwrite(filename,img)

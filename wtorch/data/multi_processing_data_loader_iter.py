@@ -17,6 +17,8 @@ import time
 from . import IterableDataset, Sampler, SequentialSampler, RandomSampler, BatchSampler, Dataset
 from . import _utils, _BaseDataLoaderIter
 import wml_utils as wmlu
+import traceback
+import sys
 import math
 
 class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
@@ -780,7 +782,9 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
         # Called when shutting down this `_MultiProcessingDataLoaderIter`.
         # See NOTE [ Data Loader Multiprocessing Shutdown Logic ] for details on
         # the logic of this function.
-        print(f"Shutdown data loader workers")
+        print(f"Shutdown data loader workers.")
+        traceback.print_exc(file=sys.stdout)
+        sys.stdout.flush()
         python_exit_status = _utils.python_exit_status
         if python_exit_status is True or python_exit_status is None:
             # See (2) of the note. If Python is shutting down, do no-op.

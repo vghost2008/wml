@@ -253,11 +253,12 @@ class Config:
                 cfg_text_list.append(_cfg_text)
 
             base_cfg_dict = dict()
-            for c in cfg_dict_list:
+            for i,c in enumerate(cfg_dict_list):
                 duplicate_keys = base_cfg_dict.keys() & c.keys()
                 if len(duplicate_keys) > 0:
-                    raise KeyError('Duplicate key is not allowed among bases. '
-                                   f'Duplicate keys: {duplicate_keys}')
+                    #raise KeyError('Duplicate key is not allowed among bases. '
+                                   #f'Duplicate keys: {duplicate_keys}')
+                    print(f"WARNING: Find duplicate key in config, use {base_filename[i]} for key {duplicate_keys}")
                 base_cfg_dict.update(c)
 
             # Substitute base variables from strings to their actual values
