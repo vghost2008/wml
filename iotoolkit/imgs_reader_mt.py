@@ -6,6 +6,8 @@ import numpy as np
 import random
 import sys
 import os
+from PIL import Image
+Image.MAX_IMAGE_PIXELS = 1000000000 
 
 class ImgsDataset:
     def __init__(self,data_dir_or_files,transform=None,shuffle=True):
