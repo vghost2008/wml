@@ -375,11 +375,11 @@ def get_unused_path(path):
         i += 1
     return path
 
-def get_unused_path_with_suffix(path):
+def get_unused_path_with_suffix(path,begin_idx=0):
     if not os.path.exists(path):
         return path
     parts = osp.splitext(path)
-    i = 0
+    i = begin_idx
     while os.path.exists(path):
         path = parts[0]+ f"_{i}"+parts[1]
         i += 1

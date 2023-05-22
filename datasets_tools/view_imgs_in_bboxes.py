@@ -28,6 +28,8 @@ def parse_args():
     parser.add_argument('save_dir', type=str, help='save dir')
     parser.add_argument('--type', type=str, default="xml",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
+    parser.add_argument('--min-size', type=int, default=0,help='min bbox size')
+    parser.add_argument('--add-classes-name', action='store_true', help='min bbox size')
     args = parser.parse_args()
     return args
 
@@ -124,20 +126,26 @@ def mapillary_vistas_dataset():
     data.read_data(wmlu.home_dir("ai/mldata/mapillary_vistas/mapillary-vistas-dataset_public_v2.0"))
     return data.get_boxes_items()
 
-def cut_and_save_imgs_in_bboxes(dataset,save_dir):
+def cut_and_save_imgs_in_bboxes(dataset,save_dir,min_size=0,add_classes_name=False):
     counter = wmlu.Counter()
     for idx,data in enumerate(dataset):
         img_file, shape,labels, labels_names, bboxes,*_ = data
         if len(labels_names)==0:
             continue
         print(f"Process {idx}/{len(dataset)}")
+        if min_size>1:
+            bboxes = odb.clamp_bboxes(bboxes,min_size=min_size)
         bboxes = bboxes.astype(np.int32)
         img = wmli.imread(img_file)
         base_name = wmlu.base_name(img_file)
         for i,name in enumerate(labels_names):
-            v = counter.add(name)
-            t_save_path = osp.join(save_dir,name,f"{base_name}_{v}.jpg")
-            t_save_path = wmlu.get_unused_path_with_suffix(t_save_path)
+            if add_classes_name:
+                v = counter.add(name)
+                t_save_path = osp.join(save_dir,name,f"{base_name}.jpg")
+            else:
+                v = counter.add("img")
+                t_save_path = osp.join(save_dir,f"{base_name}.jpg")
+            #t_save_path = wmlu.get_unused_path_with_suffix(t_save_path,v)
             simg = wmli.crop_img_absolute(img,bboxes[i])
             wmli.imwrite(t_save_path,simg)
 
@@ -168,5 +176,5 @@ if __name__ == "__main__":
                                   labels=args.labels
                                   )
     
-    cut_and_save_imgs_in_bboxes(dataset,args.save_dir)
+    cut_and_save_imgs_in_bboxes(dataset,args.save_dir,min_size=args.min_size,add_classes_name=args.add_classes_name)
     
