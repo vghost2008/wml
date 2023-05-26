@@ -35,7 +35,6 @@ def get_imgs_info(files):
     for i,(file,img) in enumerate(reader):
         sys.stdout.write(f"Process {i}/{len(reader)}        \r")
         sys.stdout.flush()
-        continue
         if len(img)==0:
             print(f"ERROR: Read {file} faild.")
             continue
@@ -65,14 +64,11 @@ def get_imgs_info(files):
 
 if __name__ == "__main__":
     #os.environ['CUDA_VISIBLE_DEVICES'] = "3"
-    os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+    #os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     args = parse_args()
     img_files = wmlu.get_files(args.src_dir,suffix=".jpg;;.jpeg;;.png;;.bmp")
     if args.test_nr is not None and args.test_nr>0:
         print(f"Only test {args.test_nr} imgs.")
         random.shuffle(img_files)
         img_files = img_files[:args.test_nr]
-    for f in img_files:
-        print(wmli.get_img_size(f))
-    with wmlu.TimeThis("get_imgs_info"):
-        get_imgs_info(img_files)
+    get_imgs_info(img_files)

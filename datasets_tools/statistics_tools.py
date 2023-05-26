@@ -27,6 +27,25 @@ def parse_args():
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     args = parser.parse_args()
     return args
+
+class DictDatasetReader:
+
+    def __init__(self,dataset) -> None:
+        self.dataset = dataset
+        pass
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self,idx):
+        if hasattr(self.dataset,"get_ann_info"):
+            data = self.dataset.get_ann_info(idx)
+        else:
+            data = self.dataset[idx]
+
+        labels_text = [str(x) for x in data['labels']]
+        return data['filename'],[0,0],data['labels'],labels_text,data['bboxes'],None,None,None,None
+        
 '''
 ratio: h/w
 '''
@@ -171,7 +190,7 @@ def trans_img_long_size_to(img_size,long_size=512):
     return [x*scale for x in img_size]
 
 def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_to_remove=None,max_aspect=None,absolute_size=False,
-                                trans_img_size=None):
+                                trans_img_size=None,silent=False):
     all_boxes = []
     all_labels = []
     max_examples = 0
@@ -187,7 +206,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
         total_file_nr += 1
         if bboxes.shape[0]<1:
-            print(f"{file} no annotation, skip")
+            if not silent:
+                print(f"{file} no annotation, skip")
             no_annotation_nr += 1
             continue
         if absolute_size:
@@ -258,7 +278,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
 
     print(f"Total file count {total_file_nr}.")
-    print(f"Total no annotation file count {no_annotation_nr}.")
+    print(f"Total no annotation file count {no_annotation_nr}, {no_annotation_nr*100/total_file_nr:.2f}%.")
     print("\n--->File count:")
     label_file_count= list(label_file_count.items())
     label_file_count.sort(key=lambda x:x[1],reverse=True)
@@ -280,6 +300,10 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     print(f"Classes per img, min={np.min(classes_nr_per_img)}, max={np.max(classes_nr_per_img)}, mean={np.mean(classes_nr_per_img)}, std={np.std(classes_nr_per_img)}")
 
     return [all_boxes,classeswise_boxes,labels_to_file,classes_nr_per_img]
+
+def statistics_dict_dataset_boxes_with_datas(datas,*args,**kwargs):
+    ndatas = DictDatasetReader(datas)
+    return statistics_boxes_with_datas(ndatas,*args,**kwargs)
 
 def show_boxes_statistics(statics):
     plt.figure(0,figsize=(10,10))
