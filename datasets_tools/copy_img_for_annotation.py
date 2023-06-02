@@ -18,7 +18,10 @@ def get_all_imgs(img_dir,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
     for f in files:
         basename = wmlu.base_name(f)
         if basename in res:
-            res[basename] = res[basename]+[f]
+            d = res[basename]
+            if isinstance(d,str):
+                d = [d]
+            res[basename] = d+[f]
         else:
             res[basename] = f
     return res

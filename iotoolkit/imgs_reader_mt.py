@@ -9,6 +9,18 @@ import os
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = 1000000000 
 
+class MaxImgLongSize:
+    def __init__(self,max_size=2048):
+        self.max_size = max_size
+    
+    def __call__(self,img):
+        if img.shape[0]>self.max_size or img.shape[1]>self.max_size:
+            img = wmli.resize_long_size(img,self.max_size)
+        return img
+
+    def __repr__(self):
+        return f"{type(self).__name__}: max_size={self.max_size}"
+
 class ImgsDataset:
     def __init__(self,data_dir_or_files,transform=None,shuffle=True):
         if isinstance(data_dir_or_files,str):
@@ -18,6 +30,8 @@ class ImgsDataset:
         if shuffle:
             random.shuffle(self.files)
         self.transform = transform
+        print(f"ImgsDataset transform:")
+        print(self.transform)
 
     def __len__(self):
         return len(self.files)

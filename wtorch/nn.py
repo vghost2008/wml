@@ -49,12 +49,31 @@ class LayerNorm2d(nn.LayerNorm):
         super().__init__(num_features, **kwargs)
         self.num_channels = self.normalized_shape[0]
 
-    def forward(self, x):
+
+    def forward(self, x, data_format='channel_first'):
+        """Forward method.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+            data_format (str): The format of the input tensor. If
+                ``"channel_first"``, the shape of the input tensor should be
+                (B, C, H, W). If ``"channel_last"``, the shape of the input
+                tensor should be (B, H, W, C). Defaults to "channel_first".
+        """
         assert x.dim() == 4, 'LayerNorm2d only supports inputs with shape ' \
             f'(N, C, H, W), but got tensor with shape {x.shape}'
-        return F.layer_norm(
-            x.permute(0, 2, 3, 1).contiguous(), self.normalized_shape,
-            self.weight, self.bias, self.eps).permute(0, 3, 1, 2).contiguous()
+        if data_format == 'channel_first':
+            x = x.permute(0, 2, 3, 1)
+            x = F.layer_norm(x, self.normalized_shape, self.weight, self.bias,
+                             self.eps)
+            # If the output is discontiguous, it may cause some unexpected
+            # problem in the downstream tasks
+            x = x.permute(0, 3, 1, 2).contiguous()
+        elif data_format == 'channel_last':
+            x = F.layer_norm(x, self.normalized_shape, self.weight, self.bias,
+                             self.eps)
+        return x
+
 
 class EvoNormS0(nn.Module):
     def __init__(self, num_groups,num_features, eps=1e-6, scale=True):
@@ -355,6 +374,11 @@ def get_norm(norm, out_channels,norm_args={}):
     Returns:
         nn.Module or None: the normalization layer
     """
+    if isinstance(norm,dict):
+        norm = dict(norm)
+        _norm = norm.pop('type')
+        norm_args = norm
+        norm = _norm
     if norm is None:
         return None
     if norm in ["GN","EvoNormS0"] and len(norm_args)==0:
@@ -422,6 +446,11 @@ class SiLU(nn.Module):
 
 
 def get_activation(name="SiLU", inplace=True):
+    if isinstance(name,dict):
+        cfg = dict(name)
+        name = cfg.pop('type')
+        inplace = cfg.pop('inplace',True)
+        assert len(cfg)==0,f"ERROR: activation cfg {cfg}"
     if name == "SiLU" or name == "Swish":
         module = nn.SiLU(inplace=inplace)
     elif name == "ReLU":

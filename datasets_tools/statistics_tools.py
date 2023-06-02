@@ -387,9 +387,13 @@ def pascal_voc_dataset(data_dir,labels=None):
     #data_path = "/home/wj/ai/mldata1/B7mura/datas/test_s0"
     #data_path = "/home/wj/0day/wt_06"
     #data_path = '/home/wj/0day/pyz'
-    data.read_data(data_dir,
+    xmls = wmlu.get_files(data_dir,suffix=".xml")
+    imgs = [wmlu.change_suffix(x,"jpg") for x in xmls]
+    files = list(zip(imgs,xmls))
+    data.read_data(files,silent=True)
+    '''data.read_data(data_dir,
                    silent=True,
-                   img_suffix=".bmp;;.jpg")
+                   img_suffix=".bmp;;.jpg")'''
 
     return data.get_items()
 
@@ -480,7 +484,8 @@ if __name__ == "__main__":
     statics = statistics_boxes_with_datas(dataset,
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
-                                          max_aspect=None,absolute_size=True)
+                                          max_aspect=None,absolute_size=True,
+                                          silent=True)
                                           #trans_img_size=partial(trans_img_long_size_to,long_size=8192))
     statistics_boxes(statics[0], nr=nr)
     statistics_classes_per_img(statics[3])

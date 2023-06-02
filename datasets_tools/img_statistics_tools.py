@@ -3,7 +3,7 @@ import img_utils as wmli
 import wml_utils as wmlu
 import numpy as np
 import os
-from iotoolkit.imgs_reader_mt import ImgsReader
+from iotoolkit.imgs_reader_mt import ImgsReader,MaxImgLongSize
 import sys
 import random
 
@@ -11,6 +11,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('src_dir', type=str, default="/home/wj/ai/mldata1/B7mura/datas/try_s0",help='source video directory')
     parser.add_argument("--test-nr",type=int,help="max imgs to test")
+    parser.add_argument("--max-long-size",type=int,default=1024,help="max img long size")
     args = parser.parse_args()
     return args
 
@@ -25,12 +26,18 @@ def get_img_contrast_info(img):
     return contrast
 
 
-def get_imgs_info(files):
+def get_imgs_info(files,args):
     widths = []
     heights = []
     value = []
     contrast = []
-    reader = ImgsReader(files,thread_nr=8)
+    max_long_size = args.max_long_size
+    transform = None
+    if max_long_size>1:
+        transform = MaxImgLongSize(max_long_size)
+    reader = ImgsReader(files,thread_nr=8,transform=transform)
+    width_counter = wmlu.Counter()
+    height_counter = wmlu.Counter()
 
     for i,(file,img) in enumerate(reader):
         sys.stdout.write(f"Process {i}/{len(reader)}        \r")
@@ -39,8 +46,11 @@ def get_imgs_info(files):
             print(f"ERROR: Read {file} faild.")
             continue
         try:
-            widths.append(img.shape[1])
-            heights.append(img.shape[0])
+            shape = wmli.get_img_size(file)
+            widths.append(shape[1])
+            heights.append(shape[0])
+            width_counter.add(int(shape[1]//10)*10)
+            height_counter.add(int(shape[0]//10)*10)
             value.append(np.mean(img,axis=(0,1)))
             contrast.append(get_img_contrast_info(img))
         except Exception as e:
@@ -55,6 +65,14 @@ def get_imgs_info(files):
     ratios = widths/(heights+1e-5)
 
     print("\n")
+    print("width_counter")
+    width_counter = list(width_counter.items())
+    width_counter = sorted(width_counter,key=lambda x:x[0])
+    wmlu.show_list(width_counter)
+    print("height_counter")
+    height_counter = list(height_counter.items())
+    height_counter = sorted(height_counter,key=lambda x:x[0])
+    wmlu.show_list(height_counter)
     print(f"WIDTH: max={np.max(widths)}, min={np.min(widths)}, mean={np.mean(widths)}, std={np.std(widths)}")
     print(f"HEIGHT: max={np.max(heights)}, min={np.min(heights)}, mean={np.mean(heights)}, std={np.std(heights)}")
     print(f"RATIOS(W/H): max={np.max(ratios)}, min={np.min(ratios)}, mean={np.mean(ratios)}, std={np.std(ratios)}")
@@ -71,4 +89,4 @@ if __name__ == "__main__":
         print(f"Only test {args.test_nr} imgs.")
         random.shuffle(img_files)
         img_files = img_files[:args.test_nr]
-    get_imgs_info(img_files)
+    get_imgs_info(img_files,args)
