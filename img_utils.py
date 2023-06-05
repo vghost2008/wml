@@ -22,6 +22,8 @@ import object_detection2.visualization as odv
 import torchvision
 import torch
 
+BASE_IMG_SUFFIX=".jpg;;.jpeg;;.bmp;;.png;;.gif"
+
 try:
     from turbojpeg import TJCS_RGB, TJPF_BGR, TJPF_GRAY, TurboJPEG
 except ImportError:

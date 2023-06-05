@@ -148,10 +148,10 @@ file_path:图像文件路径
 shape:[h,w,d]
 boxes:[N,4] (y0,x0,y1,x1) 相对大小
 '''
-def write_voc_xml(save_path,file_path,shape, bboxes, labels_text, difficult=None, truncated=None,probs=None,is_relative_coordinate=True):
+def write_voc_xml(xml_path,img_path,shape, bboxes, labels_text, difficult=None, truncated=None,probs=None,is_relative_coordinate=True):
 
     if shape is None or shape[0] < 5 or shape[1] < 5:
-        _shape = get_shape_from_img(save_path,file_path)
+        _shape = get_shape_from_img(xml_path,img_path)
         print(f"Force update img shape, old={shape}, new={_shape}.")
         shape = list(_shape)
     
@@ -171,20 +171,20 @@ def write_voc_xml(save_path,file_path,shape, bboxes, labels_text, difficult=None
     doc.appendChild(objectlist)
 
     folder = doc.createElement("folder")
-    #folder_value = doc.createTextNode(os.path.basename(os.path.dirname(file_path)).decode("utf-8"))
-    folder_value = doc.createTextNode(os.path.basename(os.path.dirname(file_path)))
+    #folder_value = doc.createTextNode(os.path.basename(os.path.dirname(img_path)).decode("utf-8"))
+    folder_value = doc.createTextNode(os.path.basename(os.path.dirname(img_path)))
     folder.appendChild(folder_value)
     objectlist.appendChild(folder)
 
     filename = doc.createElement("filename")
-    #filename_value = doc.createTextNode(os.path.basename(file_path).decode("utf-8"))
-    filename_value = doc.createTextNode(os.path.basename(file_path))
+    #filename_value = doc.createTextNode(os.path.basename(img_path).decode("utf-8"))
+    filename_value = doc.createTextNode(os.path.basename(img_path))
     filename.appendChild(filename_value)
     objectlist.appendChild(filename)
 
     path = doc.createElement("path")
-    #path_value = doc.createTextNode(file_path.decode("utf-8"))
-    path_value = doc.createTextNode(file_path)
+    #path_value = doc.createTextNode(img_path.decode("utf-8"))
+    path_value = doc.createTextNode(img_path)
     path.appendChild(path_value)
     objectlist.appendChild(path)
 
@@ -244,11 +244,11 @@ def write_voc_xml(save_path,file_path,shape, bboxes, labels_text, difficult=None
                     bndbox.appendChild(create_text_element(doc, "xmax", int(box[3])))
                     bndbox.appendChild(create_text_element(doc, "ymax", int(box[2])))
             except Exception as e:
-                print(f"ERROR: {save_path} {e} {box}")
+                print(f"ERROR: {xml_path} {e} {box}")
             object.appendChild(bndbox)
             objectlist.appendChild(object)
 
-    with open(save_path,'w') as f:
+    with open(xml_path,'w') as f:
         #f.write(doc.toprettyxml(indent='\t', encoding='utf-8'))
         f.write(doc.toprettyxml(indent='\t'))
 

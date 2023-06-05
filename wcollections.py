@@ -119,3 +119,12 @@ class Counter(dict):
         else:
             self[key] = 1
         return self[key]
+
+class EDict(dict):
+    '''
+    只能添加键值，不允许更新
+    '''
+    def __setitem__(self,item,value):
+        if item in self:
+            raise RuntimeError(f"ERROR: key {item} already exists.")
+        super().__setitem__(item,value)

@@ -626,6 +626,8 @@ return:
 [N,M]
 '''
 def iou_matrix(bboxes0,bboxes1):
+    bboxes0 = np.array(bboxes0)
+    bboxes1 = np.array(bboxes1)
     bboxes0 = np.expand_dims(bboxes0,axis=1)
     bboxes1 = np.expand_dims(bboxes1,axis=0)
 

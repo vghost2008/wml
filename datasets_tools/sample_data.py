@@ -17,7 +17,7 @@ def parse_args():
 
 def sample_in_one_dir(dir_path,nr):
     print(f"Sample in {dir_path}")
-    files = wmlu.recurse_get_filepath_in_dir(dir_path)
+    files = wmlu.recurse_get_filepath_in_dir(dir_path,suffix=".jpg;;.jpeg;;.bmp;;.png")
     random.shuffle(files)
     return files[:nr]
 
