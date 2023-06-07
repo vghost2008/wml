@@ -4,11 +4,12 @@ import glob
 import os.path as osp
 import os
 import shutil
+import img_utils as wmli
 
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")
-    parser.add_argument("--ext",type=str,default=".xml",help="annotation ext")
+    parser.add_argument("--ext",type=str,default="xml",help="annotation ext")
     args = parser.parse_args()
     return args
 
@@ -30,12 +31,12 @@ def find_imgs_for_ann_file(ann_path):
 
 if __name__ == "__main__":
     args = parse_args()
-    ann_files = wmlu.get_files(args.src_dir,args.ext)
+    imgs = wmlu.get_files(args.src_dir,wmli.BASE_IMG_SUFFIX)
     files2remove = []
-    for ann_file in ann_files:
-        img_file = find_imgs_for_ann_file(ann_file)
-        if img_file is None:
-            files2remove.append(ann_file)
+    for img in imgs:
+        ann_file = wmlu.change_suffix(img,args.ext)
+        if not osp.exists(ann_file):
+            files2remove.append(img)
     print(f"Files to remove {len(files2remove)}:")
     wmlu.show_list(files2remove)
     x = input("Y/n\n")
