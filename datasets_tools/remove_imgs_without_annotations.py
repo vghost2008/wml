@@ -10,6 +10,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")
     parser.add_argument("--ext",type=str,default="xml",help="annotation ext")
+    parser.add_argument("--save-dir",type=str,help="save dir")
     args = parser.parse_args()
     return args
 
@@ -37,13 +38,26 @@ if __name__ == "__main__":
         ann_file = wmlu.change_suffix(img,args.ext)
         if not osp.exists(ann_file):
             files2remove.append(img)
-    print(f"Files to remove {len(files2remove)}:")
-    wmlu.show_list(files2remove)
-    x = input("Y/n\n")
+    save_dir = args.save_dir
+    if save_dir is None:
+        print(f"Files to remove {len(files2remove)}:")
+        wmlu.show_list(files2remove)
+        x = input(f"Y/n to remove {len(files2remove)}\n")
+    else:
+        print(f"Files to move {len(files2remove)}:")
+        wmlu.show_list(files2remove)
+        x = input(f"Y/n to move {len(files2remove)} to {save_dir}\n")
     if x.lower()=="y":
-        print(f"Remove files")
-        for file in files2remove:
-            os.remove(file)
+        if save_dir is None:
+            print(f"Remove files")
+            for file in files2remove:
+                os.remove(file)
+        else:
+            os.makedirs(save_dir,exist_ok=True)
+            for file in files2remove:
+                bn = osp.basename(file)
+                dst_path = osp.join(save_dir,bn)
+                shutil.move(file,dst_path)
     else:
         print(f"Cancel")
 

@@ -2,8 +2,18 @@ import sys
 import os
 import wml_utils as wmlu
 import cv2
+import os.path as osp
 import numpy as np
 from iotoolkit.pascal_voc_toolkit import write_voc_xml
+import argparse
+import img_utils as wmli
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="build gif")
+    parser.add_argument("src_dir",type=str,help="src dir")
+    parser.add_argument("--labels",type=str,nargs="+",default=[],help="labels")
+    args = parser.parse_args()
+    return args
 
 '''
 txt 文件内容
@@ -47,9 +57,11 @@ def read_yolotxt(txt_path,img_suffix="jpg"):
     return np.array(labels),np.array(bboxes)
 
 
-def trans_yolotxt(txt_path,classes_names,img_suffix="jpg"):
+def trans_yolotxt(txt_path,img_path,classes_names):
+    if not osp.exists(txt_path):
+        print(f"{txt_path} not exists.")
+        return
     labels,bboxes = read_yolotxt(txt_path)
-    img_path = wmlu.change_suffix(txt_path,img_suffix)
     xml_path = wmlu.change_suffix(txt_path,"xml")
     _bboxes = []
     _labels = []
@@ -60,16 +72,34 @@ def trans_yolotxt(txt_path,classes_names,img_suffix="jpg"):
         _bboxes.append(bboxes[i])
     if len(_labels) == 0:
         print(f"{txt_path} is empty.")
-        return
+    print(f"Save {xml_path}")
     write_voc_xml(xml_path,img_path,None,_bboxes,_labels)
 
 def trans_dirs(dir_path,classes_names):
-    txt_paths = wmlu.recurse_get_filepath_in_dir(dir_path,suffix=".txt")
-    for txt_path in txt_paths:
-        trans_yolotxt(txt_path,classes_names)
+    img_files = wmlu.get_files(dir_path,suffix=wmli.BASE_IMG_SUFFIX)
+    for img_path in img_files:
+        txt_path = wmlu.change_suffix(img_path,"txt")
+        trans_yolotxt(txt_path,img_path,classes_names)
+
+def read_labels_file(path):
+    with open(path,"r") as f:
+        lines = f.readlines()
+        lines = [x.strip() for x in lines]
+    return lines
 
 if __name__ == "__main__":
     #classes_names = ["car", "truck", "tank_truck", "bus", "van", "dangerous_sign"]
-    classes_names = {1:'car',2:'bus',3:'truck'}
-    trans_dirs("/mnt/data1/wj/ai/mldata/boedcvehicle/train_data/txj_vd_bus_truck",classes_names)
+    args = parse_args()
+    src_dir = args.src_dir
+    labels = args.labels
+    if len(labels)==0:
+        labels_file = os.path.join(src_dir,"classes.txt")
+        if not os.path.exists(labels_file):
+            print(f"Find labels file {labels_file} faild.")
+            exit(0)
+        labels = read_labels_file(labels_file)
+    id2text = dict(zip(range(len(labels)),labels))
+    wmlu.show_dict(id2text)
+        
+    trans_dirs(src_dir,id2text)
 
