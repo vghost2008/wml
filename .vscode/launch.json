@@ -57,6 +57,15 @@
             "console": "integratedTerminal",
             "args":["/home/wj/ai/mldata1/B7mura/datas/new_anno/230506", "/home/wj/ai/mldata1/B7mura/datas/train_s0",  "/home/wj/ai/mldata1/B7mura/tmp/data"]
         },
+        {
+            "name": "Python: annotation patch",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "datasets_tools/annotation_patch.py",
+            "console": "integratedTerminal",
+            "args":["/home/wj/ai/mldata1/B7mura/tmp/add_missed_mp1u_d2a_0612", "/home/wj/ai/mldata1/B7mura/datas/train_sru2/d2a_0612", "--save-dir", "/home/wj/ai/mldata1/B7mura/tmp/tmp","--max-size","8192"],
+        },
     ]
     
 }

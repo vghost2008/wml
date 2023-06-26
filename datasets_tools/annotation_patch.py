@@ -25,17 +25,42 @@ def parse_args():
     parser.add_argument('patch_dir', type=str, help='patch annotation directory')
     parser.add_argument('data_dir', type=str, help='data dir')
     parser.add_argument('--type', type=str, default="xml",help='dataset type')
+    parser.add_argument('--save-dir', type=str, help='dir to save annotation views.')
+    parser.add_argument('--max-size', type=int, help='max size to save img.')
     args = parser.parse_args()
     return args
 
-def patch_one_xml_file(bbox,label,xml_path,img_path):
+def patch_one_xml_file(bbox,label,xml_path,img_path,save_dir=None,max_size=None):
     print(f"Patch {xml_path}")
     shape, bboxes, labels_text, difficult, truncated, probs = read_voc_xml(xml_path,absolute_coord=True)
     bk_xml_path = wmlu.change_suffix(xml_path,"bk")
     shutil.move(xml_path,bk_xml_path)
+    if save_dir is not None:
+        basename = wmlu.base_name(xml_path)
+        os.makedirs(save_dir,exist_ok=True)
+        save_img_path = osp.join(save_dir,basename+"_old.jpg")
+        img = wmli.imread(img_path)
+        if not osp.exists(save_img_path):
+            oimg = odv.draw_bboxes(img.copy(),
+                                   labels_text,bboxes=bboxes,show_text=True,
+                                   is_relative_coordinate=False)
+            if max_size is not None:
+                oimg = wmli.resize_long_size(oimg,max_size)
+            wmli.imwrite(save_img_path,oimg)
+
     bbox = odb.npchangexyorder([bbox])
     bboxes = np.concatenate([bboxes,bbox],axis=0)
     labels_text.append(label)
+    if save_dir is not None:
+        save_img_path = osp.join(save_dir,basename+"_new.jpg")
+        save_img_path = wmlu.get_unused_path_with_suffix(save_img_path)
+        if not osp.exists(save_img_path):
+            nimg = odv.draw_bboxes(img.copy(),
+                                   labels_text,bboxes=bboxes,show_text=True,
+                                   is_relative_coordinate=False)
+            if max_size is not None:
+                nimg = wmli.resize_long_size(nimg,max_size)
+            wmli.imwrite(save_img_path,nimg)
     write_voc_xml(xml_path,img_path,shape, bboxes, labels_text, is_relative_coordinate=False)
     
 def get_patch_info(patch_path):
@@ -74,9 +99,14 @@ if __name__ == "__main__":
     patch_dir = args.patch_dir
     data_dir = args.data_dir
     suffix = args.type
+    save_dir = args.save_dir
+    max_size = args.max_size
     patch_files = wmlu.get_files(patch_dir,suffix=wmli.BASE_IMG_SUFFIX)
     data_files = wmlu.get_files(data_dir,suffix=wmli.BASE_IMG_SUFFIX)
     data_dict = wmlu.EDict()
+
+    wmlu.create_empty_dir_remove_if(save_dir)
+
     for f in data_files:
         try:
             basename = wmlu.base_name(f)
@@ -96,7 +126,7 @@ if __name__ == "__main__":
             continue
         img_path = data_dict[basename]
         xml_path = wmlu.change_suffix(img_path,"xml")
-        patch_one_xml_file(bbox,label,xml_path,img_path)
+        patch_one_xml_file(bbox,label,xml_path,img_path,save_dir,max_size=max_size)
 
 
 

@@ -81,6 +81,8 @@ def fixed_color_fn(label):
     return colors_tableau[label%color_nr]
 
 def fixed_color_large_fn(label):
+    if isinstance(label,(str,bytes)):
+        return colors_tableau_large[len(label)]
     color_nr = len(colors_tableau_large)
     return colors_tableau_large[label%color_nr]
 
@@ -136,7 +138,7 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
         return img
     img = np.array(img)
     if scores is None:
-        scores = np.ones_like(classes,dtype=np.float32)
+        scores = np.ones([len(classes)],dtype=np.float32)
     if not isinstance(bboxes,np.ndarray):
         bboxes = np.array(bboxes)
     for i in range(bboxes.shape[0]):

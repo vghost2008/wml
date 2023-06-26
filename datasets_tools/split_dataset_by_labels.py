@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument(
         '--suffix',
         type=str,
-        default='json',
+        default='xml',
         choices=['json', 'xml', 'txt'],
         help='annotation suffix')
     parser.add_argument(

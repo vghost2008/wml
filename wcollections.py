@@ -61,8 +61,18 @@ class MDict(dict):
         Args:
             *args:
             **kwargs:
-            example:
+
+            example 1:
             x = MDict(dtype=list)
+            x[1].append('a')
+            x[2].append('b')
+            x[1].append('c')
+            print(x)
+            output:
+            {1: ['a', 'c'], 2: ['b']}
+
+            example 2:
+            x = MDict(dvalue=[])
             x[1].append('a')
             x[2].append('b')
             x[1].append('c')
