@@ -123,6 +123,18 @@ class MDict(dict):
 
 
 class Counter(dict):
+    '''
+    Example:
+    counter = Counter()
+    counter.add("a")
+    counter.add("a")
+    counter.add("b")
+    print(counter):
+    {
+        a: 2
+        b: 1
+    }
+    '''
     def add(self,key):
         if key in self:
             self[key] += 1
