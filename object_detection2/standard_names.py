@@ -19,6 +19,7 @@ BOXES_REGS = "box_regs"
 SEMANTIC = "semantic"
 COEFFICIENT = "coefficient"
 IMG_METAS = "img_metas"
+PROPOSAL_BBOXES = "proposal_bboxes"
 
 GT_BOXES = 'gt_bboxes'
 GT_LENGTH = 'gt_length'
