@@ -61,19 +61,30 @@ def bboxes_ious(bboxesa, bboxesb):
     jaccard = inter_vol/union_vol
     return jaccard
 
-def bboxes_ious_matrix(bboxesa,bboxesb):
-    '''
-    bboxesa: [N,4]  (xmin,ymin,xmax,ymax)
-    bboxesb: [M,4]  (xmin,ymin,xmax,ymax)
-    return:
-    [N,M]
-    '''
-    ious = []
-    for bbox in bboxesa:
-        _ious = bboxes_ious(bbox,bboxesb)
-        ious.append(_ious)
-    return torch.stack(ious,dim=0)
 
+def bboxes_ious_matrix(bboxes0,bboxes1):
+    bboxes0 = torch.unsqueeze(bboxes0,dim=1)
+    bboxes1 = torch.unsqueeze(bboxes1,dim=0)
+
+    x_int_min = torch.maximum(bboxes0[...,0],bboxes1[...,0])
+    x_int_max = torch.minimum(bboxes0[...,2],bboxes1[...,2])
+    y_int_min = torch.maximum(bboxes0[...,1],bboxes1[...,1])
+    y_int_max = torch.minimum(bboxes0[...,3],bboxes1[...,3])
+
+    int_w = x_int_max-x_int_min
+    int_h = y_int_max-y_int_min
+    int_w.clamp_(min=0.0)
+    int_h.clamp_(min=0.0)
+    inter_vol = int_w*int_h
+    areas0 = torch.prod(bboxes0[...,2:]-bboxes0[...,:2],dim=-1)
+    areas1 = torch.prod(bboxes1[...,2:]-bboxes1[...,:2],dim=-1)
+    union_vol = areas0+areas1-inter_vol
+
+    union_vol.clamp_(min=1e-8)
+
+    return inter_vol/union_vol
+
+iou_matrix = bboxes_ious_matrix
 
 def correct_bbox(bboxes,w,h):
     '''

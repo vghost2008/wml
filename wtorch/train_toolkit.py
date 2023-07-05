@@ -145,11 +145,12 @@ def freeze_model(model,freeze_bn=True):
         print(name, param.size(), "freeze")
         param.requires_grad = False
 
-def defrost_model(model,defrost_bn=True):
+def defrost_model(model,defrost_bn=True,silent=False):
     if defrost_bn:
         model.train()
     for name, param in model.named_parameters():
-        print(name, param.size(), "defrost")
+        if not silent:
+            print(name, param.size(), "defrost")
         param.requires_grad = True
 
 def __set_bn_momentum(m,momentum=0.1):

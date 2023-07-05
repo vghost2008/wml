@@ -47,6 +47,108 @@ class ConfigDict(Dict):
         else:
             return value
         raise ex
+    
+    def merge_from_dict(self, options, allow_list_keys=True):
+        """Merge list into cfg_dict.
+
+        Merge the dict parsed by MultipleKVAction into this cfg.
+
+        Examples:
+            >>> options = {'model.backbone.depth': 50,
+            ...            'model.backbone.with_cp':True}
+            >>> cfg = Config(dict(model=dict(backbone=dict(type='ResNet'))))
+            >>> cfg.merge_from_dict(options)
+            >>> cfg_dict = super(Config, self).__getattribute__('_cfg_dict')
+            >>> assert cfg_dict == dict(
+            ...     model=dict(backbone=dict(depth=50, with_cp=True)))
+
+            >>> # Merge list element
+            >>> cfg = Config(dict(pipeline=[
+            ...     dict(type='LoadImage'), dict(type='LoadAnnotations')]))
+            >>> options = dict(pipeline={'0': dict(type='SelfLoadImage')})
+            >>> cfg.merge_from_dict(options, allow_list_keys=True)
+            >>> cfg_dict = super(Config, self).__getattribute__('_cfg_dict')
+            >>> assert cfg_dict == dict(pipeline=[
+            ...     dict(type='SelfLoadImage'), dict(type='LoadAnnotations')])
+
+        Args:
+            options (dict): dict of configs to merge from.
+            allow_list_keys (bool): If True, int string keys (e.g. '0', '1')
+              are allowed in ``options`` and will replace the element of the
+              corresponding index in the config if the config is a list.
+              Default: True.
+        """
+        option_cfg_dict = {}
+        for full_key, v in options.items():
+            d = option_cfg_dict
+            key_list = full_key.split('.')
+            for subkey in key_list[:-1]:
+                d.setdefault(subkey, ConfigDict())
+                d = d[subkey]
+            subkey = key_list[-1]
+            d[subkey] = v
+
+        cfg_dict = self
+        cfg_dict = ConfigDict._merge_a_into_b(
+                option_cfg_dict, cfg_dict, allow_list_keys=allow_list_keys)
+        self.update(cfg_dict)
+
+    @staticmethod
+    def _merge_a_into_b(a, b, allow_list_keys=False):
+        """merge dict ``a`` into dict ``b`` (non-inplace).
+
+        Values in ``a`` will overwrite ``b``. ``b`` is copied first to avoid
+        in-place modifications.
+
+        Args:
+            a (dict): The source dict to be merged into ``b``.
+            b (dict): The origin dict to be fetch keys from ``a``.
+            allow_list_keys (bool): If True, int string keys (e.g. '0', '1')
+              are allowed in source ``a`` and will replace the element of the
+              corresponding index in b if b is a list. Default: False.
+
+        Returns:
+            dict: The modified dict of ``b`` using ``a``.
+
+        Examples:
+            # Normally merge a into b.
+            >>> Config._merge_a_into_b(
+            ...     dict(obj=dict(a=2)), dict(obj=dict(a=1)))
+            {'obj': {'a': 2}}
+
+            # Delete b first and merge a into b.
+            >>> Config._merge_a_into_b(
+            ...     dict(obj=dict(_delete_=True, a=2)), dict(obj=dict(a=1)))
+            {'obj': {'a': 2}}
+
+            # b is a list
+            >>> Config._merge_a_into_b(
+            ...     {'0': dict(a=2)}, [dict(a=1), dict(b=2)], True)
+            [{'a': 2}, {'b': 2}]
+        """
+        b = b.copy()
+        for k, v in a.items():
+            if allow_list_keys and k.isdigit() and isinstance(b, list):
+                k = int(k)
+                if len(b) <= k:
+                    raise KeyError(f'Index {k} exceeds the length of list {b}')
+                b[k] = ConfigDict._merge_a_into_b(v, b[k], allow_list_keys)
+            elif isinstance(v, dict):
+                if k in b and not v.pop(DELETE_KEY, False):
+                    allowed_types = (dict, list) if allow_list_keys else dict
+                    if not isinstance(b[k], allowed_types):
+                        raise TypeError(
+                            f'{k}={v} in child config cannot inherit from '
+                            f'base because {k} is a dict in the child config '
+                            f'but is of type {type(b[k])} in base config. '
+                            f'You may set `{DELETE_KEY}=True` to ignore the '
+                            f'base config.')
+                    b[k] = ConfigDict._merge_a_into_b(v, b[k], allow_list_keys)
+                else:
+                    b[k] = ConfigDict(v)
+            else:
+                b[k] = v
+        return b
 
 
 def add_args(parser, cfg, prefix=''):
