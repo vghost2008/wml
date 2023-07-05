@@ -85,6 +85,7 @@ def recurse_get_filepath_in_dir(dir_path,suffix=None,prefix=None,followlinks=Fal
     dir_path = os.path.expanduser(dir_path)
     if suffix is not None:
         suffix = suffix.split(";;")
+        suffix = [x.lower() for x in suffix]
     if prefix is not None:
         prefix = prefix.split(";;")
     def check_file(filename):
@@ -92,7 +93,7 @@ def recurse_get_filepath_in_dir(dir_path,suffix=None,prefix=None,followlinks=Fal
         is_prefix_good = False
         if suffix is not None:
             for s in suffix:
-                if filename.endswith(s):
+                if filename.lower().endswith(s):
                     is_suffix_good = True
                     break
         else:
