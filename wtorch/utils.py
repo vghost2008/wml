@@ -103,6 +103,7 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
     net_state_dict = net.state_dict()
     new_loaded_dict = {}
     used_loaded_dict_key = []
+    unloaded_net_state_key = []
     for k in net_state_dict:
         new_k = k
         if new_k in loaded_dict and net_state_dict[k].size() == loaded_dict[new_k].size():
@@ -116,6 +117,7 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
             used_loaded_dict_key.append(new_k)
         elif ".num_batches_tracked" not in k:
             print(f"Skipped loading parameter {k} {net_state_dict[k].shape}")
+            unloaded_net_state_key.append(k)
 
     print(f"---------------------------------------------------")
     for k in loaded_dict:
@@ -129,7 +131,7 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
     net.load_state_dict(net_state_dict)
     sys.stdout.flush()
     print(f"Load checkpoint finish.")
-    return net
+    return net,list(new_loaded_dict.keys()),unloaded_net_state_key
 
 def sequence_mask(lengths,maxlen=None,dtype=torch.bool):
     if not isinstance(lengths,torch.Tensor):

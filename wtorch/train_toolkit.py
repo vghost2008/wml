@@ -181,10 +181,13 @@ def get_gpus_str(gpus):
 def show_model_parameters_info(net):
     print("Training parameters.")
     total_train_parameters = 0
+    freeze_parameters = []
+    unfreeze_parameters = []
     for name, param in net.named_parameters():
         if param.requires_grad:
             print(name, list(param.size()), param.device,'unfreeze')
             total_train_parameters += param.numel()
+            unfreeze_parameters.append(name)
     print(f"Total train parameters {total_train_parameters:,}")
     print("Not training parameters.")
     total_not_train_parameters = 0
@@ -192,6 +195,7 @@ def show_model_parameters_info(net):
         if not param.requires_grad:
             print(name, list(param.size()), param.device,'freeze')
             total_not_train_parameters += param.numel()
+            freeze_parameters.append(name)
     print(f"Total not train parameters {total_not_train_parameters:,}")
 
     _nr = 0
@@ -204,6 +208,8 @@ def show_model_parameters_info(net):
         else:
             not_freeze_nr += 1
     print(f"Total freeze {_nr} batch normal layers, {not_freeze_nr} batch normal layer not freeze.")
+
+    return freeze_parameters,unfreeze_parameters
 
 def show_async_norm_states(module):
     for name, child in module.named_modules():
