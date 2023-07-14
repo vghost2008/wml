@@ -64,7 +64,15 @@ class COCOData:
         filename = image['file_name']
         return os.path.join(self.image_dir, filename)
 
-    def read_data(self,annotations_file,image_dir):
+    @staticmethod
+    def get_image_dir_by_annotations_file(path):
+        dir_name = wmlu.parent_dir_path_of_file(osp.dirname(path))
+        basename = wmlu.base_name(path).split("_")[-1]
+        return osp.join(dir_name,"images",basename)
+
+    def read_data(self,annotations_file,image_dir=None):
+        if image_dir is None:
+            image_dir = self.get_image_dir_by_annotations_file(annotations_file)
         if self.trans_label is not None:
             print(f"Trans label is not None")
         sys.stdout.flush()

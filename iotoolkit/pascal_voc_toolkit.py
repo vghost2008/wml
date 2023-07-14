@@ -146,7 +146,7 @@ def create_text_element(doc,name,value):
 save_path:xml文件保存路径
 file_path:图像文件路径
 shape:[h,w,d]
-boxes:[N,4] (y0,x0,y1,x1) 相对大小
+boxes:[N,4] (y0,x0,y1,x1) 
 '''
 def write_voc_xml(xml_path,img_path,shape, bboxes, labels_text, difficult=None, truncated=None,probs=None,is_relative_coordinate=True):
 

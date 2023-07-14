@@ -165,7 +165,10 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
         label_to_text = wmlu.MDict.from_dict(label_to_text)
     for ann in annotations_list:
         shape = {}
-        shape["label"] = label_to_text(ann["category_id"])
+        if label_to_text is not None:
+            shape["label"] = label_to_text(ann["category_id"])
+        else:
+            shape["label"] = ann["category_id"]
         #shape["line_color"]=None
         #shape["fill_color"]=None
         shape["shape_type"]="polygon"
@@ -182,6 +185,8 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
                 points = np.squeeze(points,axis=1)
             points = points*scale+offset
             points = points.astype(np.int32).tolist()
+            if len(points)<=2:
+                continue
             shape["points"] = points
             shapes.append(shape)
 
@@ -203,7 +208,7 @@ def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_
     annotatios_list = []
     for i in range(len(labels)):
         annotatios = {"category_id":labels[i],
-        'segmentation':masks[i],
+        'segmentation':masks[i].astype(np.uint8),
         'bbox':bboxes[i]}
         annotatios_list.append(annotatios)
     save_labelme_datav2(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)

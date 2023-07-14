@@ -8,9 +8,9 @@ import random
 from iotoolkit.labelme_toolkit import get_labels_and_bboxes
 
 
-def get_files(dir_path, sub_dir_name):
-    img_dir = os.path.join(dir_path, sub_dir_name,'images')
-    label_dir = os.path.join(dir_path, sub_dir_name,"v2.0","polygons")
+def get_files(dir_path):
+    img_dir = os.path.join(dir_path, 'images')
+    label_dir = os.path.join(dir_path, "v2.0","polygons")
     res = []
     json_files = wmlu.recurse_get_filepath_in_dir(label_dir,suffix=".json")
     for jf in json_files:
@@ -25,20 +25,21 @@ def get_files(dir_path, sub_dir_name):
 
 
 class MapillaryVistasData(object):
-    def __init__(self, label_text2id=None, shuffle=False, sub_dir_name="training",ignored_labels=[],label_map={},
-                 allowed_labels_fn=None):
+    def __init__(self, label_text2id=None, shuffle=False, ignored_labels=[],label_map={},
+                 allowed_labels_fn=None,
+                 use_semantic=True):
         self.files = None
         self.label_text2id = label_text2id
         self.shuffle = shuffle
-        self.sub_dir_name = sub_dir_name
         self.ignored_labels = ignored_labels
         self.label_map = label_map
+        self.use_semantic = use_semantic
         self.allowed_labels_fn = None if allowed_labels_fn is None or (isinstance(allowed_labels_fn,list ) and len(allowed_labels_fn)==0) else allowed_labels_fn
         if self.allowed_labels_fn is not None and isinstance(self.allowed_labels_fn,list):
             self.allowed_labels_fn = lambda x:x in allowed_labels_fn
 
     def read_data(self, dir_path):
-        self.files = get_files(dir_path, self.sub_dir_name)
+        self.files = get_files(dir_path)
         if self.shuffle:
             random.shuffle(self.files)
 
@@ -48,6 +49,7 @@ class MapillaryVistasData(object):
     def get_items(self,beg=0,end=None,filter=None):
         '''
         :return:
+        bboxes: [ymin,xmin,ymax,xmax]
         binary_masks [N,H,W], value is 0 or 1,
         full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
         '''
@@ -61,15 +63,20 @@ class MapillaryVistasData(object):
             print(img_file,json_file)
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
-            image, annotations_list = self.read_json(json_file)
+            image, annotations_list = self.read_json(json_file,use_semantic=self.use_semantic)
             labels_names, bboxes = get_labels_and_bboxes(image, annotations_list)
-            masks = [ann["segmentation"] for ann in annotations_list]
-            if len(masks) > 0:
-                try:
-                    masks = np.stack(masks, axis=0)
-                except:
-                    print("ERROR: stack masks faild.")
+            try:
+                if self.use_semantic:
+                    masks = [ann["segmentation"] for ann in annotations_list]
+                    if len(masks) > 0:
+                        try:
+                            masks = np.stack(masks, axis=0)
+                        except:
+                            print("ERROR: stack masks faild.")
+                else:
                     masks = None
+            except:
+                masks = None
 
             if self.label_text2id is not None:
                 labels = [self.label_text2id(x) for x in labels_names]
@@ -88,7 +95,10 @@ class MapillaryVistasData(object):
             sys.stdout.flush()
             image, annotations_list = self.read_json(json_file,use_semantic=False)
             labels_names, bboxes = get_labels_and_bboxes(image, annotations_list)
-            labels = [self.label_text2id(x) for x in labels_names]
+            if self.label_text2id is not None:
+                labels = [self.label_text2id(x) for x in labels_names]
+            else:
+                labels = None
             #file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _
             yield img_file, [image['height'], image['width']], labels, labels_names,bboxes, None,None,None,None
 
@@ -114,7 +124,6 @@ class MapillaryVistasData(object):
                         continue
                     if self.label_map is not None and label in self.label_map:
                         label = self.label_map[label]
-                    mask = np.zeros(shape=[img_height, img_width], dtype=np.uint8)
                     all_points = np.array([shape["polygon"]]).astype(np.int32)
                     if len(all_points) < 1:
                         continue
@@ -129,6 +138,7 @@ class MapillaryVistasData(object):
                     ymin = np.min(y)
                     ymax = np.max(y)
                     if use_semantic:
+                        mask = np.zeros(shape=[img_height, img_width], dtype=np.uint8)
                         segmentation = cv.drawContours(mask, all_points, -1, color=(1), thickness=cv.FILLED)
                         annotations_list.append({"bbox": (xmin, ymin, xmax - xmin + 1, ymax - ymin + 1),
                                                  "segmentation": segmentation,

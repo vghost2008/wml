@@ -105,7 +105,7 @@ def get_bboxes_by_mask(masks):
 def crop_masks_by_bboxes(masks,bboxes):
     '''
     masks: [N,H,W]
-    bboxes: [N,4] (x0,y0,x1,y1)
+    bboxes: [N,4] (x0,y0,x1,y1), absolute coordinate
     '''
     shape = masks.shape[1:]
     bboxes[:,0:4:2] = np.clip(bboxes[:,0:4:2],0.0,shape[1])

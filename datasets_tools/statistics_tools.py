@@ -404,10 +404,9 @@ def coco2014_dataset():
 
     return data.get_items()
 
-def coco2017_dataset():
+def coco2017_dataset(annotations_path,labels=None):
     data = COCOData()
-    data.read_data(wmlu.home_dir("ai/mldata2/coco/annotations/instances_train2017.json"),
-                   image_dir=wmlu.home_dir("ai/mldata2/coco/train2017"))
+    data.read_data(annotations_path)
 
     return data.get_items()
 
@@ -427,7 +426,7 @@ def labelme_dataset(data_dir,labels):
 
 
 lid = 0
-def mapillary_vistas_dataset():
+def _mapillary_vistas_dataset():
     NAME2ID = {}
     ID2NAME = {}
 
@@ -452,6 +451,14 @@ def mapillary_vistas_dataset():
     # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatav10_preproc")
     # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10_neg_preproc")
     data.read_data(wmlu.home_dir("ai/mldata/mapillary_vistas/mapillary-vistas-dataset_public_v2.0"))
+    return data.get_boxes_items()
+
+def mapillary_vistas_dataset(data_dir):
+    data = MapillaryVistasData(shuffle=False,use_semantic=False)
+    # data.read_data("/data/mldata/qualitycontrol/rdatasv5_splited/rdatasv5")
+    # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatav10_preproc")
+    # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10_neg_preproc")
+    data.read_data(data_dir)
     return data.get_boxes_items()
 
 
@@ -481,6 +488,13 @@ if __name__ == "__main__":
         dataset = labelme_dataset(data_dir=data_dir,
                                   labels=args.labels
                                   )
+    elif dataset_type == "coco":
+        dataset = coco2017_dataset(data_dir,
+                                   labels=args.labels)
+    elif dataset_type == "vistas":
+        dataset = mapillary_vistas_dataset(data_dir)
+    else:
+        print(f"Unknow dataset type {dataset_type}")
     statics = statistics_boxes_with_datas(dataset,
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
