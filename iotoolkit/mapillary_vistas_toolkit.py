@@ -120,10 +120,10 @@ class MapillaryVistasData(object):
                     label = shape["label"]
                     if self.ignored_labels is not None and label in self.ignored_labels:
                         continue
-                    if self.allowed_labels_fn is not None and not self.allowed_labels_fn(label):
-                        continue
                     if self.label_map is not None and label in self.label_map:
                         label = self.label_map[label]
+                    if self.allowed_labels_fn is not None and not self.allowed_labels_fn(label):
+                        continue
                     all_points = np.array([shape["polygon"]]).astype(np.int32)
                     if len(all_points) < 1:
                         continue

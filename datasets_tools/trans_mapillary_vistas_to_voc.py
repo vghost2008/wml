@@ -24,10 +24,15 @@ def parse_args():
 def trans_data(data_dir,save_dir,labels):
     wmlu.create_empty_dir(save_dir,remove_if_exists=False)
 
+    label_map = {
+        'individual':'person',
+        'cyclists':'person',
+        'other-rider':'person'
+    }
 
     data = MapillaryVistasData(shuffle=False,
                                allowed_labels_fn=labels,
-                               label_map=None,
+                               label_map=label_map,
                                use_semantic=False)
     data.read_data(data_dir)
 

@@ -44,7 +44,8 @@ def sample_in_dir(dir_path,nr,split_nr=None,sample_in_sub_dirs=True):
     for dir in dirs:
         data = sample_in_one_dir(dir,nr)
         if split_nr is None:
-            append_to_dict(res,0,data)
+            #append_to_dict(res,0,data)
+            append_to_dict(res,wmlu.base_name(dir),data)
         else:
             data = wmlu.list_to_2dlistv2(data,split_nr)
             for i,d in enumerate(data):
@@ -54,8 +55,8 @@ def sample_in_dir(dir_path,nr,split_nr=None,sample_in_sub_dirs=True):
 
 def save_data(data,save_dir,suffix=None):
     for k,v in data.items():
-        #tsd = osp.join(save_dir,str(k))
-        tsd = save_dir
+        tsd = osp.join(save_dir,str(k))
+        #tsd = save_dir
         wmlu.create_empty_dir(tsd,False)
         for f in v:
             '''dir_name = wmlu.base_name(osp.dirname(f))

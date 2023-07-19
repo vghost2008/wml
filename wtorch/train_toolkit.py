@@ -9,6 +9,8 @@ import sys
 from .wlr_scheduler import *
 from collections import OrderedDict
 from .nn import LayerNorm,LayerNorm2d,EvoNormS0,EvoNormS01D
+import traceback
+
 
 _NORMS = (
     nn.BatchNorm1d,
@@ -253,30 +255,36 @@ def isfinite_hook(module,fea_in,fea_out):
         #return None
     if not torch.all(torch.isfinite(fea_out)):
         print("Find NaN or infininite")
-        print(f"{inspect.stack()}")
+        #print(f"{inspect.stack()}")
+        traceback.print_exc(file=sys.stdout)
         print(f"Input : {torch.min(fea_in).item(),torch.max(fea_in).item(),torch.mean(fea_in).item()}")
         print(f"Output: {torch.min(fea_out).item(),torch.max(fea_out).item(),torch.mean(fea_out).item()}")
         for name, param in module.named_parameters():
             print(f"{name}: {torch.min(param).item(),torch.max(param).item(),torch.mean(param).item()}")
 
-def islarge(x,max_v=65535):
-    return torch.any(torch.abs(x)>max_v)
-
-def islarge_hook(module,fea_in,fea_out):
+def islarge_hook(module,fea_in,fea_out,max_v=60000):
+    '''
+    register_forward_hook(net,isfinite_hook)
+    '''
     if isinstance(fea_in,(tuple,list)):
         if len(fea_in)==1:
             fea_in = fea_in[0]
         elif len(fea_in)==0:
             return None
-    #if islarge(fea_in):
+    #if not torch.all(torch.isfinite(fea_in)):
         #return None
-    if islarge(fea_out):
-        print("Find large value")
-        print(f"{inspect.stack()}")
+    if islarge(fea_out,max_v=max_v):
+        print("Find Large value")
+        #print(f"{inspect.stack()}")
+        traceback.print_exc(file=sys.stdout)
         print(f"Input : {torch.min(fea_in).item(),torch.max(fea_in).item(),torch.mean(fea_in).item()}")
         print(f"Output: {torch.min(fea_out).item(),torch.max(fea_out).item(),torch.mean(fea_out).item()}")
         for name, param in module.named_parameters():
             print(f"{name}: {torch.min(param).item(),torch.max(param).item(),torch.mean(param).item()}")
+
+
+def islarge(x,max_v=65535):
+    return torch.any(torch.abs(x)>max_v)
 
 def register_forward_hook(net,hook):
     nr = 0
@@ -285,6 +293,50 @@ def register_forward_hook(net,hook):
         nr += 1
     if nr == 0:
         net.register_forward_hook(hook=hook)
+
+def tensor_fix_grad(grad):
+    '''
+    tensor.register_hook(net,isfinite_hook)
+    '''
+    max_v = 16000.0
+    if not torch.all(torch.isfinite(grad)):
+        traceback.print_exc(file=sys.stdout)
+        print(grad.shape,grad)
+        #raise RuntimeError(f"infinite grad")
+        return torch.zeros_like(grad)
+    elif islarge(grad,max_v):
+        return torch.clamp(grad,min=-max_v,max=max_v)
+    return grad
+    
+
+def tensor_isfinite_hook(grad):
+    '''
+    tensor.register_hook(net,isfinite_hook)
+    '''
+    if not torch.all(torch.isfinite(grad)):
+        print("Find NaN or infininite grad")
+        #print(f"{inspect.stack()}")
+        traceback.print_exc(file=sys.stdout)
+        print(f"grad: {torch.min(grad).item(),torch.max(grad).item(),torch.mean(grad).item()}")
+        print("value:",grad)
+
+def tensor_islarge_hook(grad,max_v=60000):
+    '''
+    tensor.register_hook(net,isfinite_hook)
+    '''
+    if islarge(grad,max_v=max_v):
+        print("Find Large value grad")
+        #print(f"{inspect.stack()}")
+        traceback.print_exc(file=sys.stdout)
+        print(f"Output: {torch.min(grad).item(),torch.max(grad).item(),torch.mean(grad).item()}")
+
+def register_tensor_hook(model,hook):
+    '''
+    register_tensor_hook(model,tensor_isfinite_hook)
+    '''
+    for param in model.parameters():
+        if param.requires_grad:
+            param.register_hook(hook)
 
 def finetune_model(model,names_not2train=None,names2train=None):
     if names_not2train is not None:
