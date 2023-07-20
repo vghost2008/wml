@@ -27,6 +27,18 @@ _NORMS = (
     EvoNormS01D
 )
 
+def _get_tensor_or_tensors_shape(x):
+    if isinstance(x,(list,tuple)):
+        res = []
+        for v in x:
+            if v is not None:
+                res.append(v.shape)
+        return res
+    if x is not None:
+        return x.shape
+    else:
+        return None
+
 def grad_norm(parameters, norm_type: float = 2.0) -> torch.Tensor:
     if isinstance(parameters, torch.Tensor):
         parameters = [parameters]
@@ -284,7 +296,24 @@ def islarge_hook(module,fea_in,fea_out,max_v=60000):
 
 
 def islarge(x,max_v=65535):
+    if x is None:
+        return False
+    if isinstance(x,(tuple,list)):
+        for v in x :
+            if islarge(v,max_v=max_v):
+                return True
+        return False
     return torch.any(torch.abs(x)>max_v)
+
+def isfinite(x):
+    if x is None:
+        return True
+    if isinstance(x,(tuple,list)):
+        for v in x :
+            if not isfinite(v):
+                return False
+        return True 
+    return torch.all(torch.isfinite(x))
 
 def register_forward_hook(net,hook):
     nr = 0
@@ -293,6 +322,16 @@ def register_forward_hook(net,hook):
         nr += 1
     if nr == 0:
         net.register_forward_hook(hook=hook)
+
+def register_backward_hook(net,hook):
+    nr = 0
+    for module in net.children():
+        register_backward_hook(module,hook)
+        nr += 1
+    #if nr == 0:
+    if True:
+        #net.register_full_backward_hook(hook=hook)
+        net.register_backward_hook(hook=hook)
 
 def tensor_fix_grad(grad):
     '''
@@ -314,11 +353,11 @@ def tensor_isfinite_hook(grad):
     tensor.register_hook(net,isfinite_hook)
     '''
     if not torch.all(torch.isfinite(grad)):
-        print("Find NaN or infininite grad")
+        print(f"Find NaN or infininite grad, {grad.shape}")
         #print(f"{inspect.stack()}")
         traceback.print_exc(file=sys.stdout)
         print(f"grad: {torch.min(grad).item(),torch.max(grad).item(),torch.mean(grad).item()}")
-        print("value:",grad)
+        #print("value:",grad)
 
 def tensor_islarge_hook(grad,max_v=60000):
     '''
@@ -337,6 +376,26 @@ def register_tensor_hook(model,hook):
     for param in model.parameters():
         if param.requires_grad:
             param.register_hook(hook)
+
+def is_any_grad_infinite(model):
+    '''
+    register_tensor_hook(model,tensor_isfinite_hook)
+    '''
+    for name,param in model.named_parameters():
+        if param.requires_grad and param.grad is not None and \
+            (not torch.all(torch.isfinite(param.grad))  or islarge(param.grad,max_v=32768.0)):
+            print(f"ERROR: {name}: unnormal grad")
+
+def backward_grad_normal_hook(module,grad_input,grad_output):
+    '''
+    tensor.register_hook(net,isfinite_hook)
+    '''
+    if not isfinite(grad_output) or islarge(grad_output,max_v=32768.0):
+        print("Find NaN or infininite grad")
+        #print(f"{inspect.stack()}")
+        print(module,_get_tensor_or_tensors_shape(grad_input),_get_tensor_or_tensors_shape(grad_output),grad_input,grad_output)
+        #traceback.print_exc(file=sys.stdout)
+        #print(f"grad_output: {torch.min(grad_output).item(),torch.max(grad_output).item(),torch.mean(grad_output).item()}")
 
 def finetune_model(model,names_not2train=None,names2train=None):
     if names_not2train is not None:

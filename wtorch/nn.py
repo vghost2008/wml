@@ -36,6 +36,19 @@ class LayerNorm(nn.Module):
                 x = self.weight[:, None] * x + self.bias[:, None]
             return x
 
+class Identity(nn.Module):
+    def __init__(self,name="Identity"):
+        self.name = name
+        self.cache = None
+        super().__init__()
+
+    def forward(self,x):
+        self.cache = x
+        return x.clone()
+
+    def __repr__(self):
+        return self.name
+
 class LayerNorm2d(nn.LayerNorm):
     """LayerNorm on channels for 2d images.
 
@@ -591,8 +604,9 @@ class ArcMarginProduct(nn.Module):
 
     def forward(self, *,cosine, label):
         # --------------------------- cos(theta) & phi(theta) ---------------------------
-        sine = torch.sqrt((1.0 - torch.pow(cosine, 2)).clamp(0, 1)).to(cosine.dtype)
-        phi = cosine * self.cos_m - sine * self.sin_m
+        b = 1.00001 #防止cosine==1或者-1时梯度变为无穷大，无穷小
+        sine = torch.sqrt((b - torch.pow(cosine, 2)).clamp(0, 1)).to(cosine.dtype)
+        phi = cosine * self.cos_m - sine * self.sin_m #cos(theta+m)
         if self.easy_margin:
             phi = torch.where(cosine > 0, phi, cosine)
         else:
