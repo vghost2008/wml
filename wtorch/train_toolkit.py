@@ -339,11 +339,11 @@ def tensor_fix_grad(grad):
     '''
     max_v = 16000.0
     if not torch.all(torch.isfinite(grad)):
-        traceback.print_exc(file=sys.stdout)
-        print(grad.shape,grad)
+        print(f"infinite grad:",grad.shape,grad)
         #raise RuntimeError(f"infinite grad")
         return torch.zeros_like(grad)
     elif islarge(grad,max_v):
+        print(f"large grad:",grad.shape,torch.min(grad),torch.max(grad))
         return torch.clamp(grad,min=-max_v,max=max_v)
     return grad
     

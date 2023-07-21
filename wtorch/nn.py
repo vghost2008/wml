@@ -5,6 +5,10 @@ from .conv_ws import ConvWS2d
 from collections import Iterable
 from torch.nn import Parameter
 import math
+def _clone_tensors(x):
+    if isinstance(x,(list,tuple)):
+        return [v.clone() for v in x]
+    return x.clone()
 
 
 class LayerNorm(nn.Module):
@@ -40,7 +44,13 @@ class Identity(nn.Module):
     def __init__(self,name="Identity"):
         self.name = name
         self.cache = None
+        self.grad_cache = None
         super().__init__()
+        self.register_backward_hook(self.backward_hook)
+
+
+    def backward_hook(self,model,grad_input,grad_output):
+        self.grad_cache = _clone_tensors(grad_input)
 
     def forward(self,x):
         self.cache = x
@@ -604,7 +614,9 @@ class ArcMarginProduct(nn.Module):
 
     def forward(self, *,cosine, label):
         # --------------------------- cos(theta) & phi(theta) ---------------------------
-        b = 1.00001 #防止cosine==1或者-1时梯度变为无穷大，无穷小
+        b = 1.0001 #防止cosine==1或者-1时梯度变为无穷大，无穷小
+        max_v = 1.00004
+        cosine = cosine.clamp(-max_v,max_v)
         sine = torch.sqrt((b - torch.pow(cosine, 2)).clamp(0, 1)).to(cosine.dtype)
         phi = cosine * self.cos_m - sine * self.sin_m #cos(theta+m)
         if self.easy_margin:
@@ -618,5 +630,55 @@ class ArcMarginProduct(nn.Module):
         # -------------torch.where(out_i = {x_i if condition_i else y_i) -------------
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
         output *= self.s
+
+        return output
+
+class ArcMarginProduct_(nn.Module):
+    r"""Implement of large margin arc distance: :
+        Args:
+            s: norm of input feature
+            m: margin
+
+            cos(theta + m)
+        """
+    def __init__(self, s=30.0, m=0.50, easy_margin=False):
+        super(ArcMarginProduct, self).__init__()
+        self.s = s
+        self.m = m
+
+        self.easy_margin = easy_margin
+        self.cos_m = math.cos(m)
+        self.sin_m = math.sin(m)
+        self.th = math.cos(math.pi - m)
+        self.mm = math.sin(math.pi - m) * m
+        self.id0 = Identity("id0")
+        self.id1 = Identity("id1")
+        self.id2 = Identity("id2")
+        self.id3 = Identity("id3")
+        self.id4 = Identity("id4")
+        self.id5 = Identity("id5")
+
+    def forward(self, *,cosine, label):
+        # --------------------------- cos(theta) & phi(theta) ---------------------------
+        b = 1.00001 #防止cosine==1或者-1时梯度变为无穷大，无穷小
+        cosine = self.id0(cosine)
+        sine = torch.sqrt((b - torch.pow(cosine, 2)).clamp(0, 1)).to(cosine.dtype)
+        sine = self.id1(sine)
+        phi = cosine * self.cos_m - sine * self.sin_m #cos(theta+m)
+        phi = self.id2(phi)
+        if self.easy_margin:
+            phi = torch.where(cosine > 0, phi, cosine)
+        else:
+            phi = torch.where(cosine > self.th, phi, cosine - self.mm)
+        phi = self.id3(phi)
+        # --------------------------- convert label to one-hot ---------------------------
+        # one_hot = torch.zeros(cosine.size(), requires_grad=True, device='cuda')
+        one_hot = torch.zeros(cosine.size(), device=cosine.device)
+        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        # -------------torch.where(out_i = {x_i if condition_i else y_i) -------------
+        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+        output = self.id4(output)
+        output *= self.s
+        output = self.id5(output)
 
         return output

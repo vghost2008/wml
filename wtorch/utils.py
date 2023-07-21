@@ -549,4 +549,7 @@ def find_contours_in_bbox(mask,bbox):
         res.append(x+offset)
     return res
 
-
+def clone_tensors(x):
+    if isinstance(x,(list,tuple)):
+        return [v.clone() for v in x]
+    return x.clone()
