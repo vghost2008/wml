@@ -14,6 +14,7 @@ class LinearScheduler(nn.Module):
         self.i = 0
         if start_value>=0.0 and stop_value>=0.0 and end_step>0:
             nr_steps = end_step-begin_step
+            assert nr_steps>0,f"ERROR begin step and end {begin_step} {end_step}"
             self.drop_values = np.linspace(start=start_value, stop=stop_value, num=int(nr_steps))
             self.drop_prob = None
         elif start_value<0 and stop_value<0:

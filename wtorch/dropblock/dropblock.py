@@ -57,7 +57,11 @@ class DropBlock2D(nn.Module):
             out = x * block_mask[:, None, :, :]
 
             # scale output
-            out = out * block_mask.numel() / block_mask.sum()
+            cur_nr = block_mask.sum()
+            if cur_nr < 1:
+                print(f"ERROR: DropBlock drop_prob={self.drop_prob}, gamma={gamma}, cur_nr={cur_nr}")
+                return x
+            out = out * block_mask.numel() / cur_nr 
 
             self.cur_drop_prob = 1.0-block_mask.sum()/block_mask.numel()
             return out
@@ -127,8 +131,12 @@ class DropBlock3D(DropBlock2D):
             # apply block mask
             out = x * block_mask[:, None, :, :, :]
 
+            cur_nr = block_mask.sum()
+            if cur_nr < 1:
+                print(f"ERROR: DropBlock drop_prob={self.drop_prob}, gamma={gamma}, cur_nr={cur_nr}")
+                return x
             # scale output
-            out = out * block_mask.numel() / block_mask.sum()
+            out = out * block_mask.numel() / cur_nr 
 
             return out
 
