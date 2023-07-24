@@ -53,17 +53,20 @@ class DropBlock2D(nn.Module):
             # compute block mask
             block_mask = self._compute_block_mask(mask)
 
+            cur_nr = torch.sum(block_mask,dtype=torch.float32)
+            if cur_nr < 1:
+                print(f"ERROR: DropBlock drop_prob={self.drop_prob}, gamma={gamma}, cur_nr={cur_nr}")
+                return x
+
+            scale = (block_mask.numel()/cur_nr).to(x.dtype)
+
             # apply block mask
             out = x * block_mask[:, None, :, :]
 
             # scale output
-            cur_nr = block_mask.sum()
-            if cur_nr < 1:
-                print(f"ERROR: DropBlock drop_prob={self.drop_prob}, gamma={gamma}, cur_nr={cur_nr}")
-                return x
-            out = out * block_mask.numel() / cur_nr 
+            out = out * scale
 
-            self.cur_drop_prob = 1.0-block_mask.sum()/block_mask.numel()
+            self.cur_drop_prob = 1.0-cur_nr/block_mask.numel()
             return out
 
     def _compute_block_mask(self, mask):
