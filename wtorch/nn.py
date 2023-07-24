@@ -612,10 +612,12 @@ class ArcMarginProduct(nn.Module):
         self.th = math.cos(math.pi - m)
         self.mm = math.sin(math.pi - m) * m
 
+    @torch.cuda.amp.autocast(False)
     def forward(self, *,cosine, label):
         # --------------------------- cos(theta) & phi(theta) ---------------------------
         b = 1.0001 #防止cosine==1或者-1时梯度变为无穷大，无穷小
         max_v = 1.00004
+        cosine = cosine.float()
         cosine = cosine.clamp(-max_v,max_v)
         sine = torch.sqrt((b - torch.pow(cosine, 2)).clamp(0, 1)).to(cosine.dtype)
         phi = cosine * self.cos_m - sine * self.sin_m #cos(theta+m)
@@ -658,9 +660,11 @@ class ArcMarginProduct_(nn.Module):
         self.id4 = Identity("id4")
         self.id5 = Identity("id5")
 
+    @torch.cuda.amp.autocast(False)
     def forward(self, *,cosine, label):
         # --------------------------- cos(theta) & phi(theta) ---------------------------
         b = 1.00001 #防止cosine==1或者-1时梯度变为无穷大，无穷小
+        cosine = cosine.float()
         cosine = self.id0(cosine)
         sine = torch.sqrt((b - torch.pow(cosine, 2)).clamp(0, 1)).to(cosine.dtype)
         sine = self.id1(sine)
