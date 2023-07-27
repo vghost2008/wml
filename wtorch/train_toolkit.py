@@ -328,8 +328,8 @@ def register_backward_hook(net,hook):
     for module in net.children():
         register_backward_hook(module,hook)
         nr += 1
-    #if nr == 0:
-    if True:
+    #if True:
+    if nr == 0:
         #net.register_full_backward_hook(hook=hook)
         net.register_backward_hook(hook=hook)
 

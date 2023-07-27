@@ -5,6 +5,7 @@ from .conv_ws import ConvWS2d
 from collections import Iterable
 from torch.nn import Parameter
 import math
+
 def _clone_tensors(x):
     if isinstance(x,(list,tuple)):
         return [v.clone() for v in x]
@@ -589,7 +590,9 @@ class NormalizedLinear(nn.Module):
         self.weight = Parameter(torch.FloatTensor(out_channels,in_channels))
         nn.init.xavier_uniform_(self.weight)
     
+    @torch.cuda.amp.autocast(False)
     def forward(self,x):
+        x = x.float()
         weight = F.normalize(self.weight,dim=1)
         return F.linear(x,weight)
 
