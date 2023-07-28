@@ -56,6 +56,20 @@ def trans_data(data_dir,save_dir,labels):
         wmlu.try_link(full_path,save_dir)
         sys.stdout.write(f"\r{i}%{len(data)}          ")
 
+def trans_label(label):
+    '''
+    如果label是一个简单的字符串，直接返回字符串
+    如果label是一个name_pattern:new_name, 则如果原数据集中的类型与name_pattern匹配则替换为new_name
+    '''
+    if ":" in label:
+        data = label.split(":")
+        data = [x.strip() for x in data]
+        if len(data)==2:
+            return tuple(data)
+        else:
+            return label
+    return label
+
 def get_labels2trans(args):
     labels = args.labels
     labels_file = args.labels_file
@@ -66,6 +80,7 @@ def get_labels2trans(args):
         with open(labels_file,"r") as f:
             lines = f.readlines()
             labels = [x.strip() for x in lines]
+            labels = [trans_label(x) for x in labels]
         return labels
 
     if isinstance(labels,(list,tuple)):

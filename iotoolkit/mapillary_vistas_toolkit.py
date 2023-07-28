@@ -6,6 +6,7 @@ import cv2 as cv
 import sys
 import random
 from iotoolkit.labelme_toolkit import get_labels_and_bboxes
+import re
 
 
 def get_files(dir_path):
@@ -23,6 +24,23 @@ def get_files(dir_path):
 
     return res
 
+class LabelsFn:
+    def __init__(self,data):
+        self.data = []
+        for x in data:
+            if isinstance(x,(tuple,list)):
+                self.data.append((re.compile(x[0]),x[1]))
+            else:
+                self.data.append(x)
+
+    def __call__(self,x):
+        for d in self.data:
+            if isinstance(d,(list,tuple)):
+                if d[0].fullmatch(x):
+                    return d[1]
+            elif isinstance(d,(str,bytes)) and d==x:
+                return x
+        return False
 
 class MapillaryVistasData(object):
     def __init__(self, label_text2id=None, shuffle=False, ignored_labels=[],label_map={},
@@ -34,9 +52,10 @@ class MapillaryVistasData(object):
         self.ignored_labels = ignored_labels
         self.label_map = label_map
         self.use_semantic = use_semantic
-        self.allowed_labels_fn = None if allowed_labels_fn is None or (isinstance(allowed_labels_fn,list ) and len(allowed_labels_fn)==0) else allowed_labels_fn
-        if self.allowed_labels_fn is not None and isinstance(self.allowed_labels_fn,list):
-            self.allowed_labels_fn = lambda x:x in allowed_labels_fn
+        if allowed_labels_fn is not None and isinstance(allowed_labels_fn,list):
+            self.allowed_labels_fn = LabelsFn(allowed_labels_fn)
+        else:
+            self.allowed_labels_fn = allowed_labels_fn
 
     def read_data(self, dir_path):
         self.files = get_files(dir_path)
@@ -122,8 +141,12 @@ class MapillaryVistasData(object):
                         continue
                     if self.label_map is not None and label in self.label_map:
                         label = self.label_map[label]
-                    if self.allowed_labels_fn is not None and not self.allowed_labels_fn(label):
-                        continue
+                    if self.allowed_labels_fn is not None:
+                        nl = self.allowed_labels_fn(label)
+                        if not nl:
+                            continue
+                        if isinstance(nl,(str,bytes)):
+                            label = nl
                     all_points = np.array([shape["polygon"]]).astype(np.int32)
                     if len(all_points) < 1:
                         continue

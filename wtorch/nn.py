@@ -585,14 +585,21 @@ class AttentionPool2d(nn.Module):
         return x.squeeze(0)
 
 class NormalizedLinear(nn.Module):
-    def __init__(self,in_channels,out_channels):
+    def __init__(self,in_channels,out_channels,eps=1e-5):
         super().__init__()
         self.weight = Parameter(torch.FloatTensor(out_channels,in_channels))
         nn.init.xavier_uniform_(self.weight)
+        self.eps = eps
     
     @torch.cuda.amp.autocast(False)
     def forward(self,x):
         x = x.float()
+        '''with torch.no_grad():
+            temp_norm = torch.norm(
+                self.weight, p=2,
+                dim=1).unsqueeze(1).expand_as(self.weight)
+            self.weight.div_(temp_norm + self.eps)
+        return F.linear(x,self.weight)'''
         weight = F.normalize(self.weight,dim=1)
         return F.linear(x,weight)
 
