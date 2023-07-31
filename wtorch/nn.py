@@ -603,6 +603,14 @@ class NormalizedLinear(nn.Module):
         weight = F.normalize(self.weight,dim=1)
         return F.linear(x,weight)
 
+    def loss(self):
+        s = torch.eye(self.weight.shape[0])
+        w = F.normalize(self.weight,dim=1)
+        r = w@w.T
+        l = r+1
+        l = l*s.to(l)
+        return torch.mean(l)
+
 class ArcMarginProduct(nn.Module):
     r"""Implement of large margin arc distance: :
         Args:
@@ -696,3 +704,13 @@ class ArcMarginProduct_(nn.Module):
         output = self.id5(output)
 
         return output
+
+# Define the softmax_one function with added one in the denominator , which helps to reduce
+#the negative impact impact of tiny values in the softmax function and improves numerical stability
+def softmax_one(x, dim=None, _stacklevel=3, dtype=None):
+    #subtract the max for stability
+    x = x - x.max(dim=dim, keepdim=True).values
+    #compute exponentials
+    exp_x = torch.exp(x)
+    #compute softmax values and add on in the denominator
+    return exp_x / (1 + exp_x.sum(dim=dim, keepdim=True))
