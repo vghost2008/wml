@@ -45,13 +45,15 @@ class Identity(nn.Module):
     def __init__(self,name="Identity"):
         self.name = name
         self.cache = None
-        self.grad_cache = None
+        self.grad_input = None
+        self.grad_output = None
         super().__init__()
         self.register_backward_hook(self.backward_hook)
 
 
     def backward_hook(self,model,grad_input,grad_output):
-        self.grad_cache = _clone_tensors(grad_input)
+        self.grad_input = _clone_tensors(grad_input)
+        self.grad_output = _clone_tensors(grad_output)
 
     def forward(self,x):
         self.cache = x
@@ -605,6 +607,7 @@ class NormalizedLinear(nn.Module):
 
     def loss(self):
         s = torch.eye(self.weight.shape[0])
+        s = torch.ones_like(s)-s
         w = F.normalize(self.weight,dim=1)
         r = w@w.T
         l = r+1

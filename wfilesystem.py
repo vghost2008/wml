@@ -396,3 +396,8 @@ def symlink(src, dst, overwrite=True, **kwargs):
     if os.path.lexists(dst) and overwrite:
         os.remove(dst)
     os.symlink(src, dst, **kwargs)
+
+def ls(path):
+    sys.stdout.flush()
+    os.system(f"ls -l {path}")
+    sys.stdout.flush()

@@ -10,6 +10,7 @@ from .wlr_scheduler import *
 from collections import OrderedDict
 from .nn import LayerNorm,LayerNorm2d,EvoNormS0,EvoNormS01D
 import traceback
+from typing import Union, Iterable
 
 
 _NORMS = (
@@ -328,8 +329,8 @@ def register_backward_hook(net,hook):
     for module in net.children():
         register_backward_hook(module,hook)
         nr += 1
-    #if True:
-    if nr == 0:
+    if True:
+    #if nr == 0:
         #net.register_full_backward_hook(hook=hook)
         net.register_backward_hook(hook=hook)
 
@@ -339,11 +340,11 @@ def tensor_fix_grad(grad):
     '''
     max_v = 16000.0
     if not torch.all(torch.isfinite(grad)):
-        print(f"infinite grad:",grad.shape,grad)
+        #print(f"infinite grad:",grad.shape,grad)
         #raise RuntimeError(f"infinite grad")
         return torch.zeros_like(grad)
     elif islarge(grad,max_v):
-        print(f"large grad:",grad.shape,torch.min(grad),torch.max(grad))
+        #print(f"large grad:",grad.shape,torch.min(grad),torch.max(grad))
         return torch.clamp(grad,min=-max_v,max=max_v)
     return grad
     
@@ -381,10 +382,14 @@ def is_any_grad_infinite(model):
     '''
     register_tensor_hook(model,tensor_isfinite_hook)
     '''
+    res = False
     for name,param in model.named_parameters():
         if param.requires_grad and param.grad is not None and \
             (not torch.all(torch.isfinite(param.grad))  or islarge(param.grad,max_v=32768.0)):
             print(f"ERROR: {name}: unnormal grad")
+            res = True
+
+    return res
 
 def backward_grad_normal_hook(module,grad_input,grad_output):
     '''
@@ -476,3 +481,4 @@ def finetune_model_nottrain(model:torch.nn.Module,names_not2train):
         else:
             continue
     sys.stdout.flush()
+
