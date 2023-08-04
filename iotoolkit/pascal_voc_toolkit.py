@@ -15,6 +15,7 @@ import wml_utils as wmlu
 import img_utils as wmli
 import copy
 from .common import resample, get_shape_from_img
+import object_detection2.bboxes as odb
 
 
 
@@ -134,6 +135,15 @@ def read_voc_xml(file_path, adjust=None, aspect_range=None, has_probs=False,abso
         bboxes = np.zeros([0,4],dtype=np.float32)
     return shape, bboxes, labels_text, difficult, truncated, probs
     
+def read_voc_xml_xy(file_path, has_probs=False):
+    data = read_voc_xml(file_path=file_path,
+                        has_probs=has_probs,
+                        absolute_coord=True,
+                        )
+    shape, bboxes, labels_text, difficult, truncated, probs = data
+    bboxes = odb.npchangexyorder(bboxes)
+    return shape, bboxes, labels_text, difficult, truncated, probs
+
 def create_text_element(doc,name,value):
     if not isinstance(value,str):
         value = str(value)
@@ -251,6 +261,19 @@ def write_voc_xml(xml_path,img_path,shape, bboxes, labels_text, difficult=None, 
     with open(xml_path,'w') as f:
         #f.write(doc.toprettyxml(indent='\t', encoding='utf-8'))
         f.write(doc.toprettyxml(indent='\t'))
+
+def write_voc_xml_xy(xml_path,img_path,shape, bboxes, labels_text, difficult=None, truncated=None,probs=None):
+    bboxes = odb.npchangexyorder(bboxes)
+    write_voc_xml(xml_path=xml_path,
+                  img_path=img_path,
+                  shape=shape,
+                  bboxes=bboxes,
+                  labels_text=labels_text,
+                  difficult=difficult,
+                  truncated=truncated,
+                  probs=probs,
+                  is_relative_coordinate=False,
+                  )
 
 '''
 file_path:图像文件路径

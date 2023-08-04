@@ -29,12 +29,12 @@ if __name__ == "__main__":
     
     files0 = wmlu.recurse_get_filepath_in_dir(src_dir,suffix=suffix)
     files1 = wmlu.recurse_get_filepath_in_dir(exclude_dir,suffix=suffix)
-    files1 = [os.path.basename(file) for file in files1]
+    files1 = [wmlu.get_relative_path(file,exclude_dir) for file in files1]
     total_skip = 0
     total_remove = 0
     files_to_remove = []
     for file in files0:
-        base_name = os.path.basename(file)
+        base_name = wmlu.get_relative_path(file,src_dir)
         if base_name not in files1:
             print(f"Skip {base_name}")
             total_skip += 1
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     
     print(f"Files need to remove {len(files_to_remove)}:")
     wmlu.show_list(files_to_remove)
-    res = input("remove [y/n]")
+    res = input(f"remove {len(files_to_remove)} [y/n]")
     if res != 'y':
         print(f"Cancel.")
         exit(0)
