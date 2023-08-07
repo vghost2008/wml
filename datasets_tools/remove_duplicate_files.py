@@ -7,6 +7,7 @@ def parse_args():
     parser.add_argument("src_dir",type=str,help="src dir")
     parser.add_argument("exc_dir",type=str,help="src dir")
     parser.add_argument("--ext",type=str,default=".jpg",help="img ext")
+    parser.add_argument('--basename', action='store_true',help='whether to compare by basename.')
     args = parser.parse_args()
     return args
 
@@ -19,6 +20,12 @@ def remove_file(file):
         print(f"Remove {img_file}")
         os.remove(img_file)
 
+def relative_path(path,ref_path):
+    return wmlu.get_relative_path(path,ref_path)
+
+def basename(path,*args,**kwargs):
+    return os.path.basename(path)
+
 if __name__ == "__main__":
     args = parse_args()
     #要处理的文件夹
@@ -26,15 +33,19 @@ if __name__ == "__main__":
     #如果在exclude_dir和src_dir文件夹中同时出现，则从src_dir中删除
     exclude_dir = args.exc_dir
     suffix = args.ext
+    if args.basename:
+        name_func = basename
+    else:
+        name_func = relative_path
     
     files0 = wmlu.recurse_get_filepath_in_dir(src_dir,suffix=suffix)
     files1 = wmlu.recurse_get_filepath_in_dir(exclude_dir,suffix=suffix)
-    files1 = [wmlu.get_relative_path(file,exclude_dir) for file in files1]
+    files1 = [name_func(file,exclude_dir) for file in files1]
     total_skip = 0
     total_remove = 0
     files_to_remove = []
     for file in files0:
-        base_name = wmlu.get_relative_path(file,src_dir)
+        base_name = name_func(file,src_dir)
         if base_name not in files1:
             print(f"Skip {base_name}")
             total_skip += 1

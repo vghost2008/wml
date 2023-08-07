@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('save_dir', type=str, help='save dir')
     parser.add_argument("--sample-nr",type=int,help="sample nr")
     parser.add_argument("--suffix",type=str,default="xml", help="annotation suffix")
-    parser.add_argument('--sample-in-sub-dirs', action='store_true',help='whether to sample data in sub dirs.')
+    parser.add_argument('--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
     args = parser.parse_args()
     return args
 
@@ -55,8 +55,8 @@ def sample_in_dir(dir_path,nr,split_nr=None,sample_in_sub_dirs=True):
 
 def save_data(data,save_dir,suffix=None):
     for k,v in data.items():
-        tsd = osp.join(save_dir,str(k))
-        #tsd = save_dir
+        tsd = osp.join(save_dir,str(k))  #保存目录中包含key(子目录中采样就为子目录的名字)
+        #tsd = save_dir #保存目录不包含key
         wmlu.create_empty_dir(tsd,False)
         for f in v:
             '''dir_name = wmlu.base_name(osp.dirname(f))
@@ -75,6 +75,6 @@ if __name__ == "__main__":
     data_dir = args.src_dir
     save_dir = args.save_dir
     wmlu.create_empty_dir(save_dir,False)
-    data = sample_in_dir(data_dir,args.sample_nr,sample_in_sub_dirs=args.sample_in_sub_dirs)
+    data = sample_in_dir(data_dir,args.sample_nr,sample_in_sub_dirs=args.sub_dir)
     print(f"Save_path {save_dir}")
     save_data(data,save_dir,suffix=args.suffix)
