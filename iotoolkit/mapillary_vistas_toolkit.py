@@ -45,19 +45,21 @@ class LabelsFn:
 class MapillaryVistasData(object):
     def __init__(self, label_text2id=None, shuffle=False, ignored_labels=[],label_map={},
                  allowed_labels_fn=None,
-                 use_semantic=True):
+                 use_semantic=True,
+                 absolute_coord=True):
         self.files = None
         self.label_text2id = label_text2id
         self.shuffle = shuffle
         self.ignored_labels = ignored_labels
         self.label_map = label_map
         self.use_semantic = use_semantic
+        self.absolute_coord = absolute_coord
         if allowed_labels_fn is not None and isinstance(allowed_labels_fn,list):
             self.allowed_labels_fn = LabelsFn(allowed_labels_fn)
         else:
             self.allowed_labels_fn = allowed_labels_fn
 
-    def read_data(self, dir_path):
+    def read_data(self, dir_path,*args,**kwargs):
         self.files = get_files(dir_path)
         if self.shuffle:
             random.shuffle(self.files)
@@ -83,7 +85,7 @@ class MapillaryVistasData(object):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
             image, annotations_list = self.read_json(json_file,use_semantic=self.use_semantic)
-            labels_names, bboxes = get_labels_and_bboxes(image, annotations_list)
+            labels_names, bboxes = get_labels_and_bboxes(image, annotations_list,is_relative_coordinate=not self.absolute_coord)
             try:
                 if self.use_semantic:
                     masks = [ann["segmentation"] for ann in annotations_list]
@@ -113,7 +115,7 @@ class MapillaryVistasData(object):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
             image, annotations_list = self.read_json(json_file,use_semantic=False)
-            labels_names, bboxes = get_labels_and_bboxes(image, annotations_list)
+            labels_names, bboxes = get_labels_and_bboxes(image, annotations_list,is_relative_coordinate=not self.absolute_coord)
             if self.label_text2id is not None:
                 labels = [self.label_text2id(x) for x in labels_names]
             else:

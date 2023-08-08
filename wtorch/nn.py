@@ -610,7 +610,7 @@ class NormalizedLinear(nn.Module):
         s = torch.ones_like(s)-s
         w = F.normalize(self.weight,dim=1)
         r = w@w.T
-        l = r+1
+        l = r.clamp(min=0)
         l = l*s.to(l)
         return torch.mean(l)
 
