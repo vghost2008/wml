@@ -25,6 +25,8 @@ def parse_args():
     parser.add_argument(
         '--new-height', type=int, default=0, help='resize image height')
     parser.add_argument('--type', type=str, default='PascalVOCData',help='Data set type')
+    parser.add_argument(
+        '--line-width', type=int, default=2, help='line width')
     args = parser.parse_args()
 
     return args
@@ -42,6 +44,10 @@ register_dataset(COCOData)
 register_dataset(MapillaryVistasData)
 register_dataset(LabelMeData)
 
+def simple_names(x):
+    if "--" in x:
+        return x.split("--")[-1]
+
 if __name__ == "__main__":
 
     args = parse_args()
@@ -51,6 +57,7 @@ if __name__ == "__main__":
 
     for x in data.get_items():
         full_path, img_info,category_ids, category_names, boxes,*_ =  x
+        category_names = [simple_names(x) for x in category_names]
         img = wmli.imread(full_path)
         old_shape = img.shape
 
@@ -68,7 +75,7 @@ if __name__ == "__main__":
             img=img, classes=category_names, scores=None, 
             bboxes=boxes, 
             color_fn=None,
-            text_fn=text_fn, thickness=1,
+            text_fn=text_fn, thickness=args.line_width,
             show_text=True,
             font_scale=0.8,
             is_relative_coordinate=False)

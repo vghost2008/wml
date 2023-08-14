@@ -5,6 +5,8 @@ from .conv_ws import ConvWS2d
 from collections import Iterable
 from torch.nn import Parameter
 import math
+#from einops import rearrange
+
 
 def _clone_tensors(x):
     if isinstance(x,(list,tuple)):
@@ -604,6 +606,10 @@ class NormalizedLinear(nn.Module):
         return F.linear(x,self.weight)'''
         weight = F.normalize(self.weight,dim=1)
         return F.linear(x,weight)
+
+    def normalize_weight(self):
+        weight = F.normalize(self.weight,dim=1)
+        return weight
 
     def loss(self):
         s = torch.eye(self.weight.shape[0])
