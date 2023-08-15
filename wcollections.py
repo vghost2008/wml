@@ -150,3 +150,18 @@ class EDict(dict):
         if item in self:
             raise RuntimeError(f"ERROR: key {item} already exists.")
         super().__setitem__(item,value)
+
+def safe_update_dict(target_dict,src_dict,do_raise=True):
+    duplicate_keys = []
+    for k in src_dict.keys():
+        if k in target_dict:
+            duplicate_keys.append(k)
+    
+
+    if len(duplicate_keys)>0:
+        if do_raise:
+            raise RuntimeError(f"key {duplicate_keys} already in target dict, target dict keys {list(target_dict.keys())}")
+        else:
+            print(f"ERROR: key {duplicate_keys} already in target dict, target dict keys {list(target_dict.keys())}")
+
+    target_dict.update(src_dict)
