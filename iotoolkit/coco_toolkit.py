@@ -66,9 +66,10 @@ class COCOData:
 
     @staticmethod
     def get_image_dir_by_annotations_file(path):
-        dir_name = wmlu.parent_dir_path_of_file(osp.dirname(path))
+        dir_name = wmlu.parent_dir_path_of_file(path)
         basename = wmlu.base_name(path).split("_")[-1]
-        return osp.join(dir_name,"images",basename)
+        #return osp.join(dir_name,"images",basename)
+        return osp.join(dir_name,basename)
 
     def read_data(self,annotations_file,image_dir=None):
         if image_dir is None:
@@ -134,6 +135,7 @@ class COCOData:
             self.id2name = {}
             for id,info in self.category_index.items():
                 self.id2name[id] = info['name']
+            wmlu.show_dict(self.id2name)
         '''if COCOData.load_patch:
             self._load_patch()'''
 

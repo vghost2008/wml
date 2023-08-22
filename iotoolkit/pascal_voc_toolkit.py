@@ -567,6 +567,9 @@ class PascalVOCData(object):
                                  img_suffix=img_suffix,
                                  silent=silent,
                                  check_xml_file=check_xml_file)
+        elif isinstance(dir_path,(list,tuple)) and os.path.isdir(dir_path[0]):
+            self.files = self.get_files_from_dirs(dir_path,
+                              silent=silent,img_suffix=img_suffix,check_xml_file=check_xml_file)
         else:
             self.files = dir_path
         if self.filter_empty_files and self.label_text2id:
@@ -580,6 +583,18 @@ class PascalVOCData(object):
         if self.shuffle:
             random.shuffle(self.files)
         return True
+
+    def get_files_from_dirs(self,dirs,silent=False,img_suffix=".jpg",check_xml_file=True):
+        all_files = []
+        for dir_path in dirs:
+            files = getVOCFiles(dir_path,image_sub_dir=self.image_sub_dir,
+                                 xml_sub_dir=self.xml_sub_dir,
+                                 img_suffix=img_suffix,
+                                 silent=silent,
+                                 check_xml_file=check_xml_file)
+            all_files.extend(files)
+
+        return all_files
     
     def apply_filter_empty_files(self,files):
         new_files = []
