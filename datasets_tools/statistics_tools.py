@@ -19,6 +19,7 @@ from sklearn.cluster import KMeans
 from functools import partial
 from argparse import ArgumentParser
 from itertools import count
+from iotoolkit.object365v2_toolkit import Object365V2
 
 def parse_args():
     parser = ArgumentParser()
@@ -201,10 +202,17 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     total_file_nr = 0
     classes_nr_per_img = []
     no_annotation_nr = 0
+    total_crowd_files = 0
+    total_crowd_bboxes = 0
 
     for data in datas:
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
         total_file_nr += 1
+        is_crowd = np.array(is_crowd).astype(np.int32)
+
+        if np.any(is_crowd):
+            total_crowd_files += 1
+            total_crowd_bboxes += np.sum(is_crowd)
         if bboxes.shape[0]<1:
             if not silent:
                 print(f"{file} no annotation, skip")
@@ -271,6 +279,9 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     total_nr = 0
     for k,v in labels_counter:
         total_nr += v
+
+    print(f"Total files contain crowd bboxes: {total_crowd_files}/{total_crowd_files*100/total_file_nr:.2f}%")
+    print(f"Total crowd bboxes: {total_crowd_bboxes}/{total_crowd_bboxes*100/total_nr:.2f}%")
 
     print(f"Total bboxes count {total_nr}")
     print("\n--->BBoxes count:")
@@ -405,7 +416,13 @@ def coco2014_dataset():
     return data.get_items()
 
 def coco2017_dataset(annotations_path,labels=None):
-    data = COCOData()
+    data = COCOData(remove_crowd=False)
+    data.read_data(annotations_path)
+
+    return data.get_items()
+
+def objects365_dataset(annotations_path,labels=None):
+    data = Object365V2(remove_crowd=False)
     data.read_data(annotations_path)
 
     return data.get_items()
@@ -490,6 +507,9 @@ if __name__ == "__main__":
                                   )
     elif dataset_type == "coco":
         dataset = coco2017_dataset(data_dir,
+                                   labels=args.labels)
+    elif dataset_type == "o365":
+        dataset = objects365_dataset(data_dir,
                                    labels=args.labels)
     elif dataset_type == "vistas":
         dataset = mapillary_vistas_dataset(data_dir)

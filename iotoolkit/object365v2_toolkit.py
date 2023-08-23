@@ -6,6 +6,12 @@ from functools import partial
 
 
 def trans_file_name(filename,image_dir):
+    '''
+    object365文件名使用了类似于:'images/v1/patch8/objects365_v1_00420917.jpg'格式，而实际存的为
+    data_root/train/pathch8/objects365_v1_00420917.jpg这种格式，这里仅保留最后的目录名及文件名，也就是输出
+    pathch8/objects365_v1_00420917.jpg
+    注: read_data的image_dir需要设置为data_root/train/
+    '''
     names = filename.split("/")[-2:]
     return osp.join(*names)
 
@@ -33,6 +39,11 @@ class Object365V2(COCOData):
             self.id2name = {}
             for k,info in ID_TO_TEXT.items():
                 self.id2name[k] = info['name']
+
+    def read_data(self,annotations_file,image_dir=None):
+        if image_dir is None:
+            image_dir = osp.dirname(osp.abspath(annotations_file))
+        return super().read_data(annotations_file,image_dir)
 
 class TorchObject365V2(Object365V2):
     def __init__(self, img_dir, anno_path,trans2coco=False,trans_label=None):
