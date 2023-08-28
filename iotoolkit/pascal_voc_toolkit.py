@@ -567,7 +567,7 @@ class PascalVOCData(object):
                                  img_suffix=img_suffix,
                                  silent=silent,
                                  check_xml_file=check_xml_file)
-        elif isinstance(dir_path,(list,tuple)) and os.path.isdir(dir_path[0]):
+        elif isinstance(dir_path,(list,tuple)) and isinstance(dir_path[0],(str,bytes)) and os.path.isdir(dir_path[0]):
             self.files = self.get_files_from_dirs(dir_path,
                               silent=silent,img_suffix=img_suffix,check_xml_file=check_xml_file)
         else:

@@ -20,6 +20,9 @@ def get_all_imgs(img_dir,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
         if basename in res:
             d = res[basename]
             if isinstance(d,str):
+                if wmlu.file_md5(d) == wmlu.file_md5(f):
+                    print(f"{d} and {f} is the same file.")
+                    continue
                 d = [d]
             res[basename] = d+[f]
         else:
@@ -29,21 +32,30 @@ def get_all_imgs(img_dir,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
 def copy_imgfiles(xml_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
     xml_files = glob.glob(osp.join(xml_dir,"*"+ann_type))
     all_img_files = get_all_imgs(img_dir)
+    copy_nr = 0
+    error_nr = 0
+    not_found_nr = 0
     for xf in xml_files:
         base_name = wmlu.base_name(xf)
         img_name = base_name+img_suffix
         img_path = osp.join(img_dir,img_name)
         dst_img_path = osp.join(xml_dir,img_name)
-        if osp.exists(img_path):
-            wmlu.try_link(img_path,dst_img_path)
-        elif base_name in all_img_files:
+        #if osp.exists(img_path):
+            #wmlu.try_link(img_path,dst_img_path)
+            #copy_nr += 1
+        if base_name in all_img_files:
             files = all_img_files[base_name]
             if not isinstance(files,list):
                 wmlu.try_link(files,xml_dir)
+                copy_nr += 1
             else:
                 print(f"ERROR: Find multi img files for {xf}, img files {files}")
+                error_nr += 1
         else:
             print(f"ERROR: Find img file for {xf} faild.")
+            not_found_nr += 1
+
+    print(f"total copy {copy_nr} files, {error_nr} multi files, {not_found_nr} not found files.")
 
 if __name__ == "__main__":
     args = parse_args()

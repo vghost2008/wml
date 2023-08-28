@@ -154,7 +154,7 @@ class EDict(dict):
 def safe_update_dict(target_dict,src_dict,do_raise=True):
     duplicate_keys = []
     for k in src_dict.keys():
-        if k in target_dict:
+        if k in target_dict and target_dict[k] != src_dict[k]:
             duplicate_keys.append(k)
     
 

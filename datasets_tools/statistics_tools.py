@@ -208,11 +208,12 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     for data in datas:
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
         total_file_nr += 1
-        is_crowd = np.array(is_crowd).astype(np.int32)
-
-        if np.any(is_crowd):
-            total_crowd_files += 1
-            total_crowd_bboxes += np.sum(is_crowd)
+        if is_crowd is not None:
+            is_crowd = np.array(is_crowd).astype(np.int32)
+    
+            if np.any(is_crowd):
+                total_crowd_files += 1
+                total_crowd_bboxes += np.sum(is_crowd)
         if bboxes.shape[0]<1:
             if not silent:
                 print(f"{file} no annotation, skip")

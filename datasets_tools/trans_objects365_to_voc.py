@@ -89,7 +89,7 @@ if __name__ == "__main__":
     args = parse_args()
     ann_path = args.ann_path
     save_dir = args.out_dir
-    no_crowd = args.no_crowd
+    no_crowd = True   #args.no_crowd
     #labels = get_labels2trans(args)
     trans_data(ann_path,save_dir,no_crowd=no_crowd)
 

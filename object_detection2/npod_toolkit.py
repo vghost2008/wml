@@ -358,4 +358,4 @@ def bboxes_filter(bboxes,labels, probs,threshold=0.5):
         labels = np.array(labels)
     if not isinstance(probs,np.ndarray):
         probs = np.array(probs)
-    return bboxes[idxes],labels[idxes],probs[idxes]
+    return bboxes[idxes],labels[idxes],probs[idxes],idxes
