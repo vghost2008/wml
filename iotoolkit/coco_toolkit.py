@@ -38,7 +38,7 @@ def create_category_index(categories):
 
 class COCOData:
     load_patch = False
-    def __init__(self,trans_label=None,include_masks=False,is_relative_coordinate=False,remove_crowd=True):
+    def __init__(self,trans_label=None,include_masks=True,is_relative_coordinate=False,remove_crowd=True,*args,**kwargs):
         '''
 
         Args:
@@ -71,7 +71,7 @@ class COCOData:
         #return osp.join(dir_name,"images",basename)
         return osp.join(dir_name,basename)
 
-    def read_data(self,annotations_file,image_dir=None):
+    def read_data(self,annotations_file,image_dir=None,*args,**kwargs):
         if image_dir is None:
             image_dir = self.get_image_dir_by_annotations_file(annotations_file)
         if self.trans_label is not None:
@@ -112,6 +112,7 @@ class COCOData:
             missing_annotation_count = 0
             images = []
             for image in _images:
+                image["file_name"] = osp.basename(image['file_name'])
                 image_id = image['id']
                 if image_id not in annotations_index:
                     missing_annotation_count += 1
@@ -179,6 +180,9 @@ class COCOData:
         return len(self.ids)
 
     def __getitem__(self, item):
+        '''
+        binary_masks:[N,H,W]
+        '''
         image = self.images[item]
         res = self.get_image_annotation(image)
         return res

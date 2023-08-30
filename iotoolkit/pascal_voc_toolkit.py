@@ -582,6 +582,7 @@ class PascalVOCData(object):
 
         if self.shuffle:
             random.shuffle(self.files)
+
         return True
 
     def get_files_from_dirs(self,dirs,silent=False,img_suffix=".jpg",check_xml_file=True):

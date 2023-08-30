@@ -13,7 +13,7 @@ def parse_args():
     parser.add_argument(
         '--suffix',
         type=str,
-        default='json',
+        default='xml',
         choices=['json', 'xml', 'txt'],
         help='annotation suffix')
     parser.add_argument(
@@ -22,11 +22,10 @@ def parse_args():
         default=".jpg;;.jpeg;;.bmp;;.png",
         help='img suffix')
     parser.add_argument(
-        '--split',
-        type=float,
-        nargs="+",
-        default=[0.9,0.1],
-        help='split percent')
+        '--nr',
+        type=int,
+        default=10000,
+        help='files number per dir')
     parser.add_argument(
         '--allow-empty',
         action='store_true',
@@ -54,13 +53,7 @@ def copy_files(files,save_dir,add_nr):
 
 if __name__ == "__main__":
     args = parse_args()
-    splits = args.split
-    sum = 0.0
-    for x in splits:
-        sum += x
-    if math.fabs(sum-1.0)>0.01:
-        print(f"Error split, sum(split)==1")
-        exit(-1)
+    nr_per_dir = args.nr
     img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
     ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
     basenames = [wmlu.base_name(x) for x in img_files]
@@ -75,19 +68,11 @@ if __name__ == "__main__":
     save_dir = wmlu.get_unused_path(args.out_dir)
     os.makedirs(save_dir)
     random.seed(int(time.time()))
-    random.shuffle(all_files)
     print(f"Find {len(all_files)} files")
 
-    for i,v in enumerate(splits):
-        t_save_dir = osp.join(save_dir,"data_"+str(v))
-        if i<len(splits)-1:
-            t_nr = int(v*len(all_files)+0.5)
-            tmp_files = all_files[:t_nr]
-            all_files = all_files[t_nr:]
-        else:
-            tmp_files = all_files
-            t_nr = len(tmp_files)
-        print(f"split {v} {t_nr} files")
-        wmlu.show_list(tmp_files)
-        copy_files(tmp_files,t_save_dir,add_nr)
+    all_files = wmlu.list_to_2dlist(all_files,args.nr)
+
+    for i,v in enumerate(all_files):
+        t_save_dir = osp.join(save_dir,"data_"+str(i))
+        copy_files(v,t_save_dir,add_nr)
 

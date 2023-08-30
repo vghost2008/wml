@@ -56,7 +56,8 @@ if __name__ == "__main__":
     data.read_data(args.src_dir,img_suffix=args.ext)
 
     for x in data.get_items():
-        full_path, img_info,category_ids, category_names, boxes,*_ =  x
+        full_path, img_info,category_ids, category_names, boxes,binary_masks,*_ =  x
+        print(full_path)
         category_names = [simple_names(x) for x in category_names]
         img = wmli.imread(full_path)
         old_shape = img.shape
@@ -79,6 +80,9 @@ if __name__ == "__main__":
             show_text=True,
             font_scale=0.8,
             is_relative_coordinate=False)
+
+        if binary_masks is not None:
+            img = odv.draw_maskv2(img,category_ids,boxes,binary_masks,is_relative_coordinate=False)
 
         save_path = osp.join(args.out_dir,wmlu.base_name(full_path)+".jpeg")
 
