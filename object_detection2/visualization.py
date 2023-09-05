@@ -237,9 +237,10 @@ def draw_legend(labels,text_fn,img_size,color_fn,thickness=4,font_scale=1.2,text
 
 
 '''
+img: [H,W,C]
 mask only include the area within bbox
 bboxes: [N,4](y0,x0,y1,x1)
-mask: [N,H,W]
+mask: [N,h,w]
 '''
 def draw_mask(img,classes,bboxes,masks,
               color_fn=fixed_color_large_fn,
@@ -306,7 +307,9 @@ def draw_bboxes_and_mask(img,classes,scores,bboxes,masks,
     return img
 
 '''
-mask include the area of whole image
+img: [H,W,C]
+mask: [N,H,W], include the area of whole image
+bboxes: [N,4], [y0,x0,y1,x1]
 '''
 def draw_maskv2(img,classes,bboxes=None,masks=None,
                            color_fn=fixed_color_large_fn,
