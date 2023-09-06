@@ -20,6 +20,7 @@ from functools import partial
 from argparse import ArgumentParser
 from itertools import count
 from iotoolkit.object365v2_toolkit import Object365V2
+from object_detection2.data_process_toolkit import remove_class
 
 def parse_args():
     parser = ArgumentParser()
@@ -305,7 +306,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     for k,v in org_labels_counter:
         print(f"{k:>8}:{v:<8}, {v*100./total_nr:>4.2f}%")
     if labels_to_remove is not None:
-        all_boxes,encoded_labels = odu.removeLabels(all_boxes,encoded_labels,labels_to_remove)
+        all_boxes,encoded_labels = remove_class(all_boxes,encoded_labels,labels_to_remove)
 
     #show classes per img info
     classes_nr_per_img = np.array(classes_nr_per_img)
