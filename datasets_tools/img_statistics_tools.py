@@ -12,6 +12,7 @@ def parse_args():
     parser.add_argument('src_dir', type=str, default="/home/wj/ai/mldata1/B7mura/datas/try_s0",help='source video directory')
     parser.add_argument("--test-nr",type=int,help="max imgs to test")
     parser.add_argument("--max-long-size",type=int,default=1024,help="max img long size")
+    parser.add_argument("--size-step",type=int,default=10,help="size step")
     args = parser.parse_args()
     return args
 
@@ -31,7 +32,8 @@ def get_imgs_info(files,args):
     heights = []
     value = []
     contrast = []
-    max_long_size = args.max_long_size
+    max_long_size = args.max_long_size #统计图像像素值信息时，如果图像最长边长于max_long_size，则缩放至max_long_size
+    size_step = args.size_step #对宽高进行计数时通过size_step把不同的值划分到不同的bucket
     transform = None
     if max_long_size>1:
         transform = MaxImgLongSize(max_long_size)
@@ -49,8 +51,8 @@ def get_imgs_info(files,args):
             shape = wmli.get_img_size(file)
             widths.append(shape[1])
             heights.append(shape[0])
-            width_counter.add(int(shape[1]//10)*10)
-            height_counter.add(int(shape[0]//10)*10)
+            width_counter.add(int(shape[1]//size_step)*size_step)
+            height_counter.add(int(shape[0]//size_step)*size_step)
             value.append(np.mean(img,axis=(0,1)))
             contrast.append(get_img_contrast_info(img))
         except Exception as e:

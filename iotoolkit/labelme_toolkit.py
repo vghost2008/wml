@@ -227,7 +227,10 @@ def get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=False):
         ymax = ymin+t_box[3]
         bboxes.append([ymin,xmin,ymax,xmax])
         labels.append(ann["category_id"])
-    bboxes = np.array(bboxes,dtype=np.float32)
+    if len(bboxes)>0:
+        bboxes = np.array(bboxes,dtype=np.float32)
+    else:
+        bboxes = np.zeros([0,4],dtype=np.float32)
     if is_relative_coordinate:
         div = np.array([[height,width,height,width]],dtype=np.float32)
         bboxes = bboxes/div
@@ -603,6 +606,10 @@ class LabelMeData(object):
                 img_height = image['height']
                 img_width = image['width']
                 masks = np.zeros(shape=[0,img_height,img_width],dtype=np.uint8)
+        else:
+            img_height = image['height']
+            img_width = image['width']
+            masks = np.zeros(shape=[0,img_height,img_width],dtype=np.uint8)
 
         
         if self.label_text2id is not None:
@@ -684,7 +691,7 @@ def read_labelme_kp_data(file_path,label_text_to_id=lambda x:int(x)):
 if __name__ == "__main__":
     #data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
     import img_utils as wmli
-    import object_detection_tools.visualization as odv
+    import object_detection2.visualization as odv
     import matplotlib.pyplot as plt
     ID_TO_TEXT = {1:{"id":1,"name":"a"},2:{"id":2,"name":"b"},3:{"id":3,"name":"c"}}
     NAME_TO_ID = {}
