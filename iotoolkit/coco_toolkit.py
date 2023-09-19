@@ -112,7 +112,7 @@ class COCOData:
             missing_annotation_count = 0
             images = []
             for image in _images:
-                image["file_name"] = osp.basename(image['file_name'])
+                #image["file_name"] = osp.basename(image['file_name'])
                 image_id = image['id']
                 if image_id not in annotations_index:
                     missing_annotation_count += 1
