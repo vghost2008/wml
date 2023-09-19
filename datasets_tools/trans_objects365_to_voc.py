@@ -38,9 +38,13 @@ def trans_data(ann_path,save_dir,no_crowd=True):
         if no_crowd and np.any(is_crowd):
             continue
 
+        dir_name = wmlu.base_name(osp.dirname(full_path))
+        t_save_dir = osp.join(save_dir,dir_name)
+        os.makedirs(t_save_dir,exist_ok=True)
+
         base_name = wmlu.base_name(full_path)+".xml"
-        xml_path = os.path.join(save_dir,base_name)
-        img_path = wmlu.change_dirname(full_path,save_dir)
+        xml_path = os.path.join(t_save_dir,base_name)
+        img_path = wmlu.change_dirname(full_path,t_save_dir)
 
         if os.path.exists(xml_path):
             print(f"WARNING: File {xml_path} exists.")
@@ -49,7 +53,7 @@ def trans_data(ann_path,save_dir,no_crowd=True):
                       labels_text=category_names,
                       is_relative_coordinate=False,
                       difficult=is_crowd)
-        wmlu.try_link(full_path,save_dir)
+        wmlu.try_link(full_path,t_save_dir)
         sys.stdout.write(f"\r{i}%{len(data)}          ")
 
 def trans_label(label):
