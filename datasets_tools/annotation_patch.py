@@ -104,6 +104,7 @@ if __name__ == "__main__":
     patch_files = wmlu.get_files(patch_dir,suffix=wmli.BASE_IMG_SUFFIX)
     data_files = wmlu.get_files(data_dir,suffix=wmli.BASE_IMG_SUFFIX)
     data_dict = wmlu.EDict()
+    error_dict = set()
 
     wmlu.create_empty_dir_remove_if(save_dir)
 
@@ -114,6 +115,7 @@ if __name__ == "__main__":
         except RuntimeError as e:
             print(e)
         except:
+            error_dict.add(basename)
             print(f"ERROR: file={f}")
 
     for f in patch_files:
@@ -121,6 +123,9 @@ if __name__ == "__main__":
         if info is None:
             continue
         basename,bbox,label = info
+        if basename in error_dict:
+            print(f"{basename} is error file, skip.")
+            continue
         if basename not in data_dict:
             print(f"Find: {basename} in data dict faild, patch file {f}")
             continue
