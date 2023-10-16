@@ -395,9 +395,15 @@ def expand_bbox_by_size(bboxes,size,format="xyminwh"):
         return np.stack([nymin,nxmin,nymax,nxmax],axis=-1)
 
 '''
-bbox:(x0,y0,x1,y1)
+bbox:[N,4] (x0,y0,x1,y1)
 size:[W,H]
-return a list of new bbox with the minimum size 'size' 
+
+or 
+
+bbox:[N,4] (y0,x0,y1,x1)
+size:[H,W]
+
+return a list of new bbox with the minimum size 'size' and same center point
 '''
 def clamp_bboxes(bboxes,min_size):
     if not isinstance(min_size,Iterable):
@@ -414,6 +420,37 @@ def clamp_bboxes(bboxes,min_size):
     w = xmax-xmin
     nh = np.maximum(h,min_size[1])
     nw = np.maximum(w,min_size[0])
+    nymin = cy-nh
+    nymax = cy+nh
+    nxmin = cx-nw
+    nxmax = cx+nw
+
+    return np.stack([nxmin,nymin,nxmax,nymax],axis=-1)
+
+'''
+bbox:[N,4] (x0,y0,x1,y1)
+size:[W,H]
+
+or 
+
+bbox:[N,4] (y0,x0,y1,x1)
+size:[H,W]
+
+return a list of new bbox with the minimum size 'size' and same center point
+'''
+def set_bboxes_size(bboxes,size):
+    if not isinstance(size,Iterable):
+        size = (size,size)
+    if not isinstance(bboxes,np.ndarray):
+        bboxes = np.array(bboxes)
+    xmin = bboxes[...,0]
+    ymin = bboxes[...,1]
+    xmax = bboxes[...,2]
+    ymax = bboxes[...,3]
+    cy = (ymax + ymin) / 2
+    cx = (xmax + xmin) / 2
+    nh = np.full_like(ymin,size[1]//2)
+    nw = np.full_like(xmin,size[0]//2)
     nymin = cy-nh
     nymax = cy+nh
     nxmin = cx-nw

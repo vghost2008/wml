@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import object_detection2.npod_toolkit as npod
+import object_detection2.bboxes as odb
 import math
 import logging
 from thirdparty.odmetrics import coco_evaluation
@@ -774,7 +775,10 @@ class ModelPerformance:
             return self.safe_div(self.total_precision,self.test_nr)
 
 class GeneralCOCOEvaluation(object):
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1):
+    def __init__(self,categories_list=None,
+                 num_classes=None,mask_on=False,label_trans=None,
+                 classes_begin_value=1,
+                 min_bbox_size=0):
         if categories_list is None:
             print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
             self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(num_classes)]
@@ -786,6 +790,9 @@ class GeneralCOCOEvaluation(object):
         else:
             self.coco_evaluator = coco_evaluation.CocoMaskEvaluator(
                 self.categories_list,include_metrics_per_category=False)
+        self.min_bbox_size = min_bbox_size
+        if self.min_bbox_size > 0:
+            print(f"{type(self).__name__}: set min_bbox_size to {self.min_bbox_size}")
         self.label_trans = label_trans
         self.image_id = 0
         self.cached_values = {}
@@ -798,6 +805,10 @@ class GeneralCOCOEvaluation(object):
     def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
                  gtmasks=None,
                  masks=None,is_crowd=None,use_relative_coord=False):
+        if self.min_bbox_size > 0:
+            gtboxes = odb.clamp_bboxes(gtboxes,self.min_bbox_size)
+            boxes = odb.clamp_bboxes(boxes,self.min_bbox_size)
+
         if probability is None:
             probability = np.ones_like(labels,dtype=np.float32)
         if not isinstance(gtboxes,np.ndarray):
@@ -900,37 +911,41 @@ class GeneralCOCOEvaluation(object):
 
 @METRICS_REGISTRY.register()
 class COCOBoxEvaluation(GeneralCOCOEvaluation):
-    def __init__(self,categories_list=None,num_classes=None,label_trans=None,classes_begin_value=1):
+    def __init__(self,categories_list=None,num_classes=None,label_trans=None,classes_begin_value=1,**kwargs):
         super().__init__(categories_list=categories_list,
                          num_classes=num_classes,
                          mask_on=False,
                          label_trans=label_trans,
-                         classes_begin_value=classes_begin_value)
+                         classes_begin_value=classes_begin_value,
+                         **kwargs)
 @METRICS_REGISTRY.register()
 class COCOMaskEvaluation(GeneralCOCOEvaluation):
-    def __init__(self,categories_list=None,num_classes=None,label_trans=None,classes_begin_value=1):
+    def __init__(self,categories_list=None,num_classes=None,label_trans=None,classes_begin_value=1,**kwargs):
         super().__init__(categories_list=categories_list,
                          num_classes=num_classes,
                          mask_on=True,
                          label_trans=label_trans,
-                         classes_begin_value=classes_begin_value)
+                         classes_begin_value=classes_begin_value,
+                         **kwargs)
 
 @METRICS_REGISTRY.register()
 class COCOEvaluation(object):
     '''
     num_classes: 不包含背景 
     '''
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,**kwargs):
         self.box_evaluator = COCOBoxEvaluation(categories_list=categories_list,
                                                num_classes=num_classes,
                                                label_trans=label_trans,
-                                               classes_begin_value=classes_begin_value)
+                                               classes_begin_value=classes_begin_value,
+                                               **kwargs)
         self.mask_evaluator = None
         if mask_on:
             self.mask_evaluator = COCOMaskEvaluation(categories_list=categories_list,
                                                      num_classes=num_classes,
                                                      label_trans=label_trans,
-                                                     classes_begin_value=classes_begin_value)
+                                                     classes_begin_value=classes_begin_value,
+                                                     **kwargs)
     def __call__(self, *args, **kwargs):
         self.box_evaluator(*args,**kwargs)
         if self.mask_evaluator is not None:

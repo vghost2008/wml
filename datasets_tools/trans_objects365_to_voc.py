@@ -16,8 +16,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("ann_path",type=str,help="ann path")
     parser.add_argument("out_dir",type=str,help="out dir")
-    parser.add_argument("--labels",type=str,nargs="+",help="labels to trans")
-    parser.add_argument("--labels-file",type=str,help="labels file to trans")
     parser.add_argument("--no-crowd",action="store_true",help="whether to use files contains crowd objects")
     args = parser.parse_args()
     return args

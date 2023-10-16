@@ -5,7 +5,7 @@ import numpy as np
 import semantic.visualization_utils as smv
 from PIL import Image
 from iotoolkit.coco_data_fwd import JOINTS_PAIR as COCO_JOINTS_PAIR
-from .basic_datadef import colors_tableau ,colors_tableau_large
+from .basic_datadef import colors_tableau ,colors_tableau_large, PSEUDOCOLOR
 from .basic_datadef import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
 
@@ -80,11 +80,16 @@ def fixed_color_fn(label):
     color_nr = len(colors_tableau)
     return colors_tableau[label%color_nr]
 
-def fixed_color_large_fn(label):
+def fixed_color_large_fn(label,probs):
     if isinstance(label,(str,bytes)):
         return colors_tableau_large[len(label)]
     color_nr = len(colors_tableau_large)
     return colors_tableau_large[label%color_nr]
+
+def pesudo_color_fn(label,probs):
+    color_nr = len(PSEUDOCOLOR)
+    idx = int(probs*color_nr)
+    return PSEUDOCOLOR[idx%color_nr]
 
 def red_color_fn(label):
     del label
@@ -145,7 +150,7 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
         try:
             bbox = bboxes[i]
             if color_fn is not None:
-                color = color_fn(classes[i])
+                color = color_fn(classes[i],scores[i])
             else:
                 color = (int(random.random()*255), int(random.random()*255), int(random.random()*255))
             p10 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))

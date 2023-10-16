@@ -701,6 +701,7 @@ def imwrite(filename, img,size=None):
     dir_path = os.path.dirname(filename)
     if dir_path != "" and not os.path.exists(dir_path):
         os.makedirs(dir_path,exist_ok=True)
+    img = np.ascontiguousarray(img)
     if len(img.shape)==3 and img.shape[2]==3:
         img = copy.deepcopy(img)
         cv2.cvtColor(img, cv2.COLOR_RGB2BGR,img)
@@ -1071,7 +1072,7 @@ def get_standard_color(idx):
     return colors_tableau[idx]
 
 
-def __get_discrete_palette(palette,nr=1000):
+def __get_discrete_palette(palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0))],nr=1000):
     res = np.zeros([nr,3],dtype=np.float32)
     pre_p = palette[0]
     for cur_p in palette[1:]:
@@ -1082,6 +1083,8 @@ def __get_discrete_palette(palette,nr=1000):
         for i in range(beg_idx,end_idx):
             cur_color = (i-beg_idx)*(color1-color0)/(end_idx-beg_idx)+color0
             res[i] = cur_color
+        pre_p = cur_p
+
     
     res = np.clip(res,0,255)
     res = res.astype(np.uint8)
