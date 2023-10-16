@@ -69,3 +69,41 @@ def resize_img_and_mask(img,mask,size,img_pad_value=127,mask_pad_value=255,pad_t
     mask = wmli.pad_imgv2(mask, px0, px1, py0, py1, pad_value=mask_pad_value)
     return img,mask
 
+'''
+mask:[H,W] value is 1 or 0
+rect:[ymin,xmin,ymax,xmax]
+output:
+the new mask in sub image and correspond bbox
+'''
+def cut_mask(mask,rect):
+    max_area = np.sum(mask)
+    cuted_mask = wmli.sub_image(mask,rect)
+    ratio = np.sum(cuted_mask)/max(1,max_area)
+    if ratio <= 1e-6:
+        return None,None,ratio
+    ys,xs = np.where(cuted_mask)
+    xmin = np.min(xs)
+    xmax = np.max(xs)
+    ymin = np.min(ys)
+    ymax = np.max(ys)
+    bbox = np.array([xmin,ymin,xmax,ymax],dtype=np.int32)
+    return cuted_mask,bbox,ratio
+
+'''
+mask:[N,H,W] value is 1 or 0
+bboxes:[N,4] [ymin,xmin,ymax,xmax]
+output:
+the new mask in sub image and correspond bbox
+'''
+def cut_masks(masks,bboxes):
+    new_masks = []
+    new_bboxes = []
+    ratios = []
+    nr = len(masks)
+    for i in range(len(nr)):
+        n_mask,n_bbox,ratio = cut_mask(masks[i],bboxes[i])
+        new_masks.append(n_mask)
+        new_bboxes.append(n_bbox)
+        ratios.append(ratio)
+    
+    return new_masks,new_bboxes,ratios

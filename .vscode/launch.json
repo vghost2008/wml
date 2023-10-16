@@ -75,6 +75,15 @@
             "console": "integratedTerminal",
             "args":["~/ai/mldata/objects365/val/zhiyuan_objv2_val.json",  "~/ai/mldata/objects365/voc_split/val/"]
         },
+        {
+            "name": "Python: cut dataset",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "datasets_tools/cut_dataset.py",
+            "console": "integratedTerminal",
+            "args":["/home/wj/ai/mldata/mnistodv2/test",  "/home/wj/ai/mldata/0day/tmp/mnistodv2","--size","100"]
+        },
     ]
     
 }

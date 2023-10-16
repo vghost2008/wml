@@ -202,8 +202,8 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
 def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_text=lambda x:str(x)):
     '''
     labels:[N]
-    bboxes:[N,4](x0,y0,x1,y1)
-    masks:[N,H,W] 仅包含bbox内的部分
+    bboxes:[N,4](x0,y0,x1,y1), 绝对坐标
+    masks:[N,h,w] 仅包含bbox内的部分
     '''
     annotatios_list = []
     for i in range(len(labels)):

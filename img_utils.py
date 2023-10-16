@@ -701,6 +701,7 @@ def imwrite(filename, img,size=None):
     dir_path = os.path.dirname(filename)
     if dir_path != "" and not os.path.exists(dir_path):
         os.makedirs(dir_path,exist_ok=True)
+    img = np.ascontiguousarray(img)
     if len(img.shape)==3 and img.shape[2]==3:
         img = copy.deepcopy(img)
         cv2.cvtColor(img, cv2.COLOR_RGB2BGR,img)
