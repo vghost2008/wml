@@ -148,6 +148,7 @@ def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=
     data["imagePath"] = os.path.basename(image_path)
     data["imageWidth"] = image["width"]
     data["imageHeight"] = image["height"]
+    data["imageData"] = None
     with open(file_path,"w") as f:
         json.dump(data,f)
 
@@ -194,6 +195,7 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
     data["imagePath"] = os.path.basename(image_path)
     data["imageWidth"] = image["width"]
     data["imageHeight"] = image["height"]
+    data["imageData"] = None
     with open(file_path,"w") as f:
         json.dump(data,f)
 '''

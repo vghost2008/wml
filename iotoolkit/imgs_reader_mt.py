@@ -24,7 +24,7 @@ class MaxImgLongSize:
 class ImgsDataset:
     def __init__(self,data_dir_or_files,transform=None,shuffle=True):
         if isinstance(data_dir_or_files,str):
-            self.files = wmlu.get_files(data_dir_or_files,suffix=".jpg;;.jpeg;;.bmp;;.png")
+            self.files = wmlu.get_files(data_dir_or_files,suffix=wmli.BASE_IMG_SUFFIX)
         else:
             self.files = data_dir_or_files
         if shuffle:
