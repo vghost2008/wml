@@ -15,9 +15,13 @@ import object_detection2.bboxes as odb
 from functools import partial
 from .common import *
 from .labelme_toolkit_fwd import *
+from semantic.structures import *
 import glob
 
-class LabelMeData(object):
+class FastLabelMeData(object):
+    '''
+    与LabelMeData的区别为生成的Mask使用多边形的方式保存
+    '''
     def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,
                  filter_empty_files=False,
                  resample_parameters=None):
@@ -26,7 +30,7 @@ class LabelMeData(object):
         '''
         self.files = None
         if isinstance(label_text2id,dict):
-            self.label_text2id = partial(dict_label_text2id,dict_data=label_text2id)
+            self.label_text2id = partial(ignore_case_dict_label_text2id,dict_data=label_text2id)
         else:
             self.label_text2id = label_text2id
         self.shuffle = shuffle
@@ -124,21 +128,12 @@ class LabelMeData(object):
         bboxes:[N,4] (ymin,xmin,ymax,xmax)
         '''
         img_file, json_file = self.files[idx]
-        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
+        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,use_polygon_mask=True)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         masks = [ann["segmentation"] for ann in annotations_list]
-        if len(masks)>0:
-            try:
-                masks = np.stack(masks,axis=0)
-            except:
-                img_height = image['height']
-                img_width = image['width']
-                masks = np.zeros(shape=[0,img_height,img_width],dtype=np.uint8)
-        else:
-            img_height = image['height']
-            img_width = image['width']
-            masks = np.zeros(shape=[0,img_height,img_width],dtype=np.uint8)
-
+        img_height = image['height']
+        img_width = image['width']
+        masks = WPolygonMasks(masks,width=img_width,height=img_height)
         
         if self.label_text2id is not None:
             labels = [self.label_text2id(x) for x in labels_names]
@@ -162,7 +157,7 @@ class LabelMeData(object):
         for i,(img_file, json_file) in enumerate(self.files):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
-            image, annotations_list = read_labelme_data(json_file, None)
+            image, annotations_list = read_labelme_data(json_file, None,mask_on=False)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
             yield img_file,[image['height'],image['width']],labels, bboxes,  None
@@ -179,7 +174,7 @@ if __name__ == "__main__":
     def name_to_id(name):
         return NAME_TO_ID[name]
 
-    data = LabelMeData(label_text2id=name_to_id,shuffle=True)
+    data = FastLabelMeData(label_text2id=name_to_id,shuffle=True)
     #data.read_data("/data/mldata/qualitycontrol/rdatasv5_splited/rdatasv5")
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatav10_preproc")
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10_neg_preproc")

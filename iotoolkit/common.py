@@ -42,3 +42,14 @@ def get_shape_from_img(xml_path,img_path):
         if not os.path.exists(img_path):
             img_path = wmlu.change_suffix(xml_path, "jpeg")
     return wmli.get_img_size(img_path)
+
+def ignore_case_dict_label_text2id(name,dict_data):
+    name = name.lower()
+    if name not in dict_data:
+        print(f"ERROR: trans {name} faild.")
+    return dict_data.get(name,None)
+
+def dict_label_text2id(name,dict_data):
+    if name not in dict_data:
+        print(f"ERROR: trans {name} faild.")
+    return dict_data.get(name,None)
