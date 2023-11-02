@@ -5,6 +5,9 @@ import wtorch.utils as wtu
 from .mask_utils import get_bboxes_by_contours
 
 class WPolygonMaskItem:
+    HORIZONTAL = 'horizontal'
+    VERTICAL =  'vertical'
+    DIAGONAL =  'diagonal'
     def __init__(self,points,*,width=None,height=None):
         '''
         points:  list[[N,2]]
@@ -21,6 +24,63 @@ class WPolygonMaskItem:
         mask = np.zeros(shape=[height,width],dtype=np.uint8)
         segmentation = cv2.drawContours(mask,self.points,-1,color=(1),thickness=cv2.FILLED)
         return segmentation
+
+    def resize(self,size,width=None,height=None):
+        '''
+        size:[w,h]
+        '''
+        if len(self.points)==0:
+            return self
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+        
+        w_scale = size[0]/width
+        h_scale = size[1]/height
+        scale = np.array([[w_scale,h_scale]],dtype=np.float)
+        ori_type = self.points[0].dtype
+        points = [p.astype(np.float)*scale for p in self.points]
+        self.points = points.astype(ori_type)
+        self.width = size[0]
+        self.height = size[1]
+
+        return self
+
+    def flip(self,direction,width=None,height=None):
+        if len(self.points)==0:
+            return self
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+        
+        if direction == self.HORIZONTAL:
+            new_points = []
+            for p in self.points:
+                p[:,0] = width-p[:,0]
+                p = p[::-1,:]
+                new_points.append(p)
+        elif direction == self.VERTICAL:
+            for p in self.points:
+                p = p[::-1,:]
+                p[:,1] = height-p[:,0]
+                new_points.append(p)
+        elif direction == self.DIAGONAL:
+            new_points = []
+            for p in self.points:
+                p[:,0] = width-p[:,0]
+                p[:,1] = height-p[:,0]
+                new_points.append(p)
+        else:
+            info = f"unknow flip direction {direction}"
+            print(f"ERROR: {info}")
+            raise RuntimeError(info)
+        
+        self.points = new_points
+
+        return self
+
 
 class WPolygonMasks:
     def __init__(self,masks,*,width=None,height=None,exclusion=None) -> None:
@@ -55,13 +115,25 @@ class WPolygonMasks:
 
         return np.stack(masks,axis=0)
 
+    def resize(self,size):
+        '''
+        size:[w,h]
+        '''
+        self.masks = [m.resize(size,width=self.width,height=self.height) for m in self.masks]
+        self.width = size[0]
+        self.height = size[1]
+        return self
+
+    def flip(self,direction):
+        [m.flip(direction,width=self.width,height=self.height) for m in self.masks]
+        return self
+
     @classmethod
     def from_bitmap_masks(cls,bitmap_masks):
         masks,bboxes,keep = bitmap_masks.polygon()
         items = [WPolygonMaskItem(points=m,width=bitmap_masks.width,height=bitmap_masks.height) for m in masks]
         return cls(items,width=bitmap_masks.width,height=bitmap_masks.height)
 
-    
     
 class WBitmapMasks:
     def __init__(self,masks,*,width=None,height=None):

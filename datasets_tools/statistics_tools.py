@@ -11,6 +11,7 @@ import img_utils as wmli
 from iotoolkit.pascal_voc_toolkit import PascalVOCData,read_voc_xml
 from iotoolkit.coco_toolkit import COCOData
 from iotoolkit.labelme_toolkit import LabelMeData
+from iotoolkit.fast_labelme import FastLabelMeData
 import object_detection2.bboxes as odb 
 import pandas as pd
 import wml_utils as wmlu
@@ -437,7 +438,7 @@ def coco2014_val_dataset():
     return data.get_items()
 
 def labelme_dataset(data_dir,labels):
-    data = LabelMeData(label_text2id=None)
+    data = FastLabelMeData(label_text2id=None)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
     data.read_data(data_dir,img_suffix="bmp;;jpg;;jpeg")
     #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
