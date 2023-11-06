@@ -6,7 +6,6 @@ from xml.dom.minidom import Document
 import random
 import os
 import math
-import object_detection2.visualization as odv
 import wml_utils
 import logging
 import shutil
@@ -194,6 +193,7 @@ class PascalVOCData(object):
 
 if __name__ == "__main__":
     #data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
+    import object_detection2.visualization as odv
     import img_utils as wmli
     import matplotlib.pyplot as plt
 

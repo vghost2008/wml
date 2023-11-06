@@ -41,7 +41,7 @@ class WPolygonMaskItem:
         scale = np.array([[w_scale,h_scale]],dtype=np.float)
         ori_type = self.points[0].dtype
         points = [p.astype(np.float)*scale for p in self.points]
-        self.points = points.astype(ori_type)
+        self.points = [p.astype(ori_type) for p in points]
         self.width = size[0]
         self.height = size[1]
 
@@ -89,10 +89,20 @@ class WPolygonMasks:
         self.height = height
         self.exclusion = exclusion
 
-    def __item__(self,idxs):
+    def __getitem__(self,idxs):
         if isinstance(idxs,(list,np.ndarray,tuple)):
-            masks = self.masks[idxs]
+            idxs = np.array(idxs)
+            print("__item__",idxs.dtype,idxs)
+            if idxs.dtype == np.bool:
+                idxs = np.where(idxs)[0]
+                print("__item__",idxs)
+            masks = [self.masks[idx] for idx in idxs]
             return WPolygonMasks(masks,width=self.width,height=self.height,exclusion=self.exclusion)
+        else:
+            return self.masks[idxs]
+
+    def __len__(self):
+        return len(self.masks)
 
     def bitmap(self,exclusion=None):
         '''
@@ -122,9 +132,11 @@ class WPolygonMasks:
         self.masks = [m.resize(size,width=self.width,height=self.height) for m in self.masks]
         self.width = size[0]
         self.height = size[1]
+        print(f"resize mask")
         return self
 
     def flip(self,direction):
+        print(f"FLIP mask")
         [m.flip(direction,width=self.width,height=self.height) for m in self.masks]
         return self
 

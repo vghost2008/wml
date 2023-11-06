@@ -80,7 +80,7 @@ def fixed_color_fn(label):
     color_nr = len(colors_tableau)
     return colors_tableau[label%color_nr]
 
-def fixed_color_large_fn(label,probs):
+def fixed_color_large_fn(label,probs=None):
     if isinstance(label,(str,bytes)):
         return colors_tableau_large[len(label)]
     color_nr = len(colors_tableau_large)

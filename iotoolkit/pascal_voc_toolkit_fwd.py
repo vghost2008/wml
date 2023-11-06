@@ -6,7 +6,6 @@ from xml.dom.minidom import Document
 import random
 import os
 import math
-import object_detection2.visualization as odv
 import wml_utils
 import logging
 import shutil

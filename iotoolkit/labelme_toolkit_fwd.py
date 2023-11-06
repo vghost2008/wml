@@ -3,7 +3,6 @@ import os
 import json
 import numpy as np
 import cv2 as cv
-import object_detection2.visualization as odv
 import copy
 import img_utils as wmli
 import random
@@ -459,41 +458,6 @@ def cut(annotations_list,img_data,bbox,threshold=0.15,return_none_if_no_ann=True
     else:
         return None,None,None
 
-def view_data(image_file,json_file,label_text_to_id=None,color_fn=None,alpha=0.4):
-    image,annotation_list = read_labelme_data(json_file,label_text_to_id)
-    image_data = wmli.imread(image_file)
-    do_scale = False
-    if image_data.shape[0]>2048 or image_data.shape[1]>2048:
-        scale = min(2048.0/image_data.shape[0],2048.0/image_data.shape[1])
-        size = (int(image_data.shape[1]*scale),int(image_data.shape[0]*scale))
-        image_data = cv.resize(image_data,size)
-        do_scale = True
-    else:
-        size = (image_data.shape[1],image_data.shape[0])
-
-    for ann in annotation_list:
-        if color_fn is not None:
-            color = list(color_fn(ann["category_id"]))
-        else:
-            color = [random.random()*255, random.random()*255, random.random()*255]
-        color = np.array([[color]],dtype=np.float)
-        mask = ann["segmentation"]
-        if do_scale:
-            mask = cv.resize(mask,size)
-        mask = np.expand_dims(mask,axis=-1)
-        image_data  = (image_data*(np.array([[[1]]],dtype=np.float32) - mask * alpha)).astype(np.uint8) + (mask * color * alpha).astype(np.uint8)
-
-    labels,bboxes = get_labels_and_bboxes(image,annotation_list,is_relative_coordinate=True)
-    image_data = odv.bboxes_draw_on_imgv2(image_data,classes=labels,bboxes=bboxes,thickness=2)
-
-    plt.figure(figsize=(10, 10))
-    plt.imshow(image_data)
-    plt.show()
-
-def view_data_in_dir(dir_path):
-    files = get_files(dir_path)
-    for img_file,json_file in files:
-        view_data(img_file,json_file)
 
             
 def remove_instance(image,annotations_list,remove_pred_fn,default_value=[127, 127, 127]):
