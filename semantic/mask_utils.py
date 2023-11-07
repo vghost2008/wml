@@ -3,6 +3,7 @@ import numpy as np
 import logging
 import img_utils as wmli
 import cv2
+from .basic_toolkit import *
 
 def np_iou(mask0,mask1):
     if mask0.dtype is not np.bool:
@@ -109,22 +110,4 @@ def cut_masks(masks,bboxes):
     return new_masks,new_bboxes,ratios
 
 
-def get_bboxes_by_contours(contours):
-    '''
-    contours:[[N,2]]
-    '''
-    if len(contours)==0:
-        return np.zeros([4],dtype=np.float32)
-    cn0 = np.reshape(contours[0],[-1,2])
-    x0 = np.min(cn0[:,0])
-    x1 = np.max(cn0[:,0])
-    y0 = np.min(cn0[:,1])
-    y1 = np.max(cn0[:,1])
-    for cn in contours[1:]:
-        cn = np.reshape(cn,[-1,2])
-        x0 = min(np.min(cn[:,0]),x0)
-        x1 = max(np.max(cn[:,0]),x1)
-        y0 = min(np.min(cn[:,1]),y0)
-        y1 = max(np.max(cn[:,1]),y1)
 
-    return np.array([x0,y0,x1,y1],dtype=np.float32)

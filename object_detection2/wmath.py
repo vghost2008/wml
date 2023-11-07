@@ -1,11 +1,22 @@
 import numpy as np
+from numpy import seterr
 from typing import Optional
+import traceback
+import sys
+
+seterr(all='raise')
 
 def npsafe_divide(numerator, denominator, name=None):
-    return np.where(
+    try:
+        return np.where(
         np.greater(denominator, 0),
         np.divide(numerator, denominator),
         np.zeros_like(numerator))
+    except Exception as e:
+        print(e)
+        traceback.print_exc(file=sys.stdout)
+
+
 
 def make_divisible(v: float, divisor: int, min_value: Optional[int] = None) -> int:
     """

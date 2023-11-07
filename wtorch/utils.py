@@ -10,6 +10,8 @@ import wml_utils as wmlu
 import img_utils as wmli
 import cv2
 from thirdparty.config import CfgNode 
+from semantic.structures import WPolygonMasks
+from semantic.basic_toolkit import *
 try:
     from mmcv.parallel import DataContainer as DC
     from mmcv.utils.config import ConfigDict
@@ -504,6 +506,8 @@ def npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
     bboxes: [N,4](x0,y0,x1,y1)
     size: (new_w,new_h)
     '''
+    if isinstance(mask,WPolygonMasks):
+        return mask.resize(size),None
     if mask.shape[0]==0:
         return np.zeros([0,size[1],size[0]],dtype=mask.dtype),np.zeros([0,4],dtype=bboxes.dtype)
     x_scale = size[0]/mask.shape[2]
@@ -533,21 +537,6 @@ def __time_npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
     t2 = t.time(reset=True)
     print(f"RM,{t0},{t1},{t2}")
     return a
-
-def find_contours_in_bbox(mask,bbox):
-    bbox = np.array(bbox).astype(np.int32)
-    sub_mask = wmli.crop_img_absolute_xy(mask,bbox)
-    if sub_mask.shape[0]<=1 or sub_mask.shape[1]<=1:
-        return []
-    contours,hierarchy = cv2.findContours(sub_mask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-    if len(contours) == 0:
-        return []
-    offset = np.array([bbox[0],bbox[1]],dtype=np.int32)
-    offset = np.reshape(offset,[1,1,2])
-    res = []
-    for x in contours:
-        res.append(x+offset)
-    return res
 
 def clone_tensors(x):
     if isinstance(x,(list,tuple)):
