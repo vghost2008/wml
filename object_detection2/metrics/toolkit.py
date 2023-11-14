@@ -420,7 +420,7 @@ def getPrecisionV2(gt_data,pred_data,pred_func,threshold,return_f1=False):
 
 @METRICS_REGISTRY.register()
 class Accuracy:
-    def __init__(self,threshold=0.5,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
+    def __init__(self,threshold=0.1,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
         self.threshold = threshold
         self.gtboxes = []
         self.gtlabels = []
