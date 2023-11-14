@@ -501,8 +501,12 @@ class PrecisionAndRecall:
         if self.total_test_nr==0 or len(self.boxes)==0 or len(self.labels)==0:
             self.precision,self.recall = 0,0
             return
-        gtboxes = np.concatenate(self.gtboxes,axis=0)
-        gtlabels = np.concatenate(self.gtlabels,axis=0)
+        if len(self.gtboxes) == 0:
+            gtboxes = np.zeros([0,4],dtype=np.float32)
+            gtlabels = np.zeros([0],dtype=np.int32)
+        else:
+            gtboxes = np.concatenate(self.gtboxes,axis=0)
+            gtlabels = np.concatenate(self.gtlabels,axis=0)
         boxes = np.concatenate(self.boxes,axis=0)
         labels = np.concatenate(self.labels,axis=0)
         self.precision,self.recall = getPrecision(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,

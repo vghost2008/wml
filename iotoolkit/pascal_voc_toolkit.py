@@ -527,7 +527,11 @@ class PascalVOCData(object):
         return len(self.files)
 
     def __getitem__(self,idx):
-        img_file,xml_file = self.files[idx]
+        try:
+            img_file,xml_file = self.files[idx]
+        except Exception as e:
+            print(f"ERROR: {e} {self.files[idx]}")
+            print(self.files)
         #print(xml_file)
         if not os.path.exists(xml_file):
             return img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None

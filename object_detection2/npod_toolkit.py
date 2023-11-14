@@ -350,7 +350,7 @@ def bboxes_sort(classes, scores, bboxes, top_k=400):
 
 def bboxes_filter(bboxes,labels, probs,threshold=0.5):
 
-    keep_bboxes = np.greater(probs,threshold)
+    keep_bboxes = np.greater_equal(probs,threshold)
     idxes = np.where(keep_bboxes)
     if not isinstance(bboxes,np.ndarray):
         bboxes = np.array(bboxes)
