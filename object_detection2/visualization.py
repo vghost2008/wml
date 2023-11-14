@@ -4,10 +4,10 @@ import random
 import numpy as np
 import semantic.visualization_utils as smv
 from PIL import Image
-from iotoolkit.coco_data_fwd import JOINTS_PAIR as COCO_JOINTS_PAIR
-from .basic_datadef import colors_tableau ,colors_tableau_large, PSEUDOCOLOR
-from .basic_datadef import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
+from basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large, PSEUDOCOLOR
+from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
+from semantic.structures import WPolygonMasks
 
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
 
@@ -80,7 +80,7 @@ def fixed_color_fn(label):
     color_nr = len(colors_tableau)
     return colors_tableau[label%color_nr]
 
-def fixed_color_large_fn(label,probs):
+def fixed_color_large_fn(label,probs=None):
     if isinstance(label,(str,bytes)):
         return colors_tableau_large[len(label)]
     color_nr = len(colors_tableau_large)
@@ -316,31 +316,93 @@ img: [H,W,C]
 mask: [N,H,W], include the area of whole image
 bboxes: [N,4], [y0,x0,y1,x1]
 '''
-def draw_maskv2(img,classes,bboxes=None,masks=None,
+def draw_maskv2_bitmap(img,classes,bboxes=None,masks=None,
                            color_fn=fixed_color_large_fn,
                            is_relative_coordinate=True,
+                           alpha=0.4,
                            ):
     if not isinstance(masks,np.ndarray):
         masks = np.array(masks)
-    if is_relative_coordinate:
+    if is_relative_coordinate and bboxes is not None:
         scales = np.array([[img.shape[1],img.shape[0],img.shape[1],img.shape[0]]],dtype=np.float32)
         bboxes = bboxes*scales
     masks = masks.astype(np.uint8)
     if masks.shape[1] < img.shape[0] or masks.shape[2]<img.shape[1]:
         masks = np.pad(masks,[[0,0],[0,img.shape[0]-masks.shape[1]],[0,img.shape[1]-masks.shape[2]]])
-    for i,bbox in enumerate(bboxes):
+    for i in range(masks.shape[0]):
         if color_fn is not None:
             color = list(color_fn(classes[i]))
         else:
             color = [random.random()*255, random.random()*255, random.random()*255]
-        x = int(bbox[1]*img.shape[1])
-        y = int(bbox[0]*img.shape[0])
-        w = int((bbox[3]-bbox[1])*img.shape[1])
-        h = int((bbox[2]-bbox[0])*img.shape[0])
-        if w<=0 or h<=0:
-            continue
+        if bboxes is not None:
+            bbox = bboxes[i]
+            w = bbox[3]-bbox[1]
+            h = bbox[2]-bbox[0]
+            if w<=0 or h<=0:
+                continue
         mask = masks[i]
-        img = smv.draw_mask_on_image_array(img,mask,color=color,alpha=0.4)
+        img = smv.draw_mask_on_image_array(img,mask,color=color,alpha=alpha)
+    
+    return img
+
+def draw_maskv2_polygon(img,classes,bboxes=None,masks=None,
+                           color_fn=fixed_color_large_fn,
+                           is_relative_coordinate=True,
+                           alpha=0.4,
+                           fill=True,
+                           thickness=1,
+                           ):
+    if fill:
+        masks = masks.bitmap()
+        img = draw_maskv2_bitmap(img,
+                                  classes=classes,
+                                  bboxes=bboxes,
+                                  masks=masks,
+                                  color_fn=color_fn,
+                                  is_relative_coordinate=is_relative_coordinate,
+                                  alpha=alpha)
+        return img
+    if is_relative_coordinate and bboxes is not None:
+        scales = np.array([[img.shape[1],img.shape[0],img.shape[1],img.shape[0]]],dtype=np.float32)
+        bboxes = bboxes*scales
+    for i in range(masks.shape[0]):
+        if color_fn is not None:
+            color = list(color_fn(classes[i]))
+        else:
+            color = [random.random()*255, random.random()*255, random.random()*255]
+        mask = masks[i]
+        img = smv.draw_polygon_mask_on_image_array(img, mask.points, color=color, thickness=thickness)
+    
+    return img
+
+def draw_maskv2(img,classes,bboxes=None,masks=None,
+                           color_fn=fixed_color_large_fn,
+                           is_relative_coordinate=True,
+                           alpha=0.4,
+                           fill=True,
+                           thickness=1,
+                           ):
+    if isinstance(masks,WPolygonMasks):
+        img = draw_maskv2_polygon(img,
+                                  classes=classes,
+                                  bboxes=bboxes,
+                                  masks=masks,
+                                  color_fn=color_fn,
+                                  is_relative_coordinate=is_relative_coordinate,
+                                  alpha=alpha,
+                                  fill=fill,
+                                  thickness=thickness)
+    elif isinstance(masks,np.ndarray):
+        img = draw_maskv2_bitmap(img,
+                                  classes=classes,
+                                  bboxes=bboxes,
+                                  masks=masks,
+                                  color_fn=color_fn,
+                                  is_relative_coordinate=is_relative_coordinate,
+                                  alpha=alpha)
+    else:
+        info = f"Unknow mask type {type(masks).__name__}"
+        print(f"WARNING: {info}")
     
     return img
 
@@ -350,12 +412,19 @@ mask include the area of whole image
 def draw_maskv2_xy(img,classes,bboxes=None,masks=None,
                            color_fn=fixed_color_large_fn,
                            is_relative_coordinate=False,
+                           alpha=0.4,
+                           fill=True,
+                           thickness=1,
                            ):
-    bboxes = odb.npchangexyorder(bboxes)
+    if bboxes is not None:
+        bboxes = odb.npchangexyorder(bboxes)
     img = draw_maskv2(img=img,
                     classes=classes,bboxes=bboxes,
                     masks=masks,color_fn=color_fn,
-                    is_relative_coordinate=is_relative_coordinate)
+                    is_relative_coordinate=is_relative_coordinate,
+                    alpha=alpha,
+                    fill=fill,
+                    thickness=thickness)
     return img
 '''
 mask include the area of whole image

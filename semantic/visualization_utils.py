@@ -455,6 +455,27 @@ def draw_mask_on_image_array(image, mask, color='red', alpha=0.4):
   cv2.drawContours(image,contours,-1,rgb,2)
   return image
 
+def draw_polygon_mask_on_image_array(image, mask, color='red', thickness=2):
+  """Draws mask on an image.
+
+  Args:
+    image: uint8 numpy array with shape (img_height, img_height, 3)
+    mask: a uint8 numpy array of shape (img_height, img_height) with
+      values between either 0 or 1.
+    color: color to draw the keypoints with. Default is red.
+    alpha: transparency value between 0 and 1. (default: 0.4)
+
+  Raises:
+    ValueError: On incorrect data type for image or masks.
+  """
+  if isinstance(color,tuple) or isinstance(color,list):
+      rgb = color
+  else:
+      if not isinstance(color,str):
+          color = str(color,encoding="utf-8")
+      rgb = ImageColor.getrgb(color)
+  cv2.drawContours(image,mask,-1,rgb,thickness=thickness)
+  return image
 
 def visualize_boxes_and_labels_on_image_array(
     image,

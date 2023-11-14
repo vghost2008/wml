@@ -99,14 +99,15 @@ if __name__ == "__main__":
     patch_dir = args.patch_dir
     data_dir = args.data_dir
     suffix = args.type
-    save_dir = args.save_dir
+    save_dir = args.save_dir #保存patch前及后的对比效果图
     max_size = args.max_size
     patch_files = wmlu.get_files(patch_dir,suffix=wmli.BASE_IMG_SUFFIX)
     data_files = wmlu.get_files(data_dir,suffix=wmli.BASE_IMG_SUFFIX)
     data_dict = wmlu.EDict()
     error_dict = set()
 
-    wmlu.create_empty_dir_remove_if(save_dir)
+    if save_dir is not None:
+        wmlu.create_empty_dir_remove_if(save_dir)
 
     for f in data_files:
         try:
@@ -118,7 +119,7 @@ if __name__ == "__main__":
             error_dict.add(basename)
             print(f"ERROR: file={f}")
 
-    for f in patch_files:
+    for i,f in enumerate(patch_files):
         info = get_patch_info(f)
         if info is None:
             continue
@@ -131,6 +132,7 @@ if __name__ == "__main__":
             continue
         img_path = data_dict[basename]
         xml_path = wmlu.change_suffix(img_path,"xml")
+        sys.stdout.write(f"{i}/{len(patch_files)} ")
         patch_one_xml_file(bbox,label,xml_path,img_path,save_dir,max_size=max_size)
 
 

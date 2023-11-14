@@ -49,7 +49,8 @@ def npbboxes_intersection_of_box0(box0,box1):
     w = np.maximum(int_xmax - int_xmin, 0.)
     inter_vol = h * w
     union_vol = (bbox_ref[2] - bbox_ref[0]) * (bbox_ref[3] - bbox_ref[1])
-    jaccard = wmath.npsafe_divide(inter_vol, union_vol, 'jaccard')
+    union_vol = np.maximum(union_vol,1e-6)
+    jaccard = inter_vol/union_vol
     return jaccard
 
 '''
