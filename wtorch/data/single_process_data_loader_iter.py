@@ -3,7 +3,7 @@ import torch
 import time
 from . import _utils
 import wml_utils as wmlu
-from . import _BaseDataLoaderIter
+from . import _BaseDataLoaderIter,_DatasetKind
 
 class _SingleProcessDataLoaderIter(_BaseDataLoaderIter):
     def __init__(self, loader):

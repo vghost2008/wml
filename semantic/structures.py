@@ -455,6 +455,9 @@ class WBitmapMasks(WBaseMask):
         self.reinit(masks=masks,width=width,height=height)
 
     def reinit(self,masks,*,width=None,height=None):
+        if len(masks.shape)==2:
+            print(masks.shape)
+            pass
         assert len(masks.shape)==3 and masks.shape[1]>0 and masks.shape[2]>0, f"ERROR: error points shape {masks.shape}"
         super().__init__()
         self.width = width if width is not None else masks.shape[2]
@@ -475,6 +478,12 @@ class WBitmapMasks(WBaseMask):
         if self.masks.dtype != np.uint8:
             print("WARNING: masks dtype is not uint8")
             self.masks = self.masks.astype(np.uint8)
+        
+        self.masks = np.ascontiguousarray(self.masks)
+
+    @classmethod
+    def new(cls,masks,*,width=None,height=None):
+        return cls(masks=masks,width=width,height=height)
     
     def __getitem__(self, index):
         """Index the BitmapMask.
@@ -485,8 +494,12 @@ class WBitmapMasks(WBaseMask):
         Returns:
             :obj:`BitmapMasks`: Indexed bitmap masks.
         """
-        masks = self.masks[index]
-        return WBitmapMasks(masks)
+        try:
+            masks = self.masks[index]
+            return self.new(masks)
+        except Exception as e:
+            print(f"ERROR: {e} index={index}, masks shape={self.masks.shape}, new masks shape {masks.shape}")
+            raise e
 
     def __setitem__(self,idxs,value):
         if isinstance(idxs,(list,tuple)) and (len(idxs)==2 or len(idxs)==3) and isinstance(idxs[0],slice):
@@ -556,7 +569,7 @@ class WBitmapMasks(WBaseMask):
             resized_masks = np.empty((0, size[1],size[0]), dtype=np.uint8)
         else:
             resized_masks = npresize_mask(self.masks,size)
-        return WBitmapMasks(resized_masks)
+        return self.new(resized_masks)
 
     def resize_mask_in_bboxes(self,bboxes,size=None,r=None):
         '''
@@ -580,9 +593,10 @@ class WBitmapMasks(WBaseMask):
             if dsize[0]<=1 or dsize[1]<=1:
                 continue
             sub_mask = bwmli.crop_img_absolute_xy(mask[i],bboxes[i])
+            sub_mask = np.ascontiguousarray(sub_mask)
             cur_m = cv2.resize(sub_mask,dsize=dsize,interpolation=cv2.INTER_NEAREST)
             bwmli.set_subimg(res_mask[i],cur_m,dbbox[:2])
-        return WBitmapMasks(res_mask),resized_bboxes
+        return self.new(res_mask),resized_bboxes
 
     @property
     def shape(self):
@@ -603,7 +617,7 @@ class WBitmapMasks(WBaseMask):
             print(f"ERROR: {info}")
             raise RuntimeError(info)
 
-        return WBitmapMasks(masks)
+        return self.new(masks)
 
     def pad(self, out_shape, pad_val=0):
         '''
@@ -614,7 +628,7 @@ class WBitmapMasks(WBaseMask):
         wp = max(out_shape[1]-self.width,0)
         masks = np.pad(self.masks, [[0, 0], [0, hp], [0, wp]], constant_values=pad_val)
     
-        return WBitmapMasks(masks)
+        return self.new(masks)
 
     def crop(self, bbox):
         '''
@@ -623,7 +637,7 @@ class WBitmapMasks(WBaseMask):
         # clip the boundary
         bbox = bbox.copy()
         cropped_masks = bwmli.crop_masks_absolute_xy(self.masks,bbox)
-        return WBitmapMasks(cropped_masks)
+        return self.new(cropped_masks)
     
     def to_ndarray(self):
         """See :func:`BaseInstanceMasks.to_ndarray`."""
@@ -659,7 +673,7 @@ class WBitmapMasks(WBaseMask):
                 rotated_masks = rotated_masks[:, :, None]  # (h, w, 1)
             rotated_masks = rotated_masks.transpose(
                 (2, 0, 1)).astype(self.masks.dtype)
-        return WBitmapMasks(rotated_masks, height=out_shape[0],width=out_shape[1])
+        return self.new(rotated_masks, height=out_shape[0],width=out_shape[1])
 
     def translate(self,
                   out_shape,
@@ -709,12 +723,12 @@ class WBitmapMasks(WBaseMask):
                 translated_masks = translated_masks[:, :, None]
             translated_masks = translated_masks.transpose(
                 (2, 0, 1)).astype(self.masks.dtype)
-        return WBitmapMasks(translated_masks, height=out_shape[0],width=out_shape[1])
+        return self.new(translated_masks, height=out_shape[0],width=out_shape[1])
 
-    @staticmethod
-    def concatenate(masks):
+    @classmethod
+    def concatenate(cls,masks):
         masks = np.concatenate([m.masks for m in masks],axis=0)
-        return WBitmapMasks(masks)
+        return cls(masks)
 
     @classmethod
     def zeros(cls,*,width=None,height=None,shape=None):
