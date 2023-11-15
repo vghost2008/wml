@@ -1,5 +1,5 @@
 import img_utils as wmli
-import bboxes as odb
+import object_detection2.bboxes as odb
 import cv2 as cv
 import numpy as np
 from semantic.mask_utils import cut_mask

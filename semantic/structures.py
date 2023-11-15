@@ -2,13 +2,20 @@ import numpy as np
 import copy
 import cv2
 from . import basic_toolkit as bmt
-from .mask_utils import get_bboxes_by_contours
+from .mask_utils import get_bboxes_by_contours,npresize_mask
+import object_detection2.bboxes as odb
+import basic_img_utils as bwmli
 import object_detection2.bboxes as odb
 
-class WPolygonMaskItem:
+class WBaseMask:
     HORIZONTAL = 'horizontal'
     VERTICAL =  'vertical'
     DIAGONAL =  'diagonal'
+    def __init__(self) -> None:
+        pass
+
+
+class WPolygonMaskItem:
     def __init__(self,points,*,width=None,height=None):
         '''
         points:  list[[N,2]]
@@ -57,19 +64,19 @@ class WPolygonMaskItem:
         if height is None:
             height = self.height
         
-        if direction == self.HORIZONTAL:
+        if direction == WBaseMask.HORIZONTAL:
             new_points = []
             for p in self.points:
                 p[:,0] = width-p[:,0]
                 p = p[::-1,:]
                 new_points.append(p)
-        elif direction == self.VERTICAL:
+        elif direction == WBaseMask.VERTICAL:
             new_points = []
             for p in self.points:
                 p = p[::-1,:]
                 p[:,1] = height-p[:,0]
                 new_points.append(p)
-        elif direction == self.DIAGONAL:
+        elif direction == WBaseMask.DIAGONAL:
             new_points = []
             for p in self.points:
                 p[:,0] = width-p[:,0]
@@ -177,9 +184,9 @@ class WPolygonMaskItem:
             translated_masks = []
             for p in self.points:
                 p = p.copy()
-                if direction == self.HORIZONTAL:
+                if direction == WBaseMask.HORIZONTAL:
                     p[:,0] = np.clip(p[:,0] + offset, 0, out_shape[1])
-                elif direction == self.VERTICAL:
+                elif direction == WBaseMask.VERTICAL:
                     p[:,1] = np.clip(p[:,1] + offset, 0, out_shape[0])
                 else:
                     info = f"error direction {direction}"
@@ -208,15 +215,19 @@ class WPolygonMaskItem:
         return res_masks
 
 
-class WPolygonMasks:
+class WPolygonMasks(WBaseMask):
     def __init__(self,masks,*,width=None,height=None,exclusion=None) -> None:
+        super().__init__()
         self.masks = copy.deepcopy(masks)
         self.width = width
         self.height = height
         self.exclusion = exclusion
 
     @classmethod
-    def zeros(cls,*,width=None,height=None):
+    def zeros(cls,*,width=None,height=None,shape=None):
+        if shape is not None:
+            width = shape[1]
+            height = shape[0]
         return cls([],width=width,height=height)
 
     def __getitem__(self,idxs):
@@ -224,11 +235,11 @@ class WPolygonMasks:
             sx = idxs[-1]
             sy = idxs[-2]
             if self.is_none_slice(sy) and self.is_flip_slice(sx):
-                return self.flip(WPolygonMaskItem.HORIZONTAL)
+                return self.flip(WBaseMask.HORIZONTAL)
             elif self.is_none_slice(sx) and self.is_flip_slice(sy):
-                return self.flip(WPolygonMaskItem.VERTICAL)
+                return self.flip(WBaseMask.VERTICAL)
             elif self.is_flip_slice(sx) and self.is_flip_slice(sy):
-                return self.flip(WPolygonMaskItem.DIAGONAL)
+                return self.flip(WBaseMask.DIAGONAL)
             bbox = self.slice2bbox(sx=sx,sy=sy)
             return self.crop(bbox)
         elif isinstance(idxs,(list,np.ndarray,tuple)):
@@ -401,15 +412,21 @@ class WPolygonMasks:
     def translate(self,
                   out_shape,
                   offset,
-                  direction=WPolygonMaskItem.HORIZONTAL,
+                  direction=WBaseMask.HORIZONTAL,
                   fill_val=None,
                   interpolation=None):
+        '''
+        out_shape: [H,W]
+        '''
         masks = [m.translate(out_shape, offset, direction, fill_val,interpolation) for m in self.masks]
         width = out_shape[1]
         height = out_shape[0]
         return WPolygonMasks(masks,width=width,height=height)
     
     def pad(self, out_shape, pad_val=0):
+        '''
+        out_shape: [H,W]
+        '''
         """padding has no effect on polygons`"""
         return WPolygonMasks(self.masks, height=out_shape[0],width=out_shape[1])
 
@@ -417,19 +434,93 @@ class WPolygonMasks:
     def shape(self):
         return (len(self.masks),self.height,self.width)
 
+    def resize_mask_in_bboxes(self,bboxes,size=None,r=None):
+        '''
+        mask: [N,H,W]
+        bboxes: [N,4](x0,y0,x1,y1)
+        size: (new_w,new_h)
+        '''
+        return self.resize(size),None
+
+    def to_ndarray(self):
+        """See :func:`BaseInstanceMasks.to_ndarray`."""
+        return self.bitmap()
+
     
-class WBitmapMasks:
+class WBitmapMasks(WBaseMask):
     def __init__(self,masks,*,width=None,height=None):
         '''
         masks: [N,H,W]
         '''
+        self.reinit(masks=masks,width=width,height=height)
+
+    def reinit(self,masks,*,width=None,height=None):
         assert len(masks.shape)==3 and masks.shape[1]>0 and masks.shape[2]>0, f"ERROR: error points shape {masks.shape}"
-        if masks.dtype != np.uint8:
-            print("WARNING: masks dtype is not uint8")
-            masks = masks.astype(np.uint8)
-        self.masks = copy.deepcopy(masks)
+        super().__init__()
         self.width = width if width is not None else masks.shape[2]
         self.height = height if height is not None else masks.shape[1]
+        if len(masks) == 0:
+            self.masks = np.empty((0, self.height, self.width), dtype=np.uint8)
+        else:
+            assert isinstance(masks, (list, tuple,np.ndarray))
+            if isinstance(masks, (list,tuple)):
+                assert isinstance(masks[0], np.ndarray)
+                assert masks[0].ndim == 2  # (H, W)
+            else:
+                assert masks.ndim == 3  # (N, H, W)
+            if isinstance(masks,np.ndarray):
+                self.masks = masks
+            else:
+                self.masks = np.stack(masks).reshape(-1, height, width)
+        if self.masks.dtype != np.uint8:
+            print("WARNING: masks dtype is not uint8")
+            self.masks = self.masks.astype(np.uint8)
+    
+    def __getitem__(self, index):
+        """Index the BitmapMask.
+
+        Args:
+            index (int | ndarray): Indices in the format of integer or ndarray.
+
+        Returns:
+            :obj:`BitmapMasks`: Indexed bitmap masks.
+        """
+        masks = self.masks[index]
+        return WBitmapMasks(masks)
+
+    def __setitem__(self,idxs,value):
+        if isinstance(idxs,(list,tuple)) and (len(idxs)==2 or len(idxs)==3) and isinstance(idxs[0],slice):
+            self.masks[idxs] = value
+        elif isinstance(idxs,(list,np.ndarray,tuple)):
+            idxs = np.array(idxs)
+            if idxs.dtype == np.bool:
+                idxs = np.where(idxs)[0]
+            if len(value) != len(idxs):
+                info = f"idxs size not equal value's size {len(idxs)} vs {len(value)}"
+                print(f"ERROR: {type(self).__name__}: {info}")
+                raise RuntimeError(info)
+            for i in idxs:
+                self.masks[i] = value[i]
+        else:
+            info = f"unknow idxs type {type(idxs)}"
+            print(f"ERROR: {type(self).__name__}: {info}")
+            raise RuntimeError(info)
+
+    def __iter__(self):
+        return iter(self.masks)
+
+    def __repr__(self):
+        s = self.__class__.__name__ + '('
+        s += f'num_masks={len(self.masks)}, '
+        s += f'height={self.height}, '
+        s += f'width={self.width})'
+        return s
+
+    def __len__(self):
+        """Number of masks."""
+        return len(self.masks)
+    
+
 
     def polygon(self,bboxes=None):
         t_masks = []
@@ -456,3 +547,179 @@ class WBitmapMasks:
     @classmethod
     def from_polygon_masks(cls,polygon_masks):
         return cls(masks=polygon_masks.bitmap())
+    
+    def resize(self, size, interpolation='nearest'):
+        '''
+        size:[w,h]
+        '''
+        if len(self.masks) == 0:
+            resized_masks = np.empty((0, size[1],size[0]), dtype=np.uint8)
+        else:
+            resized_masks = npresize_mask(self.masks,size)
+        return WBitmapMasks(resized_masks)
+
+    def resize_mask_in_bboxes(self,bboxes,size=None,r=None):
+        '''
+        mask: [N,H,W]
+        bboxes: [N,4](x0,y0,x1,y1)
+        size: (new_w,new_h)
+        '''
+        if bboxes is None or self.masks.shape[0]==0:
+            return self.resize(size),np.zeros([0,4],dtype=bboxes.dtype)
+        mask = self.masks.copy()
+        x_scale = size[0]/mask.shape[2]
+        y_scale = size[1]/mask.shape[1]
+        bboxes = odb.correct_bboxes(bboxes,size=[mask.shape[0],mask.shape[1]])
+        resized_bboxes = (bboxes*np.array([[x_scale,y_scale,x_scale,y_scale]])).astype(np.int32)
+        resized_bboxes = odb.correct_bboxes(resized_bboxes,size=size)
+        bboxes = np.array(bboxes).astype(np.int32)
+        res_mask = np.zeros([mask.shape[0],size[1],size[0]],dtype=mask.dtype)
+        for i in range(mask.shape[0]):
+            dbbox = resized_bboxes[i]
+            dsize = (dbbox[2]-dbbox[0],dbbox[3]-dbbox[1])
+            if dsize[0]<=1 or dsize[1]<=1:
+                continue
+            sub_mask = bwmli.crop_img_absolute_xy(mask[i],bboxes[i])
+            cur_m = cv2.resize(sub_mask,dsize=dsize,interpolation=cv2.INTER_NEAREST)
+            bwmli.set_subimg(res_mask[i],cur_m,dbbox[:2])
+        return WBitmapMasks(res_mask),resized_bboxes
+
+    @property
+    def shape(self):
+        return self.masks.shape
+    
+    def flip(self,direction):
+        if len(self.masks)==0:
+            return self
+        
+        if direction == WBaseMask.HORIZONTAL:
+            masks = self.masks[:,:,::-1]
+        elif direction == WBaseMask.VERTICAL:
+            masks = self.masks[:,::-1,:]
+        elif direction == WBaseMask.DIAGONAL:
+            masks = self.masks[:,::-1,::-1]
+        else:
+            info = f"unknow flip direction {direction}"
+            print(f"ERROR: {info}")
+            raise RuntimeError(info)
+
+        return WBitmapMasks(masks)
+
+    def pad(self, out_shape, pad_val=0):
+        '''
+        out_shape: [H,W]
+        '''
+        """padding has no effect on polygons`"""
+        hp = max(out_shape[0]-self.height,0)
+        wp = max(out_shape[1]-self.width,0)
+        masks = np.pad(self.masks, [[0, 0], [0, hp], [0, wp]], constant_values=pad_val)
+    
+        return WBitmapMasks(masks)
+
+    def crop(self, bbox):
+        '''
+        bbox: [x0,y0,x1,y1]
+        '''
+        # clip the boundary
+        bbox = bbox.copy()
+        cropped_masks = bwmli.crop_masks_absolute_xy(self.masks,bbox)
+        return WBitmapMasks(cropped_masks)
+    
+    def to_ndarray(self):
+        """See :func:`BaseInstanceMasks.to_ndarray`."""
+        return self.masks
+        
+    def rotate(self, out_shape, angle, center=None, scale=1.0, fill_val=0):
+        """Rotate the BitmapMasks.
+
+        Args:
+            out_shape (tuple[int]): Shape for output mask, format (h, w).
+            angle (int | float): Rotation angle in degrees. Positive values
+                mean counter-clockwise rotation.
+            center (tuple[float], optional): Center point (w, h) of the
+                rotation in source image. If not specified, the center of
+                the image will be used.
+            scale (int | float): Isotropic scale factor.
+            fill_val (int | float): Border value. Default 0 for masks.
+
+        Returns:
+            BitmapMasks: Rotated BitmapMasks.
+        """
+        if len(self.masks) == 0:
+            rotated_masks = np.empty((0, *out_shape), dtype=self.masks.dtype)
+        else:
+            rotated_masks = bwmli.imrotate(
+                self.masks.transpose((1, 2, 0)),
+                angle,
+                center=center,
+                scale=scale,
+                border_value=fill_val)
+            if rotated_masks.ndim == 2:
+                # case when only one mask, (h, w)
+                rotated_masks = rotated_masks[:, :, None]  # (h, w, 1)
+            rotated_masks = rotated_masks.transpose(
+                (2, 0, 1)).astype(self.masks.dtype)
+        return WBitmapMasks(rotated_masks, height=out_shape[0],width=out_shape[1])
+
+    def translate(self,
+                  out_shape,
+                  offset,
+                  direction='horizontal',
+                  fill_val=0,
+                  interpolation='bilinear'):
+        """Translate the BitmapMasks.
+
+        Args:
+            out_shape (tuple[int]): Shape for output mask, format (h, w).
+            offset (int | float): The offset for translate.
+            direction (str): The translate direction, either "horizontal"
+                or "vertical".
+            fill_val (int | float): Border value. Default 0 for masks.
+            interpolation (str): Same as :func:`mmcv.imtranslate`.
+
+        Returns:
+            BitmapMasks: Translated BitmapMasks.
+
+        Example:
+            >>> from mmdet.core.mask.structures import BitmapMasks
+            >>> self = BitmapMasks.random(dtype=np.uint8)
+            >>> out_shape = (32, 32)
+            >>> offset = 4
+            >>> direction = 'horizontal'
+            >>> fill_val = 0
+            >>> interpolation = 'bilinear'
+            >>> # Note, There seem to be issues when:
+            >>> # * out_shape is different than self's shape
+            >>> # * the mask dtype is not supported by cv2.AffineWarp
+            >>> new = self.translate(out_shape, offset, direction, fill_val,
+            >>>                      interpolation)
+            >>> assert len(new) == len(self)
+            >>> assert new.height, new.width == out_shape
+        """
+        if len(self.masks) == 0:
+            translated_masks = np.empty((0, *out_shape), dtype=np.uint8)
+        else:
+            translated_masks = bwmli.imtranslate(
+                self.masks.transpose((1, 2, 0)),
+                offset,
+                direction,
+                border_value=fill_val,
+                interpolation=interpolation)
+            if translated_masks.ndim == 2:
+                translated_masks = translated_masks[:, :, None]
+            translated_masks = translated_masks.transpose(
+                (2, 0, 1)).astype(self.masks.dtype)
+        return WBitmapMasks(translated_masks, height=out_shape[0],width=out_shape[1])
+
+    @staticmethod
+    def concatenate(masks):
+        masks = np.concatenate([m.masks for m in masks],axis=0)
+        return WBitmapMasks(masks)
+
+    @classmethod
+    def zeros(cls,*,width=None,height=None,shape=None):
+        if shape is not None:
+            masks = np.zeros(shape,dtype=np.uint8)
+        else:
+            masks = np.zeros([1,height,width],dtype=np.uint8)
+        return cls(masks)

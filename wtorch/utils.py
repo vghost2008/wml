@@ -10,7 +10,7 @@ import wml_utils as wmlu
 import img_utils as wmli
 import cv2
 from thirdparty.config import CfgNode 
-from semantic.structures import WPolygonMasks
+from semantic.structures import WPolygonMasks,WBitmapMasks
 from semantic.basic_toolkit import *
 try:
     from mmcv.parallel import DataContainer as DC
@@ -480,19 +480,7 @@ def npresize_mask(mask,size=None,r=None):
     mask = resize_mask(torch.from_numpy(mask),size,r)
     return mask.numpy()
 
-def __npresize_mask(mask,size=None,r=None):
-    '''
-    mask: [N,H,W]
-    size: (new_w,new_h)
-    '''
-    if mask.shape[0]==0:
-        return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
-    new_mask = []
-    for i in range(mask.shape[0]):
-        cur_m = cv2.resize(mask[i],dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
-        new_mask.append(cur_m)
-    new_mask = np.stack(new_mask,axis=0)
-    return new_mask
+
 
 def __correct_bboxes(bboxes,h,w):
     old_type = bboxes.dtype
@@ -506,8 +494,8 @@ def npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
     bboxes: [N,4](x0,y0,x1,y1)
     size: (new_w,new_h)
     '''
-    if isinstance(mask,WPolygonMasks):
-        return mask.resize(size),None
+    if isinstance(mask,(WPolygonMasks,WBitmapMasks)):
+        return mask.resize_mask_in_bboxes(bboxes,size=size,r=r)
     if mask.shape[0]==0:
         return np.zeros([0,size[1],size[0]],dtype=mask.dtype),np.zeros([0,4],dtype=bboxes.dtype)
     x_scale = size[0]/mask.shape[2]

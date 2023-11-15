@@ -4,7 +4,7 @@ import os
 import sys
 import random
 from collections import Iterable
-sys.path.append(os.path.dirname(__file__))
+#sys.path.append(os.path.dirname(__file__))
 import math
 import object_detection2.wmath as wmath
 import cv2 as cv
@@ -768,3 +768,18 @@ def torch_area(bboxes):
     s0 = torch.clamp(bboxes[...,2]-bboxes[...,0],min=0)
     s1 = torch.clamp(bboxes[...,3]-bboxes[...,1],min=0)
     return s0*s1
+
+def correct_bboxes(bboxes,size):
+    '''
+    bboxes: [N,4]  (x0,y0,x1,y1)
+    size: [W,H]
+    
+    or 
+    bboxes: [N,4]  (y0,x0,y1,x1)
+    size: [H,W]
+    
+    '''
+    old_type = bboxes.dtype
+    bboxes = np.maximum(bboxes,0)
+    bboxes = np.minimum(bboxes,np.array([[size[0],size[1],size[0],size[1]]]))
+    return bboxes.astype(old_type)

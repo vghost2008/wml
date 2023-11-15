@@ -4,6 +4,7 @@ import logging
 import img_utils as wmli
 import cv2
 from .basic_toolkit import *
+import torch
 
 def np_iou(mask0,mask1):
     if mask0.dtype is not np.bool:
@@ -110,4 +111,31 @@ def cut_masks(masks,bboxes):
     return new_masks,new_bboxes,ratios
 
 
+def resize_mask(mask,size=None,r=None):
+    '''
+    mask: [N,H,W]
+    size: (new_w,new_h)
+    '''
+    if size is None:
+        size = (int(mask.shape[2]*r),int(mask.shape[1]*r))
+    if mask.numel()==0:
+        return mask.new_zeros([mask.shape[0],size[1],size[0]])
 
+    mask = torch.unsqueeze(mask,dim=0)
+    mask =  torch.nn.functional.interpolate(mask,size=(size[1],size[0]),mode='nearest')
+    mask = torch.squeeze(mask,dim=0)
+    return mask
+
+def npresize_mask(mask,size=None,r=None):
+    '''
+    mask: [N,H,W]
+    size: (new_w,new_h)
+    '''
+    if mask.shape[0]==0:
+        return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
+    new_mask = []
+    for i in range(mask.shape[0]):
+        cur_m = cv2.resize(mask[i],dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
+        new_mask.append(cur_m)
+    new_mask = np.stack(new_mask,axis=0)
+    return new_mask
