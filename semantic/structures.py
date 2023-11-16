@@ -214,6 +214,28 @@ class WPolygonMaskItem:
             res_masks = WPolygonMaskItem(translated_masks, width=w,height=h)
         return res_masks
 
+    def get_bbox(self):
+        if len(self.points) == 0:
+            return np.zeros([4],dtype=np.float32)
+
+        points = np.concatenate(self.points,axis=0)
+
+        if len(points) == 0: #len(points)不为0，cocat的结果可能为零
+            return np.zeros([4],dtype=np.float32)
+
+        xs = points[0]
+        ys = points[1]
+        if len(xs)==0:
+            gt_bbox = np.zeros([4],dtype=np.float32)
+        else:
+            xy_min = np.min(points,axis=0)
+            xy_max = np.max(points,axis=0)
+            x0,y0 = xy_min[0],xy_min[1]
+            x1,y1 = xy_max[0],xy_max[1]
+            gt_bbox = np.array([x0,y0,x1,y1],dtype=np.float32)
+        
+
+        return gt_bbox
 
 class WPolygonMasks(WBaseMask):
     def __init__(self,masks,*,width=None,height=None,exclusion=None) -> None:
@@ -445,6 +467,14 @@ class WPolygonMasks(WBaseMask):
     def to_ndarray(self):
         """See :func:`BaseInstanceMasks.to_ndarray`."""
         return self.bitmap()
+
+    def get_bboxes(self):
+        gt_bboxes = [m.get_bbox() for m in self.masks]
+        if len(gt_bboxes) == 0:
+            return np.zeros([0,4],dtype=np.float32)
+        gt_bboxes = np.stack(gt_bboxes,axis=0)
+
+        return gt_bboxes
 
     
 class WBitmapMasks(WBaseMask):
@@ -739,3 +769,27 @@ class WBitmapMasks(WBaseMask):
         else:
             masks = np.zeros([1,height,width],dtype=np.uint8)
         return cls(masks)
+
+    def get_bboxes(self):
+        masks = masks
+        if len(masks) == 0:
+            return np.zeros([0,4],dtype=np.float32)
+
+        gtbboxes = []
+        for i in range(masks.shape[0]):
+            cur_mask = masks[i]
+            idx = np.nonzero(cur_mask)
+            xs = idx[1]
+            ys = idx[0]
+            if len(xs)==0:
+                gtbboxes.append(np.zeros([4],dtype=np.float32))
+            else:
+                x0 = np.min(xs)
+                y0 = np.min(ys)
+                x1 = np.max(xs)
+                y1 = np.max(ys)
+                gtbboxes.append(np.array([x0,y0,x1,y1],dtype=np.float32))
+        
+        gtbboxes = np.array(gtbboxes)
+
+        return gtbboxes
