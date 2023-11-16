@@ -463,7 +463,7 @@ class WBitmapMasks(WBaseMask):
         self.width = width if width is not None else masks.shape[2]
         self.height = height if height is not None else masks.shape[1]
         if len(masks) == 0:
-            self.masks = np.empty((0, self.height, self.width), dtype=np.uint8)
+            self.masks = np.zeros((0, self.height, self.width), dtype=np.uint8)
         else:
             assert isinstance(masks, (list, tuple,np.ndarray))
             if isinstance(masks, (list,tuple)):
@@ -502,6 +502,8 @@ class WBitmapMasks(WBaseMask):
             raise e
 
     def __setitem__(self,idxs,value):
+        if isinstance(value,WBitmapMasks):
+            value = value.masks
         if isinstance(idxs,(list,tuple)) and (len(idxs)==2 or len(idxs)==3) and isinstance(idxs[0],slice):
             self.masks[idxs] = value
         elif isinstance(idxs,(list,np.ndarray,tuple)):
@@ -582,7 +584,7 @@ class WBitmapMasks(WBaseMask):
         mask = self.masks.copy()
         x_scale = size[0]/mask.shape[2]
         y_scale = size[1]/mask.shape[1]
-        bboxes = odb.correct_bboxes(bboxes,size=[mask.shape[0],mask.shape[1]])
+        bboxes = odb.correct_bboxes(bboxes,size=[mask.shape[-1],mask.shape[-2]])
         resized_bboxes = (bboxes*np.array([[x_scale,y_scale,x_scale,y_scale]])).astype(np.int32)
         resized_bboxes = odb.correct_bboxes(resized_bboxes,size=size)
         bboxes = np.array(bboxes).astype(np.int32)

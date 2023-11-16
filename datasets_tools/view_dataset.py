@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument(
         '--ext',
         type=str,
-        default='jpg',
+        default='.jpg;;.bmp;;.jpeg;;.png',
         #choices=['avi', 'mp4', 'webm','MOV'],
         help='video file extensions')
     parser.add_argument(
@@ -47,6 +47,7 @@ register_dataset(LabelMeData)
 def simple_names(x):
     if "--" in x:
         return x.split("--")[-1]
+    return x
 
 if __name__ == "__main__":
 
@@ -82,7 +83,7 @@ if __name__ == "__main__":
             is_relative_coordinate=False)
 
         if binary_masks is not None:
-            img = odv.draw_maskv2(img,category_ids,boxes,binary_masks,is_relative_coordinate=False)
+            img = odv.draw_maskv2(img,category_names,boxes,binary_masks,is_relative_coordinate=False)
 
         save_path = osp.join(args.out_dir,wmlu.base_name(full_path)+".jpeg")
 
