@@ -331,7 +331,7 @@ class WPolygonMasks(WBaseMask):
         self.height = size[1]
         return self
 
-    def flip(self,direction):
+    def flip(self,direction=WBaseMask.HORIZONTAL):
         [m.flip(direction,width=self.width,height=self.height) for m in self.masks]
         return self
 
@@ -634,7 +634,7 @@ class WBitmapMasks(WBaseMask):
     def shape(self):
         return self.masks.shape
     
-    def flip(self,direction):
+    def flip(self,direction=WBaseMask.HORIZONTAL):
         if len(self.masks)==0:
             return self
         
