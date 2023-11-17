@@ -148,6 +148,7 @@ class LabelMeData(object):
             labels = labels[keep]
             bboxes = bboxes[keep]
             masks = masks[keep]
+            difficult = difficult[keep]
             labels_names = np.array(labels_names)[keep]
         else:
             labels = None

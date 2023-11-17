@@ -223,9 +223,7 @@ class WPolygonMaskItem:
         if len(points) == 0: #len(points)不为0，cocat的结果可能为零
             return np.zeros([4],dtype=np.float32)
 
-        xs = points[0]
-        ys = points[1]
-        if len(xs)==0:
+        if len(points)==0:
             gt_bbox = np.zeros([4],dtype=np.float32)
         else:
             xy_min = np.min(points,axis=0)
@@ -236,6 +234,12 @@ class WPolygonMaskItem:
         
 
         return gt_bbox
+
+    def __repr__(self):
+        s = self.__class__.__name__ + '('
+        s += f'height={self.height}, '
+        s += f'width={self.width})'
+        return s
 
 class WPolygonMasks(WBaseMask):
     def __init__(self,masks,*,width=None,height=None,exclusion=None) -> None:
@@ -300,6 +304,13 @@ class WPolygonMasks(WBaseMask):
 
     def __len__(self):
         return len(self.masks)
+
+    def __repr__(self):
+        s = self.__class__.__name__ + '('
+        s += f'num_masks={len(self.masks)}, '
+        s += f'height={self.height}, '
+        s += f'width={self.width})'
+        return s
 
     def bitmap(self,exclusion=None):
         '''
@@ -593,7 +604,7 @@ class WBitmapMasks(WBaseMask):
     def from_polygon_masks(cls,polygon_masks):
         return cls(masks=polygon_masks.bitmap())
     
-    def resize(self, size, interpolation='nearest'):
+    def resize(self, size):
         '''
         size:[w,h]
         '''
@@ -618,6 +629,7 @@ class WBitmapMasks(WBaseMask):
         resized_bboxes = (bboxes*np.array([[x_scale,y_scale,x_scale,y_scale]])).astype(np.int32)
         resized_bboxes = odb.correct_bboxes(resized_bboxes,size=size)
         bboxes = np.array(bboxes).astype(np.int32)
+
         res_mask = np.zeros([mask.shape[0],size[1],size[0]],dtype=mask.dtype)
         for i in range(mask.shape[0]):
             dbbox = resized_bboxes[i]
@@ -628,6 +640,7 @@ class WBitmapMasks(WBaseMask):
             sub_mask = np.ascontiguousarray(sub_mask)
             cur_m = cv2.resize(sub_mask,dsize=dsize,interpolation=cv2.INTER_NEAREST)
             bwmli.set_subimg(res_mask[i],cur_m,dbbox[:2])
+
         return self.new(res_mask),resized_bboxes
 
     @property
