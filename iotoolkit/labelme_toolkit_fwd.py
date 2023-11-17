@@ -109,11 +109,20 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
                     label = label_text_to_id(shape["label"])
                 else:
                     label = shape["label"]
+
+                flags = shape['flags']
+                difficult = False
+                for k,v in flags.items():
+                    if not v:
+                        continue
+                    if k.lower() in ['crowd','ignore','difficult']:
+                        difficult = True
                 annotations_list.append({"bbox":(xmin,ymin,xmax-xmin+1,ymax-ymin+1),
                                          "segmentation":segmentation,
                                          "category_id":label,
                                          "points_x":x,
-                                         "points_y":y})
+                                         "points_y":y,
+                                         "difficult":difficult})
         except:
             print(f"Read file {os.path.basename(file_path)} faild.")
             pass

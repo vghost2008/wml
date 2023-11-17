@@ -2,6 +2,8 @@ import os
 import wml_utils as wmlu
 import PIL
 import img_utils as wmli
+import os.path as osp
+import glob
 
 def __get_resample_nr(labels,resample_parameters):
     nr = 1
@@ -53,3 +55,19 @@ def dict_label_text2id(name,dict_data):
     if name not in dict_data:
         print(f"ERROR: trans {name} faild.")
     return dict_data.get(name,None)
+
+def find_imgs_for_ann_file(ann_path):
+    ann_path = osp.abspath(ann_path)
+    img_suffix = [".jpg",".jpeg",".bmp",".png",".gif"]
+    pattern = wmlu.change_suffix(ann_path,"*")
+    files = glob.glob(pattern)
+    img_file = None
+    for file in files:
+        if file==ann_path:
+            continue
+        if osp.splitext(file)[1].lower() in img_suffix:
+            img_file = file
+        else:
+            print(f"WARNING: Unknow img format file {file} for {ann_path}")
+            img_file = file
+    return img_file

@@ -125,6 +125,7 @@ class LabelMeData(object):
         img_file, json_file = self.files[idx]
         image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
+        difficult = np.array([v['difficult'] for v in annotations_list],dtype=np.bool)
         masks = [ann["segmentation"] for ann in annotations_list]
         if len(masks)>0:
             try:
@@ -151,7 +152,7 @@ class LabelMeData(object):
         else:
             labels = None
             
-        return img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, None,None 
+        return img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, difficult,None 
     
     def get_boxes_items(self):
         '''

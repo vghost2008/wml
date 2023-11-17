@@ -4,6 +4,7 @@ import glob
 import os.path as osp
 import os
 import shutil
+from iotoolkit.common import find_imgs_for_ann_file
 
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
@@ -12,21 +13,6 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def find_imgs_for_ann_file(ann_path):
-    ann_path = osp.abspath(ann_path)
-    img_suffix = [".jpg",".jpeg",".bmp",".png",".gif"]
-    pattern = wmlu.change_suffix(ann_path,"*")
-    files = glob.glob(pattern)
-    img_file = None
-    for file in files:
-        if file==ann_path:
-            continue
-        if osp.splitext(file)[1].lower() in img_suffix:
-            img_file = file
-        else:
-            print(f"WARNING: Unknow img format file {file} for {ann_path}")
-            img_file = file
-    return img_file
 
 if __name__ == "__main__":
     args = parse_args()

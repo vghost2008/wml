@@ -122,16 +122,17 @@ def getmAP(gtboxes,gtlabels,boxes,labels,probability=None,threshold=0.5,is_crowd
     res = []
     old_v = None
     for v in reversed(t_res1):
-        if old_v is not None and v[1]<old_v[1]:
-            v[1] = old_v[1]
+        if old_v is not None:
+            if v[1]<old_v[1]:
+                v[1] = old_v[1]
+            if math.fabs(v[1]-old_v[1])<1e-3 and v[0]<old_v[0]:
+                v[0] = old_v[0]
         res.append(v)
+        old_v = v
 
     min_r = res[0][1]
     max_r = res[-1][1]
     logging.debug("mAP: max r {}, min r {}".format(max_r,min_r))
-    if max_r-min_r<1.0:
-        p,r = getPrecision(gtboxes,gtlabels,boxes,labels,threshold,is_crowd=is_crowd)
-        res = [[p,r],[p,r]]
 
     if min_r > 1e-2:
         res = np.concatenate([np.array([[res[0][0],0.]]),res],axis=0)
