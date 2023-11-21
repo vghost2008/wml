@@ -8,11 +8,12 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('result', help='Config file')
     parser.add_argument('--metrics', type=str,default="PrecisionAndRecall",help='metrics')
-    parser.add_argument('--num_classes', type=int,default=0,help='num of classes')
-    parser.add_argument('--beg_score_thr', type=float,default=0.1,help='begin test thr')
-    parser.add_argument('--end_score_thr', type=float,default=1.0, help='end test thr')
-    parser.add_argument('--score_step', type=float,default=0.05, help='score step')
-    parser.add_argument('--classes_wise', action='store_true', help='score step')
+    parser.add_argument('--num-classes', type=int,default=0,help='num of classes')
+    parser.add_argument('--beg-score-thr', type=float,default=0.1,help='begin test thr')
+    parser.add_argument('--end-score-thr', type=float,default=1.0, help='end test thr')
+    parser.add_argument('--score-step', type=float,default=0.05, help='score step')
+    parser.add_argument('--classes-wise', action='store_true', help='score step')
+    parser.add_argument('--verbose', action='store_true', help='verbose mode')
     args = parser.parse_args()
     return args
 
@@ -49,11 +50,15 @@ if __name__ == "__main__":
         else:
             metrics = build_metrics(metrics_cfg)
         for d in data:
+            file = d.pop('file',"")
             keep = d['probability']>=score
             d['probability'] = d['probability'][keep]
             d['labels'] = d['labels'][keep]
             d['boxes'] = d['boxes'][keep]
             metrics(**d)
+            cur_info = metrics.current_info()
+            if args.verbose and  len(cur_info)>0:
+                print(file,cur_info)
         print(f"Score threshold: {score}")
         metrics.show()
         try:

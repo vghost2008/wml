@@ -8,6 +8,7 @@ from basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large
 from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
 from semantic.structures import WPolygonMasks
+import math
 
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
 
@@ -119,7 +120,8 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                         thickness=2,show_text=True,font_scale=1.2,text_color=(0.,255.,0.),
                         is_relative_coordinate=True,
                         is_show_text=None,
-                        fill_bboxes=False):
+                        fill_bboxes=False,
+                        is_crowd=None):
     if bboxes is None:
         return img
 
@@ -155,7 +157,14 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                 color = (int(random.random()*255), int(random.random()*255), int(random.random()*255))
             p10 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))
             p2 = (int(bbox[2] * shape[0]), int(bbox[3] * shape[1]))
-            cv2.rectangle(img, p10[::-1], p2[::-1], color, bboxes_thickness)
+            cur_is_crowd = False if is_crowd is None else is_crowd[i]
+            if not cur_is_crowd:
+                cv2.rectangle(img, p10[::-1], p2[::-1], color, bboxes_thickness)
+            else:
+                cv2.rectangle(img, p10[::-1], p2[::-1], color, int(max(bboxes_thickness//2,1)))
+                t_r = min(min(math.fabs(p10[0]-p2[0]),math.fabs(p10[1]-p2[1]))/10,5.0)
+                t_r = max(t_r,2)
+                cv2.circle(img,p10[::-1],t_r,color=color,thickness=-1)
             if show_text and text_fn is not None:
                 f_show_text = True
                 if is_show_text is not None:
@@ -168,7 +177,7 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                     p = get_text_pos_fn(p10,p2,bbox,classes[i],text_size)
                     cv2.putText(img, s, p[::-1], cv2.FONT_HERSHEY_DUPLEX,
                                 fontScale=font_scale,
-                                color=text_color,
+                                color=text_color if not cur_is_crowd else (110,110,110),
                                 thickness=text_thickness)
         except Exception as e:
             bbox = bboxes[i]
@@ -190,7 +199,8 @@ def draw_bboxes_xy(img, classes=None, scores=None, bboxes=None,
                 thickness=2,show_text=True,font_scale=1.2,text_color=(0.,255.,0.),
                 is_relative_coordinate=False,
                 is_show_text=None,
-                fill_bboxes=False):
+                fill_bboxes=False,
+                is_crowd=None):
     if bboxes is not None:
         bboxes = odb.npchangexyorder(bboxes)
     return draw_bboxes(img,classes,scores=scores,bboxes=bboxes,color_fn=color_fn,
@@ -198,7 +208,8 @@ def draw_bboxes_xy(img, classes=None, scores=None, bboxes=None,
                        show_text=show_text,font_scale=font_scale,text_color=text_color,
                        is_relative_coordinate=is_relative_coordinate,
                        is_show_text=is_show_text,
-                       fill_bboxes=fill_bboxes)
+                       fill_bboxes=fill_bboxes,
+                       is_crowd=is_crowd)
 
 def draw_legend(labels,text_fn,img_size,color_fn,thickness=4,font_scale=1.2,text_color=(0.,255.,0.),fill_bboxes=True):
     '''

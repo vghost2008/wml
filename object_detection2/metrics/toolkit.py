@@ -561,6 +561,15 @@ class PrecisionAndRecall(BaseMetrics):
 
         self.total_test_nr += 1
 
+        cur_precision,cur_recall = getPrecision(gtboxes=gtboxes,
+                                                gtlabels=gtlabels,
+                                                boxes=boxes,labels=labels,
+                                                threshold=self.threshold,
+                                                auto_scale_threshold=False,
+                                                ext_info=False,
+                                                is_crowd=is_crowd)
+        self._current_info = f"precision={cur_precision}, recall={cur_recall}"
+
     def evaluate(self):
         if self.total_test_nr==0 or len(self.boxes)==0 or len(self.labels)==0:
             self.precision,self.recall = 0,0
