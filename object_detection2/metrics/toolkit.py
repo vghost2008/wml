@@ -13,14 +13,23 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 import wml_utils as wmlu
 from .build import METRICS_REGISTRY
+from abc import ABCMeta, abstractclassmethod
 
-class BaseMetrics:
+class BaseMetrics(metaclass=ABCMeta):
     def __init__(self) -> None:
         self._current_info = ""
         pass
 
     def current_info(self):
         return self._current_info
+
+    def __repr__(self):
+        return self.to_string()
+
+    @abstractclassmethod
+    def show(self):
+        pass
+    
 
 def __safe_persent(v0,v1):
     if v1==0:
@@ -751,7 +760,7 @@ class ImgLevelPrecisionAndRecall(BaseMetrics):
             return "N.A."
 
     def __repr__(self):
-        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
+        res = f"total test nr {self.total_test_nr}, image level precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
         return res
 
 @METRICS_REGISTRY.register()
@@ -1559,3 +1568,23 @@ class WMAP(BaseMetrics):
     
     def value(self):
         self.map
+
+class ComposeMetrics(BaseMetrics):
+    def __init__(self,*args,**kwargs):
+        super().__init__()
+        self.metrics = list(args)+list(kwargs.values())
+
+    def __call__(self, *args,**kwargs):
+        [m(*args,**kwargs) for m in self.metrics]
+
+    def evaluate(self):
+        [m.evaluate() for m in self.metrics]
+
+    def show(self,name=""):
+        [m.show(name=name) for m in self.metrics]
+
+    def to_string(self):
+        return ";".join([m.to_string() for m in self.metrics])
+
+    def value(self):
+        return self.metrics[0].value()

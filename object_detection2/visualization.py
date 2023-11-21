@@ -162,8 +162,8 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                 cv2.rectangle(img, p10[::-1], p2[::-1], color, bboxes_thickness)
             else:
                 cv2.rectangle(img, p10[::-1], p2[::-1], color, int(max(bboxes_thickness//2,1)))
-                t_r = min(min(math.fabs(p10[0]-p2[0]),math.fabs(p10[1]-p2[1]))/10,5.0)
-                t_r = max(t_r,2)
+                t_r = min(min(math.fabs(p10[0]-p2[0]),math.fabs(p10[1]-p2[1]))/10,5)
+                t_r = int(max(t_r,2))
                 cv2.circle(img,p10[::-1],t_r,color=color,thickness=-1)
             if show_text and text_fn is not None:
                 f_show_text = True
