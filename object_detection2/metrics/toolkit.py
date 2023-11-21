@@ -1576,6 +1576,7 @@ class ComposeMetrics(BaseMetrics):
 
     def __call__(self, *args,**kwargs):
         [m(*args,**kwargs) for m in self.metrics]
+        self._current_info = "; ".join([m.current_info() for m in self.metrics])
 
     def evaluate(self):
         [m.evaluate() for m in self.metrics]
