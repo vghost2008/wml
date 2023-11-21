@@ -177,7 +177,7 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                     p = get_text_pos_fn(p10,p2,bbox,classes[i],text_size)
                     cv2.putText(img, s, p[::-1], cv2.FONT_HERSHEY_DUPLEX,
                                 fontScale=font_scale,
-                                color=text_color if not cur_is_crowd else (110,110,110),
+                                color=text_color if not cur_is_crowd else (110,160,110),
                                 thickness=text_thickness)
         except Exception as e:
             bbox = bboxes[i]
