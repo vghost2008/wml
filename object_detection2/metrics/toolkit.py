@@ -577,7 +577,7 @@ class PrecisionAndRecall(BaseMetrics):
                                                 auto_scale_threshold=False,
                                                 ext_info=False,
                                                 is_crowd=is_crowd)
-        self._current_info = f"precision={cur_precision}, recall={cur_recall}"
+        self._current_info = f"precision={cur_precision:.3f}, recall={cur_recall:.3f}"
 
     def evaluate(self):
         if self.total_test_nr==0 or len(self.boxes)==0 or len(self.labels)==0:
@@ -616,7 +616,7 @@ class PrecisionAndRecall(BaseMetrics):
             return "N.A."
 
     def __repr__(self):
-        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
+        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1:.3f}"
         return res
 
 @METRICS_REGISTRY.register()
@@ -702,6 +702,8 @@ class ImgLevelPrecisionAndRecall(BaseMetrics):
             labels = self.label_trans(labels)
         if not isinstance(gtlabels,np.ndarray):
             gtlabels = np.array(gtlabels)
+        if is_crowd is not None and not isinstance(is_crowd,np.ndarray):
+            is_crowd = np.array(is_crowd)
         ori_gtlabels = gtlabels.copy()
         gtlabels = set(gtlabels)
         labels = set(labels)
@@ -924,7 +926,7 @@ class GeneralCOCOEvaluation(BaseMetrics):
                         labels=labels,
                         probability=probability,
                         is_crowd=is_crowd)
-        self._current_info = f"ap={cur_ap}"
+        self._current_info = f"ap={cur_ap:.3f}"
 
         if probability is None:
             probability = np.ones_like(labels,dtype=np.float32)
@@ -1258,6 +1260,9 @@ class ClassesWiseModelPerformace(BaseMetrics):
                 continue
             self.have_data[i] = True
             self.data[i](lgtboxes,lgtlabels,lboxes,llabels,lprobs,img_size=img_size,use_relative_coord=use_relative_coord,is_crowd=lis_crowd)
+
+        self._current_info = ""
+
         return self.mp(gtboxes,gtlabels,boxes,labels,probability,is_crowd=is_crowd,img_size=img_size,
                         use_relative_coord=use_relative_coord)
 
