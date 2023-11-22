@@ -1,5 +1,6 @@
 #coding=utf-8
 from object_detection_tools.statistics_tools import *
+import numpy as np
 from sklearn.cluster import KMeans
 import object_detection2.bboxes as odb
 import sys

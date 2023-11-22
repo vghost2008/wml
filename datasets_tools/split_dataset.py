@@ -6,6 +6,11 @@ import math
 import random
 import time
 
+'''
+将数据集按split指定的比例拆分到不同的目录中
+主要用于拆分训练集，测试集等场景
+'''
+
 def parse_args():
     parser = argparse.ArgumentParser(description='split dataset')
     parser.add_argument('src_dir', type=str, help='source video directory')

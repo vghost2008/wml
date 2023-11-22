@@ -5,6 +5,9 @@ import wml_utils as wmlu
 from iotoolkit.pascal_voc_toolkit import write_voc_xml
 import numpy as np
 
+'''
+给图像文件生成空的xml标注文件
+'''
 def parse_args():
     parser = argparse.ArgumentParser(
         description='arguments')

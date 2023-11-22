@@ -1,28 +1,24 @@
 #coding=utf-8
-import sys
-import os
-import object_detection2.npod_toolkit as npod
-import wml_utils
-import matplotlib.pyplot as plt
 import numpy as np
-import math
-import object_detection2.visualization as odv
 import img_utils as wmli
 from iotoolkit.pascal_voc_toolkit import PascalVOCData,write_voc_xml
 from iotoolkit.coco_toolkit import COCOData
 from iotoolkit.labelme_toolkit import LabelMeData,save_labelme_datav3
 import object_detection2.bboxes as odb 
-import pandas as pd
 import wml_utils as wmlu
 from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
 import object_detection2.data_process_toolkit as odp
-from sklearn.cluster import KMeans
-from functools import partial
 from argparse import ArgumentParser
 from itertools import count
 import os.path as osp
 import img_utils as wmli
 import semantic.mask_utils as mu 
+
+'''
+对现有数据集进行裁切生成新的数据集，目前有两种裁剪方式
+0, 在现有的目标附近裁剪
+1，使用滑动窗裁剪
+'''
 
 def parse_args():
     parser = ArgumentParser()
@@ -116,6 +112,7 @@ def mapillary_vistas_dataset():
 
 def cut_arount_bboxes_and_save(dataset,data_dir,save_dir,cut_size,keep_ratio=1e-6):
     '''
+    在已有的目标附近裁图
     cut_size: (h,w)
     '''
     for idx,data in enumerate(dataset):
@@ -150,6 +147,7 @@ def cut_arount_bboxes_and_save(dataset,data_dir,save_dir,cut_size,keep_ratio=1e-
     
 def cut_bboxes_and_save(dataset,save_dir,cut_size,step,save_empty=False,keep_ratio=1e-6):
     '''
+    在图像上滑动窗口并裁图
     cut_size: (h,w)
     '''
     if step<=0:

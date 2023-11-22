@@ -8,6 +8,11 @@ import time
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
 from iotoolkit.labelme_toolkit import read_labelme_data
 
+'''
+将指定数据集按每一个样本中包含的标签名拷贝到相应的子目录中
+如果一个样本有多个不同类型的标签，那么会拷贝到多个相应的子目录中
+'''
+
 def parse_args():
     parser = argparse.ArgumentParser(description='split dataset')
     parser.add_argument('src_dir', type=str, help='source video directory')

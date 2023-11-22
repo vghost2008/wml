@@ -5,6 +5,11 @@ import wml_utils as wmlu
 import shutil
 from argparse import ArgumentParser
 
+'''
+从指定目录下采样sample-nr个文件，或者(sub-dir==True)从指定目标的每一个子目录中采样sample-nr个文件，并把采样的文件分子目录存在
+save_dir中
+'''
+
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('src_dir', type=str, default="/home/wj/ai/mldata1/B7mura/datas/try_s0",help='source video directory')
@@ -32,6 +37,10 @@ def sample_in_dir(dir_path,nr,split_nr=None,sample_in_sub_dirs=True):
     sample data in dir_path's sub dirs
     sample nr images in each sub dir, if split_nr is not None, sampled nr images will be split 
     to split_nr part and saved in different dir
+    split_nr当前没有使用
+    return:
+      在split_nr==None的情况下：
+      dict key=sub_dir_name,vlaue=采集的文件
     '''
     res = {}
     if sample_in_sub_dirs:

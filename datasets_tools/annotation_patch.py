@@ -20,6 +20,14 @@ import os.path as osp
 import img_utils as wmli
 import shutil
 
+'''
+基于文件的标注xml补丁脚本
+补丁文件名的命名规则为：
+    [org_file_name]_bbox{xmin},{ymin},{xmax},{ymax}_{label}.jpg
+    Example:
+    765K230022C1A_T380A0N_SCANIMAGE_20220408_174713_494_bbox1737,551,1753,562_MP1U.jpg
+打补丁时通过文件名org_file_name找到原文件，并把补丁文件名中包含的标注信息插入到原标注文件中
+'''
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('patch_dir', type=str, help='patch annotation directory')

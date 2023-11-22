@@ -2,6 +2,8 @@ import os
 import wml_utils as wmlu
 import argparse
 
+#如果在exclude_dir和src_dir文件夹中同时出现，则从src_dir中删除
+
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")

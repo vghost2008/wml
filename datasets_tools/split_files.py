@@ -6,6 +6,11 @@ import math
 import random
 import time
 
+'''
+将文件拷贝到多个子目录，每个子目录nr个文件
+可以根据需要拷贝相应的标注文件(suffix指定)
+'''
+
 def parse_args():
     parser = argparse.ArgumentParser(description='split dataset')
     parser.add_argument('src_dir', type=str, help='source video directory')
@@ -30,6 +35,11 @@ def parse_args():
         '--allow-empty',
         action='store_true',
         help='include img files without annotation')
+    parser.add_argument(
+        '--name',
+        type=str,
+        default="data_",
+        help='sub dir name')
     args = parser.parse_args()
 
     return args
@@ -73,6 +83,6 @@ if __name__ == "__main__":
     all_files = wmlu.list_to_2dlist(all_files,args.nr)
 
     for i,v in enumerate(all_files):
-        t_save_dir = osp.join(save_dir,"data_"+str(i))
+        t_save_dir = osp.join(save_dir,args.name+str(i))
         copy_files(v,t_save_dir,add_nr)
 

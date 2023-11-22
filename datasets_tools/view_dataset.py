@@ -57,7 +57,7 @@ if __name__ == "__main__":
     data.read_data(args.src_dir,img_suffix=args.ext)
 
     for x in data.get_items():
-        full_path, img_info,category_ids, category_names, boxes,binary_masks,*_ =  x
+        full_path, img_info,category_ids, category_names, boxes,binary_masks,area,is_crowd,*_ =  x
         print(full_path)
         category_names = [simple_names(x) for x in category_names]
         img = wmli.imread(full_path)
@@ -80,7 +80,8 @@ if __name__ == "__main__":
             text_fn=text_fn, thickness=args.line_width,
             show_text=True,
             font_scale=0.8,
-            is_relative_coordinate=False)
+            is_relative_coordinate=False,
+            is_crowd=is_crowd)
 
         if binary_masks is not None:
             img = odv.draw_maskv2(img,category_names,boxes,binary_masks,is_relative_coordinate=False)

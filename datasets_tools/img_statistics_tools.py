@@ -7,6 +7,10 @@ from iotoolkit.imgs_reader_mt import ImgsReader,MaxImgLongSize
 import sys
 import random
 
+'''
+对图像信息进行统计
+'''
+
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('src_dir', type=str, default="/home/wj/ai/mldata1/B7mura/datas/try_s0",help='source video directory')

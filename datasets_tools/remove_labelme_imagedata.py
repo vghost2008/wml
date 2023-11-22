@@ -5,6 +5,10 @@ import json
 import shutil
 import sys
 
+'''
+删除labelme标注中的imageData字段, 用于减小文件大小
+'''
+
 def parse_args():
     parser = argparse.ArgumentParser(description="remove labelme imagedata")
     parser.add_argument("src_dir",type=str,help="src dir")

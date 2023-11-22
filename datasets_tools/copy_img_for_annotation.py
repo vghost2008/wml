@@ -3,6 +3,9 @@ import glob
 import os.path as osp
 import wml_utils as wmlu
 
+'''
+指定标注文件目录，从图像文件目标中拷贝base name相同的图像文件到标注文件目录
+'''
 def parse_args():
     parser = argparse.ArgumentParser(
         description='arguments')
@@ -37,12 +40,6 @@ def copy_imgfiles(xml_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
     not_found_nr = 0
     for xf in xml_files:
         base_name = wmlu.base_name(xf)
-        img_name = base_name+img_suffix
-        img_path = osp.join(img_dir,img_name)
-        dst_img_path = osp.join(xml_dir,img_name)
-        #if osp.exists(img_path):
-            #wmlu.try_link(img_path,dst_img_path)
-            #copy_nr += 1
         if base_name in all_img_files:
             files = all_img_files[base_name]
             if not isinstance(files,list):
