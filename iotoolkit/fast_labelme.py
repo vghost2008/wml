@@ -130,6 +130,7 @@ class FastLabelMeData(object):
         image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,use_polygon_mask=True)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         masks = [ann["segmentation"] for ann in annotations_list]
+        difficult = np.array([v['difficult'] for v in annotations_list],dtype=np.bool)
         img_height = image['height']
         img_width = image['width']
         masks = WPolygonMasks(masks,width=img_width,height=img_height)
@@ -142,11 +143,12 @@ class FastLabelMeData(object):
             labels = labels[keep]
             bboxes = bboxes[keep]
             masks = masks[keep]
+            difficult = difficult[keep]
             labels_names = np.array(labels_names)[keep]
         else:
             labels = None
             
-        return img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, None,None 
+        return img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, difficult,None 
     
     def get_boxes_items(self):
         '''

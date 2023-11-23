@@ -55,6 +55,9 @@ def read_voc_xml(file_path, adjust=None, aspect_range=None, has_probs=False,abso
             dif = int(obj.find('difficult').text)
         else:
             dif = 0
+        if "*" in label:
+            dif = 1
+            label = label.replace("*","")
         if has_probs and obj.find("prob") is not None:
             prob = float(obj.find("prob").text)
         else:
