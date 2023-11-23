@@ -1572,7 +1572,7 @@ class WMAP(BaseMetrics):
         return self.to_string()
     
     def value(self):
-        self.map
+        return self.map
 
 class ComposeMetrics(BaseMetrics):
     def __init__(self,*args,**kwargs):

@@ -105,10 +105,6 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
                         segmentation = cv.drawContours(mask,all_points,-1,color=(1),thickness=cv.FILLED)
                 else:
                     segmentation = None
-                if label_text_to_id is not None:
-                    label = label_text_to_id(shape["label"])
-                else:
-                    label = shape["label"]
 
                 flags = shape['flags']
                 difficult = False
@@ -117,6 +113,17 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
                         continue
                     if k.lower() in ['crowd','ignore','difficult']:
                         difficult = True
+
+                ori_label = shape['label']
+                if "*" in ori_label:
+                    difficult = True
+                    ori_label = ori_label.replace("*","")
+
+                if label_text_to_id is not None:
+                    label = label_text_to_id(ori_label)
+                else:
+                    label = ori_label
+
                 annotations_list.append({"bbox":(xmin,ymin,xmax-xmin+1,ymax-ymin+1),
                                          "segmentation":segmentation,
                                          "category_id":label,
