@@ -248,12 +248,14 @@ class WPolygonMasks(WBaseMask):
         self.width = width
         self.height = height
         self.exclusion = exclusion
+        if self.width<5 or self.height<5:
+            print(f"WARNING: {self.__class__.__name__}: unnormal mask size, width={self.width}, height={self.height}")
 
     @classmethod
     def zeros(cls,*,width=None,height=None,shape=None):
         if shape is not None:
-            width = shape[1]
-            height = shape[0]
+            width = shape[-1]
+            height = shape[-2]
         return cls([],width=width,height=height)
 
     def __getitem__(self,idxs):
@@ -503,6 +505,10 @@ class WBitmapMasks(WBaseMask):
         super().__init__()
         self.width = width if width is not None else masks.shape[2]
         self.height = height if height is not None else masks.shape[1]
+
+        if self.width<5 or self.height<5:
+            print(f"WARNING: {self.__class__.__name__}: unnormal mask size, width={self.width}, height={self.height}")
+
         if len(masks) == 0:
             self.masks = np.zeros((0, self.height, self.width), dtype=np.uint8)
         else:
