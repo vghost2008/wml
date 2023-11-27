@@ -17,7 +17,7 @@ def parse_args():
 
 '''
 txt 文件内容
-label cx cy w h (相对坐标)
+label cx cy w h (相对坐标), label>=0
 Example:
 9 0.585337 0.310909 0.007212 0.056970
 9 0.655950 0.309697 0.010216 0.049697
