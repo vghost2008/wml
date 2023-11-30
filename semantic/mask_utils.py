@@ -1,7 +1,7 @@
 #coding=utf-8
 import numpy as np
 import logging
-import img_utils as wmli
+import basic_img_utils as bwmli
 import cv2
 from .basic_toolkit import *
 import torch
@@ -65,10 +65,10 @@ def resize_img_and_mask(img,mask,size,img_pad_value=127,mask_pad_value=255,pad_t
     '''
     img = np.array(img)
     mask = np.array(mask)
-    img = wmli.resize_img(img, size, keep_aspect_ratio=True)
-    mask = wmli.resize_img(mask, img.shape[:2][::-1], keep_aspect_ratio=False, interpolation=cv2.INTER_NEAREST)
-    img, px0, px1, py0, py1 = wmli.pad_img(img, size, pad_value=img_pad_value, pad_type=pad_type, return_pad_value=True)
-    mask = wmli.pad_imgv2(mask, px0, px1, py0, py1, pad_value=mask_pad_value)
+    img = bwmli.resize_img(img, size, keep_aspect_ratio=True)
+    mask = bwmli.resize_img(mask, img.shape[:2][::-1], keep_aspect_ratio=False, interpolation=cv2.INTER_NEAREST)
+    img, px0, px1, py0, py1 = bwmli.pad_img(img, size, pad_value=img_pad_value, pad_type=pad_type, return_pad_value=True)
+    mask = bwmli.pad_imgv2(mask, px0, px1, py0, py1, pad_value=mask_pad_value)
     return img,mask
 
 '''
@@ -79,7 +79,7 @@ the new mask in sub image and correspond bbox
 '''
 def cut_mask(mask,rect):
     max_area = np.sum(mask)
-    cuted_mask = wmli.sub_image(mask,rect)
+    cuted_mask = bwmli.sub_image(mask,rect)
     ratio = np.sum(cuted_mask)/max(1,max_area)
     if ratio <= 1e-6:
         return None,None,ratio

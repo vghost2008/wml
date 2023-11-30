@@ -332,3 +332,276 @@ def imtranslate(img,
         borderValue=border_value[:3],
         flags=cv2_interp_codes[interpolation])
     return translated
+'''
+size:(w,h)
+return:
+ resized img, resized_img.size <= size
+'''
+def resize_img(img,size,keep_aspect_ratio=False,interpolation=cv2.INTER_LINEAR,align=None):
+
+    img_shape = img.shape
+    if size[0] == img.shape[1] and size[1]==img.shape[0]:
+        return img
+
+    if np.any(np.array(img_shape)==0):
+        img_shape = list(img_shape)
+        img_shape[0] = size[1]
+        img_shape[1] = size[0]
+        return np.zeros(img_shape,dtype=img.dtype)
+    if keep_aspect_ratio:
+        if size[1]*img_shape[1] != size[0]*img_shape[0]:
+            if size[1]*img_shape[1]>size[0]*img_shape[0]:
+                ratio = size[0]/img_shape[1]
+            else:
+                ratio = size[1]/img_shape[0]
+            size = list(copy.deepcopy(size))
+            size[0] = int(img_shape[1]*ratio)
+            size[1] = int(img_shape[0]*ratio)
+
+            if align:
+                size[0] = (size[0]+align-1)//align*align
+                size[1] = (size[1] + align - 1) // align * align
+
+    if not isinstance(size,tuple):
+        size = tuple(size)
+    if size[0]==img_shape[0] and size[1]==img_shape[1]:
+        return img
+
+    img = cv2.resize(img,dsize=size,interpolation=interpolation)
+
+    if len(img_shape)==3 and len(img.shape)==2:
+        img = np.expand_dims(img,axis=-1)
+    
+    return img
+
+def resize_imgv2(img,size,interpolation=cv2.INTER_LINEAR,return_scale=False,align=None):
+    '''
+    size: (w,h)
+    '''
+    old_shape = img.shape
+    img = resize_img(img,size,keep_aspect_ratio=True,interpolation=interpolation)
+
+    if return_scale:
+        r = img.shape[0]/max(old_shape[0],1)
+
+    if align is not None:
+        img = align_pad(img,align=align)
+
+    if return_scale:
+        return img,r
+    else:
+        return img
+
+def resize_height(img,h,interpolation=cv2.INTER_LINEAR):
+    shape = img.shape
+    new_h = h
+    new_w = int(shape[1]*new_h/shape[0])
+    return cv2.resize(img,dsize=(new_w,new_h),interpolation=interpolation)
+
+def resize_width(img,w,interpolation=cv2.INTER_LINEAR):
+    shape = img.shape
+    new_w = w
+    new_h = int(shape[0]*new_w/shape[1])
+    return cv2.resize(img,dsize=(new_w,new_h),interpolation=interpolation)
+
+def resize_short_size(img,size,interpolation=cv2.INTER_LINEAR):
+    shape = img.shape
+    if shape[0]<shape[1]:
+        return resize_height(img,size,interpolation)
+    else:
+        return resize_width(img,size,interpolation)
+
+def resize_long_size(img,size,interpolation=cv2.INTER_LINEAR):
+    shape = img.shape
+    if shape[0]>shape[1]:
+        return resize_height(img,size,interpolation)
+    else:
+        return resize_width(img,size,interpolation)
+'''
+size:(w,h)
+return:
+img,r 
+r = new_size/old_size
+'''
+def resize_and_pad(img,size,interpolation=cv2.INTER_LINEAR,pad_color=(0,0,0),center_pad=True,return_scale=False):
+    old_shape = img.shape
+    img = resize_img(img,size,keep_aspect_ratio=True,interpolation=interpolation)
+    if return_scale:
+        r = img.shape[0]/max(old_shape[0],1)
+    if img.shape[0] == size[1] and img.shape[1] == size[0]:
+        if return_scale:
+            return img,r
+        return img
+    else:
+        if len(img.shape)==3:
+            channels = img.shape[-1]
+            if not isinstance(pad_color,Iterable):
+                pad_color = [pad_color]*channels
+            res = np.ones([size[1],size[0],channels],dtype=img.dtype)
+            pad_color = np.array(list(pad_color),dtype=img.dtype)
+            pad_color = pad_color.reshape([1,1,channels])
+        else:
+            if not isinstance(pad_color,Iterable):
+                pad_color = [pad_color]
+            res = np.ones([size[1],size[0]],dtype=img.dtype)
+            pad_color = np.array(list(pad_color),dtype=img.dtype)
+            pad_color = pad_color.reshape([1,1])
+        res = res*pad_color
+        if center_pad:
+            offset_x = (size[0]-img.shape[1])//2
+            offset_y = (size[1]-img.shape[0])//2
+        else:
+            offset_x = 0
+            offset_y = 0
+
+        w = img.shape[1]
+        h = img.shape[0]
+        res[offset_y:offset_y+h,offset_x:offset_x+w] = img
+        if return_scale:
+            return res,r
+        else:
+            return res
+
+'''
+box:[ymin,xmin,ymax,xmax], relative coordinate
+crop_size:[heigh,width] absolute pixel size.
+'''
+def crop_and_resize(img,box,crop_size):
+    img = crop_img(img,box)
+    return resize_img(img,crop_size)
+
+'''
+img:[H,W]/[H,W,C]
+box:[N,4] ymin,xmin,ymax,xmax, relative corrdinate
+从同一个图上切图
+'''
+def crop_and_resize_imgs(img,boxes,crop_size):
+    res_imgs = []
+    for box in boxes:
+        sub_img = crop_and_resize(img,box,crop_size)
+        res_imgs.append(sub_img)
+
+    return np.stack(res_imgs,axis=0)
+'''
+img:[N,H,W]/[N,H,W,C]
+box:[N,4] ymin,xmin,ymax,xmax, relative corrdinate
+box 与 img一对一的进行切图
+return:
+[N]+crop_size
+'''
+def one_to_one_crop_and_resize_imgs(imgs,boxes,crop_size):
+    res_imgs = []
+    for i,box in enumerate(boxes):
+        sub_img = crop_and_resize(imgs[i],box,crop_size)
+        res_imgs.append(sub_img)
+
+    return np.stack(res_imgs,axis=0)
+
+
+
+
+
+'''
+img:[H,W,C]
+size:(w,h)
+'''
+CENTER_PAD=0
+RANDOM_PAD=1
+TOPLEFT_PAD=2
+def pad_img(img,size,pad_value=127,pad_type=CENTER_PAD,return_pad_value=False):
+    '''
+    pad_type: 0, center pad
+    pad_type: 1, random pad
+    pad_type: 2, topleft_pad
+
+    '''
+    if pad_type==0:
+        if img.shape[0]<size[1]:
+            py0 = (size[1]-img.shape[0])//2
+            py1 = size[1]-img.shape[0]-py0
+        else:
+            py0 = 0
+            py1 = 0
+        if img.shape[1]<size[0]:
+            px0 = (size[0] - img.shape[1]) // 2
+            px1 = size[0] - img.shape[1] - px0
+        else:
+            px0 = 0
+            px1 = 0
+    elif pad_type==1:
+        if img.shape[0]<size[1]:
+            py0 = random.randint(0,size[1]-img.shape[0])
+            py1 = size[1]-img.shape[0]-py0
+        else:
+            py0 = 0
+            py1 = 0
+        if img.shape[1]<size[0]:
+            px0 = random.randint(0,size[0]-img.shape[1])
+            px1 = size[0] - img.shape[1] - px0
+        else:
+            px0 = 0
+            px1 = 0
+    elif pad_type==2:
+        if img.shape[0]<size[1]:
+            py0 = 0
+            py1 = size[1]-img.shape[0]-py0
+        else:
+            py0 = 0
+            py1 = 0
+        if img.shape[1]<size[0]:
+            px0 = 0
+            px1 = size[0] - img.shape[1] - px0
+        else:
+            px0 = 0
+            px1 = 0
+    if len(img.shape)==3:
+        img = np.pad(img, [[py0, py1], [px0, px1], [0, 0]], constant_values=pad_value)
+    else:
+        img = np.pad(img, [[py0, py1], [px0, px1]], constant_values=pad_value)
+    
+    if return_pad_value:
+        return img,px0,px1,py0,py1
+    return img
+
+'''
+img:[H,W,C]
+size:(w,h)
+'''
+def pad_imgv2(img,size,pad_color=(0,0,0),center_pad=False):
+    if img.shape[0] == size[1] and img.shape[1] == size[0]:
+        return img
+    else:
+        res = np.ones([size[1],size[0],3],dtype=img.dtype)
+        pad_color = np.array(list(pad_color),dtype=img.dtype)
+        pad_color = pad_color.reshape([1,1,3])
+        res = res*pad_color
+        if center_pad:
+            offset_x = (size[0]-img.shape[1])//2
+            offset_y = (size[1]-img.shape[0])//2
+        else:
+            offset_x = 0
+            offset_y = 0
+
+        w = img.shape[1]
+        h = img.shape[0]
+        res[offset_y:offset_y+h,offset_x:offset_x+w,:] = img
+        return res
+
+def pad_imgv2(img,px0,px1,py0,py1,pad_value=127):
+    if len(img.shape)==3:
+        img = np.pad(img, [[py0, py1], [px0, px1], [0, 0]], constant_values=pad_value)
+    else:
+        img = np.pad(img, [[py0, py1], [px0, px1]], constant_values=pad_value)
+    
+    return img
+
+'''
+img:[H,W]/[H,W,C]
+rect:[N,4] [xmin,ymin,xmax,ymax] absolute coordinate
+'''
+def sub_imagesv2(img,rects):
+    res = []
+    for rect in rects:
+        res.append(sub_imagev2(img,rect))
+
+    return res
