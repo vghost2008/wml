@@ -293,6 +293,11 @@ class WPolygonMasks(WBaseMask):
             height = shape[-2]
         return cls([],width=width,height=height)
 
+    @classmethod
+    def from_ndarray(cls,masks,*,width=None,height=None):
+        masks = WBitmapMasks.ndarray2polygon(masks)
+        return cls(masks=masks,width=width,height=height)
+
     def copy(self):
         return WPolygonMasks(self.masks,width=self.width,height=self.height,exclusion=self.exclusion)
 
@@ -581,6 +586,10 @@ class WBitmapMasks(WBaseMask):
     @classmethod
     def new(cls,masks,*,width=None,height=None):
         return cls(masks=masks,width=width,height=height)
+
+    @classmethod
+    def from_ndarray(cls,masks,*,width=None,height=None):
+        return cls(masks=masks,width=width,height=height)
     
     def __getitem__(self, index):
         """Index the BitmapMask.
@@ -637,16 +646,20 @@ class WBitmapMasks(WBaseMask):
         return len(self.masks)
     
 
-
     def polygon(self,bboxes=None):
+        return self.ndarray2polygon(self.masks,bboxes=bboxes)
+
+
+    @staticmethod
+    def ndarray2polygon(masks,bboxes=None):
         t_masks = []
-        keep = np.ones([self.masks.shape[0]],dtype=np.bool)
+        keep = np.ones([masks.shape[0]],dtype=np.bool)
         res_bboxes = []
-        for i in range(self.masks.shape[0]):
+        for i in range(masks.shape[0]):
             if bboxes is not None:
-                contours = bmt.find_contours_in_bbox(self.masks[i],bboxes[i])
+                contours = bmt.find_contours_in_bbox(masks[i],bboxes[i])
             else:
-                contours,hierarchy = cv2.findContours(self.masks[i],cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+                contours,hierarchy = cv2.findContours(masks[i],cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
             t_bbox = get_bboxes_by_contours(contours)
             if len(contours)==0 or not np.all(t_bbox[2:]-t_bbox[:2]>1):
                 keep[i] = False
