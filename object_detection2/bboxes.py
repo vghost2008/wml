@@ -11,8 +11,10 @@ import cv2 as cv
 import torch
 
 '''
-bbox_ref:[1,4], [[ymin,xmin,ymax,xmax]]
+bbox_ref:[1,4]/[N,4], [[ymin,xmin,ymax,xmax]]
 bboxes:[N,4],[[ymin,xmin,ymax,xmax],...]
+return:
+[N]
 '''
 def npbboxes_jaccard(bbox_ref, bboxes, name=None):
 
