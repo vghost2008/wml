@@ -11,16 +11,13 @@ import os
 import cv2
 import copy
 import random
-import itertools
-import time
 import glob
 import math
 from collections import OrderedDict, Iterable
 from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 from basic_data_def import colors_tableau
-import object_detection2.visualization as odv
+import object_detection2.basic_visualization as bodv
 import torchvision
-import torch
 from basic_img_utils import *
 
 BASE_IMG_SUFFIX=".jpg;;.jpeg;;.bmp;;.png;;.gif"
@@ -249,7 +246,7 @@ def imwrite_mask(filename,mask,color_map=_DEFAULT_COLOR_MAP):
     new_mask.save(filename)
 
 def imwrite_mask_on_img(filename,img,mask,color_map=_DEFAULT_COLOR_MAP,ignored_label=255):
-    r_img = odv.draw_semantic_on_image(img,mask, color_map, ignored_label=ignored_label)
+    r_img = bodv.draw_semantic_on_image(img,mask, color_map, ignored_label=ignored_label)
     imwrite(filename,r_img)
 
 def imread_mask(filename):
