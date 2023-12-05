@@ -21,6 +21,23 @@ def _get_translate_matrix(offset, direction='horizontal'):
         translate_matrix = np.float32([[1, 0, 0], [0, 1, offset]])
     return translate_matrix
 
+def _get_shear_matrix(magnitude, direction='horizontal'):
+    """Generate the shear matrix for transformation.
+
+    Args:
+        magnitude (int | float): The magnitude used for shear.
+        direction (str): The flip direction, either "horizontal"
+            or "vertical".
+
+    Returns:
+        ndarray: The shear matrix with dtype float32.
+    """
+    if direction == 'horizontal':
+        shear_matrix = np.float32([[1, magnitude, 0], [0, 1, 0]])
+    elif direction == 'vertical':
+        shear_matrix = np.float32([[1, 0, 0], [magnitude, 1, 0]])
+    return shear_matrix
+
 cv2_interp_codes = {
     'nearest': cv2.INTER_NEAREST,
     'bilinear': cv2.INTER_LINEAR,

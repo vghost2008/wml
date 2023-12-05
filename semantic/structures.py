@@ -6,6 +6,7 @@ from .mask_utils import get_bboxes_by_contours,npresize_mask
 import object_detection2.bboxes as odb
 import basic_img_utils as bwmli
 import object_detection2.bboxes as odb
+import mmcv
 
 class WBaseMask:
     HORIZONTAL = 'horizontal'
@@ -23,6 +24,9 @@ class WPolygonMaskItem:
         self.points = [p.copy().astype(np.int) for p in points]
         self.width = width
         self.height = height
+
+    def copy(self):
+        return WPolygonMaskItem(self.points,width=self.width,height=self.height)
 
     def bitmap(self,width=None,height=None):
         if width is None:
@@ -163,6 +167,34 @@ class WPolygonMaskItem:
             rotated_masks = rotated_masks.crop(np.array([0,0,out_shape[1]-1,out_shape[0]-1]))
         return rotated_masks
 
+    def shear(self,
+              out_shape,
+              magnitude,
+              direction='horizontal',
+              border_value=0,
+              interpolation='bilinear'):
+        #out_shape: [h,w]
+        if len(self.points) == 0:
+            sheared_masks = WPolygonMaskItem([], width=out_shape[1],height=out_shape[0])
+        else:
+            sheared_masks = []
+            if direction == 'horizontal':
+                shear_matrix = np.stack([[1, magnitude],
+                                         [0, 1]]).astype(np.float32)
+            elif direction == 'vertical':
+                shear_matrix = np.stack([[1, 0], [magnitude,
+                                                  1]]).astype(np.float32)
+            for p in self.points():
+                p = p.copy()
+                new_coords = np.matmul(shear_matrix, p.T)  # [2, n]
+                new_coords[0, :] = np.clip(new_coords[0, :], 0,
+                                           out_shape[1])
+                new_coords[1, :] = np.clip(new_coords[1, :], 0,
+                                           out_shape[0])
+                sheared_masks.append(new_coords.transpose((1, 0)))
+            sheared_masks = WPolygonMaskItem(sheared_masks, width=out_shape[1],height=out_shape[0])
+        return sheared_masks
+
     def translate(self,
                   out_shape,
                   offset,
@@ -253,10 +285,21 @@ class WPolygonMasks(WBaseMask):
 
     @classmethod
     def zeros(cls,*,width=None,height=None,shape=None):
+        '''
+        shape: [masks_nr,H,W]
+        '''
         if shape is not None:
             width = shape[-1]
             height = shape[-2]
         return cls([],width=width,height=height)
+
+    @classmethod
+    def from_ndarray(cls,masks,*,width=None,height=None):
+        masks = WBitmapMasks.ndarray2polygon(masks)
+        return cls(masks=masks,width=width,height=height)
+
+    def copy(self):
+        return WPolygonMasks(self.masks,width=self.width,height=self.height,exclusion=self.exclusion)
 
     def __getitem__(self,idxs):
         if isinstance(idxs,(list,tuple)) and (len(idxs)==2 or len(idxs)==3) and isinstance(idxs[0],slice):
@@ -438,8 +481,19 @@ class WPolygonMasks(WBaseMask):
 
     def rotate(self, out_shape, angle, center=None, scale=1.0, fill_val=0):
         #out_shape: [h,w]
-        """See :func:`BaseInstanceMasks.rotate`."""
         masks = [m.rotate(out_shape, angle, center, scale, fill_val) for m in self.masks]
+        width = out_shape[1]
+        height = out_shape[0]
+        return WPolygonMasks(masks,width=width,height=height)
+
+    def shear(self,
+              out_shape,
+              magnitude,
+              direction='horizontal',
+              border_value=0,
+              interpolation='bilinear'):
+        #out_shape: [h,w]
+        masks = [m.shear(out_shape, magnitude, direction, border_value, interpolation) for m in self.masks]
         width = out_shape[1]
         height = out_shape[0]
         return WPolygonMasks(masks,width=width,height=height)
@@ -501,6 +555,7 @@ class WBitmapMasks(WBaseMask):
         if len(masks.shape)==2:
             print(masks.shape)
             pass
+
         assert len(masks.shape)==3 and masks.shape[1]>0 and masks.shape[2]>0, f"ERROR: error points shape {masks.shape}"
         super().__init__()
         self.width = width if width is not None else masks.shape[2]
@@ -531,6 +586,10 @@ class WBitmapMasks(WBaseMask):
     @classmethod
     def new(cls,masks,*,width=None,height=None):
         return cls(masks=masks,width=width,height=height)
+
+    @classmethod
+    def from_ndarray(cls,masks,*,width=None,height=None):
+        return cls(masks=masks,width=width,height=height)
     
     def __getitem__(self, index):
         """Index the BitmapMask.
@@ -557,12 +616,16 @@ class WBitmapMasks(WBaseMask):
             idxs = np.array(idxs)
             if idxs.dtype == np.bool:
                 idxs = np.where(idxs)[0]
-            if len(value) != len(idxs):
+            if len(value) != len(idxs) and not isinstance(value,(int,float)):
                 info = f"idxs size not equal value's size {len(idxs)} vs {len(value)}"
                 print(f"ERROR: {type(self).__name__}: {info}")
                 raise RuntimeError(info)
-            for i in idxs:
-                self.masks[i] = value[i]
+            if isinstance(value,(float,int)):
+                for i in idxs:
+                    self.masks[i] = value
+            else:
+                for i in idxs:
+                    self.masks[i] = value[i]
         else:
             info = f"unknow idxs type {type(idxs)}"
             print(f"ERROR: {type(self).__name__}: {info}")
@@ -583,16 +646,20 @@ class WBitmapMasks(WBaseMask):
         return len(self.masks)
     
 
-
     def polygon(self,bboxes=None):
+        return self.ndarray2polygon(self.masks,bboxes=bboxes)
+
+
+    @staticmethod
+    def ndarray2polygon(masks,bboxes=None):
         t_masks = []
-        keep = np.ones([self.masks.shape[0]],dtype=np.bool)
+        keep = np.ones([masks.shape[0]],dtype=np.bool)
         res_bboxes = []
-        for i in range(self.masks.shape[0]):
+        for i in range(masks.shape[0]):
             if bboxes is not None:
-                contours = bmt.find_contours_in_bbox(self.masks[i],bboxes[i])
+                contours = bmt.find_contours_in_bbox(masks[i],bboxes[i])
             else:
-                contours,hierarchy = cv2.findContours(self.masks[i],cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+                contours,hierarchy = cv2.findContours(masks[i],cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
             t_bbox = get_bboxes_by_contours(contours)
             if len(contours)==0 or not np.all(t_bbox[2:]-t_bbox[:2]>1):
                 keep[i] = False
@@ -726,6 +793,41 @@ class WBitmapMasks(WBaseMask):
                 (2, 0, 1)).astype(self.masks.dtype)
         return self.new(rotated_masks, height=out_shape[0],width=out_shape[1])
 
+    def shear(self,
+              out_shape,
+              magnitude,
+              direction='horizontal',
+              border_value=0,
+              interpolation='bilinear'):
+        """Shear the BitmapMasks.
+
+        Args:
+            out_shape (tuple[int]): Shape for output mask, format (h, w).
+            magnitude (int | float): The magnitude used for shear.
+            direction (str): The shear direction, either "horizontal"
+                or "vertical".
+            border_value (int | tuple[int]): Value used in case of a
+                constant border.
+            interpolation (str): Same as in :func:`mmcv.imshear`.
+
+        Returns:
+            BitmapMasks: The sheared masks.
+        """
+        if len(self.masks) == 0:
+            sheared_masks = np.empty((0, *out_shape), dtype=self.masks.dtype)
+        else:
+            sheared_masks = bwmli.imshear(
+                self.masks.transpose((1, 2, 0)),
+                magnitude,
+                direction,
+                border_value=border_value,
+                interpolation=interpolation)
+            if sheared_masks.ndim == 2:
+                sheared_masks = sheared_masks[:, :, None]
+            sheared_masks = sheared_masks.transpose(
+                (2, 0, 1)).astype(self.masks.dtype)
+        return self.new(sheared_masks, height=out_shape[0],width=out_shape[1])
+
     def translate(self,
                   out_shape,
                   offset,
@@ -783,6 +885,9 @@ class WBitmapMasks(WBaseMask):
 
     @classmethod
     def zeros(cls,*,width=None,height=None,shape=None):
+        '''
+        shape: [masks_nr,H,W]
+        '''
         if shape is not None:
             masks = np.zeros(shape,dtype=np.uint8)
         else:
@@ -812,3 +917,6 @@ class WBitmapMasks(WBaseMask):
         gtbboxes = np.array(gtbboxes)
 
         return gtbboxes
+
+    def copy(self):
+        return WBitmapMasks(self.masks.copy(),width=self.width,height=self.height)
