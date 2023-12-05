@@ -93,6 +93,15 @@
             "console": "integratedTerminal",
             "args":["/home/wj/ai/mldata1/B11ACT/datas/train_s0" "/home/wj/ai/mldata1/B11ACT/tmp/view" "--type" "LabelMeData"],
         },
+        {
+            "name": "Python: view imgs in bboxes",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "datasets_tools/view_imgs_in_bboxes.py",
+            "console": "integratedTerminal",
+            "args":["/home/wj/ai/mldata1/B7mura/feedback/23231128-1130" "/home/wj/ai/mldata1/B7mura/tmp/view_in_bboxes" "--min-size" "128"],
+        },
     ]
     
 }

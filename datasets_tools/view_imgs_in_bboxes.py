@@ -133,6 +133,7 @@ def cut_and_save_imgs_in_bboxes(dataset,save_dir,min_size=0,add_classes_name=Fal
         if len(labels_names)==0:
             continue
         print(f"Process {idx}/{len(dataset)}")
+        org_bboxes = bboxes.copy()
         bboxes = odb.npscale_bboxes(bboxes,1.1)
         if min_size>1:
             bboxes = odb.clamp_bboxes(bboxes,min_size=min_size)
@@ -146,7 +147,11 @@ def cut_and_save_imgs_in_bboxes(dataset,save_dir,min_size=0,add_classes_name=Fal
             else:
                 t_save_path = osp.join(save_dir,name,f"{base_name}.jpg")
             #t_save_path = wmlu.get_unused_path_with_suffix(t_save_path,v)
-            simg = wmli.crop_img_absolute(img,bboxes[i])
+            bbox = bboxes[i]
+            simg = wmli.crop_img_absolute(img,bbox)
+            if min_size>1:
+                offset = np.array([bbox[0],bbox[1],bbox[0],bbox[1]])
+                simg = odv.draw_bbox(simg,org_bboxes[i]-offset,thickness=1,xy_order=False)
             wmli.imwrite(t_save_path,simg)
 
 if __name__ == "__main__":

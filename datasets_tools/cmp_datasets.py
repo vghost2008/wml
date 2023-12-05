@@ -1,5 +1,49 @@
+import img_utils as wmli
+import object_detection2.visualization as odv
+import matplotlib.pyplot as plt
+from iotoolkit.pascal_voc_toolkit import PascalVOCData
+from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
+from iotoolkit.coco_toolkit import COCOData
+from iotoolkit.labelme_toolkit import LabelMeData
+import argparse
+import os.path as osp
+import wml_utils as wmlu
+import wtorch.utils as wtu
 from object_detection2.metrics.toolkit import *
 import os
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='extract optical flows')
+    parser.add_argument('dir0', type=str, help='source video directory')
+    parser.add_argument('dir1', type=str, help='output rawframe directory')
+    parser.add_argument(
+        '--ext',
+        type=str,
+        default='.jpg;;.bmp;;.jpeg;;.png',
+        help='video file extensions')
+    parser.add_argument('--type', type=str, default='PascalVOCData',help='Data set type')
+    args = parser.parse_args()
+
+    return args
+
+def text_fn(x,scores):
+    return x
+
+DATASETS = {}
+
+def register_dataset(type):
+    DATASETS[type.__name__] = type
+
+register_dataset(PascalVOCData)
+register_dataset(COCOData)
+register_dataset(MapillaryVistasData)
+register_dataset(LabelMeData)
+
+def simple_names(x):
+    if "--" in x:
+        return x.split("--")[-1]
+    return x
+
 
 def cmp_datasets(lh_ds,rh_ds,num_classes=90,mask_on=False,model=COCOEvaluation,classes_begin_value=1,**kwargs):
     '''
@@ -49,15 +93,15 @@ def cmp_datasets(lh_ds,rh_ds,num_classes=90,mask_on=False,model=COCOEvaluation,c
     eval2.show()
     print(f"bboxes nr {lh_total_box_nr} vs {rh_total_box_nr}")
 
+
 if __name__ == "__main__":
-    from iotoolkit.pascal_voc_toolkit import PascalVOCData
-    DC_CLASSES_TO_ID = {"car": 0, "bus": 1, "truck": 2, "van": 2, "dangerous_sign": 3, "tank_truck": 4}
-    def text2id(x):
-        return DC_CLASSES_TO_ID[x]
-    data_path0 = "/home/wj/ai/smldata/boedcvehicle/data2label/data"
-    data_path1 = "/home/wj/桌面/data_dc_20211117"
-    data0 = PascalVOCData(label_text2id=text2id)
-    data1 = PascalVOCData(label_text2id=text2id)
-    data0.read_data(data_path0, silent=True)
-    data1.read_data(data_path1, silent=True)
+
+    args = parse_args()
+    print(DATASETS,args.type)
+    data0 = DATASETS[args.type](label_text2id=None,shuffle=False,absolute_coord=True)
+    data0.read_data(args.dir0,img_suffix=args.ext)
+
+    data1 = DATASETS[args.type](label_text2id=None,shuffle=False,absolute_coord=True)
+    data1.read_data(args.dir1,img_suffix=args.ext)
+
     cmp_datasets(data0.get_items(),data1.get_items(),num_classes=5,mask_on=False,model=COCOEvaluation,classes_begin_value=0)

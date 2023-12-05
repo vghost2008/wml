@@ -34,6 +34,9 @@ def draw_rectangle(img, p1, p2, color=[255, 0, 0], thickness=2):
     cv2.rectangle(img, p1[::-1], p2[::-1], color, thickness)
 
 def draw_bbox(img, bbox, shape=None, label=None, color=[255, 0, 0], thickness=2,is_relative_bbox=False,xy_order=True):
+    '''
+    bbox: [y0,x0,y1,x1] if xy_order = False  else [x0,y0,x1,y1]
+    '''
     if is_relative_bbox:
         p1 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))
         p2 = (int(bbox[2] * shape[0]), int(bbox[3] * shape[1]))
