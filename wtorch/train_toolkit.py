@@ -8,7 +8,7 @@ import inspect
 import sys
 from .wlr_scheduler import *
 from collections import OrderedDict
-from .nn import LayerNorm,LayerNorm2d,EvoNormS0,EvoNormS01D
+from .nn import LayerNorm,LayerNorm2d,EvoNormS0,EvoNormS01D,FrozenBatchNorm2d
 import traceback
 from typing import Union, Iterable
 
@@ -27,6 +27,12 @@ _NORMS = (
     EvoNormS0,
     EvoNormS01D
 )
+
+def __is_name_of(name, names):
+    for x in names:
+        if name.startswith(x) or name.startswith("module."+x):
+            return True
+    return False
 
 def _get_tensor_or_tensors_shape(x):
     if isinstance(x,(list,tuple)):
@@ -178,8 +184,45 @@ def __fix_bn(m):
     if classname.find('BatchNorm') != -1:
         m.eval()
 
-def freeze_bn(model):
-    model.apply(__fix_bn)
+def __freeze_bn0(model:torch.nn.Module,names2freeze=None):
+
+    _nr = 0
+    _nr_skip = 0
+    for name, ms in model.named_modules():
+        if not isinstance(ms, nn.BatchNorm2d):
+            continue
+        if __is_name_of(name, names2freeze):
+            ms.apply(__fix_bn)
+            print(f"Freeze bn {name}")
+            _nr += 1
+        else:
+            _nr_skip += 1
+            continue
+    print(f"Total freeze {_nr} bn, total {_nr_skip} bn not freeze.")
+    sys.stdout.flush()
+    return model
+
+def __freeze_bn(model,names2freeze=None):
+    '''
+    names2freeze: str/list[str] names to freeze
+    '''
+    for name in names2freeze:
+        child = getattr(model,name)
+        FrozenBatchNorm2d.convert_frozen_batchnorm(child)
+
+def freeze_bn(model,names2freeze=None):
+    '''
+    names2freeze: str/list[str] names to freeze
+    '''
+    if names2freeze is None:
+        #model.apply(__fix_bn)
+        model = FrozenBatchNorm2d.convert_frozen_batchnorm(model)
+    else:
+        if isinstance(names2freeze,(str,bytes)):
+            names2freeze = [names2freeze]
+        model = __freeze_bn(model,names2freeze)
+    
+    return model
 
 def set_bn_momentum(model,momentum):
     fn = partial(__set_bn_momentum,momentum=momentum)

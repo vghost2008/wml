@@ -241,29 +241,20 @@ class FrozenBatchNorm2d(nn.Module):
         super().__init__()
         self.num_features = num_features
         self.eps = eps
-        self.register_buffer("weight", torch.ones(num_features))
-        self.register_buffer("bias", torch.zeros(num_features))
+        #self.register_buffer("weight", torch.ones(num_features))
+        #self.register_buffer("bias", torch.zeros(num_features))
+        self.weight = Parameter(torch.ones(num_features))
+        self.bias = Parameter(torch.zeros(num_features))
         self.register_buffer("running_mean", torch.zeros(num_features))
         self.register_buffer("running_var", torch.ones(num_features) - eps)
 
-    def forward(self, x):
-        if x.dtype == torch.float16:
-            out = self.__forward(x)
-            if not torch.all(torch.isfinite(out)):
-                with torch.cuda.amp.autocast(False):
-                    out = self.__forward(x)
-                    return out
-            else:
-                return out
-        else:
-            return self.__forward(x)
 
-    def __forward(self, x):
+    def forward(self, x):
         if x.requires_grad:
             # When gradients are needed, F.batch_norm will use extra memory
             # because its backward op computes gradients for weight/bias as well.
-            scale = self.weight * (self.running_var + self.eps).rsqrt()
-            bias = self.bias - self.running_mean * scale
+            scale = self.weight.float() * (self.running_var.float() + self.eps).rsqrt()
+            bias = self.bias.float() - self.running_mean.float() * scale
             scale = scale.reshape(1, -1, 1, 1)
             bias = bias.reshape(1, -1, 1, 1)
             out_dtype = x.dtype  # may be half
