@@ -349,6 +349,57 @@ def imtranslate(img,
         borderValue=border_value[:3],
         flags=cv2_interp_codes[interpolation])
     return translated
+
+def imshear(img,
+            magnitude,
+            direction='horizontal',
+            border_value=0,
+            interpolation='bilinear'):
+    """Shear an image.
+
+    Args:
+        img (ndarray): Image to be sheared with format (h, w)
+            or (h, w, c).
+        magnitude (int | float): The magnitude used for shear.
+        direction (str): The flip direction, either "horizontal"
+            or "vertical".
+        border_value (int | tuple[int]): Value used in case of a
+            constant border.
+        interpolation (str): Same as :func:`resize`.
+
+    Returns:
+        ndarray: The sheared image.
+    """
+    assert direction in ['horizontal',
+                         'vertical'], f'Invalid direction: {direction}'
+    height, width = img.shape[:2]
+    if img.ndim == 2:
+        channels = 1
+    elif img.ndim == 3:
+        channels = img.shape[-1]
+    if isinstance(border_value, int):
+        border_value = tuple([border_value] * channels)
+    elif isinstance(border_value, tuple):
+        assert len(border_value) == channels, \
+            'Expected the num of elements in tuple equals the channels' \
+            'of input image. Found {} vs {}'.format(
+                len(border_value), channels)
+    else:
+        raise ValueError(
+            f'Invalid type {type(border_value)} for `border_value`')
+    shear_matrix = _get_shear_matrix(magnitude, direction)
+    sheared = cv2.warpAffine(
+        img,
+        shear_matrix,
+        (width, height),
+        # Note case when the number elements in `border_value`
+        # greater than 3 (e.g. shearing masks whose channels large
+        # than 3) will raise TypeError in `cv2.warpAffine`.
+        # Here simply slice the first 3 values in `border_value`.
+        borderValue=border_value[:3],
+        flags=cv2_interp_codes[interpolation])
+    return sheared
+
 '''
 size:(w,h)
 return:

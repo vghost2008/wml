@@ -259,9 +259,9 @@ def show_model_parameters_info(net):
     _nr = 0
     not_freeze_nr =0
     for name, ms in net.named_modules():
-        if not isinstance(ms, nn.BatchNorm2d):
+        if not isinstance(ms, (nn.BatchNorm2d,FrozenBatchNorm2d)):
             continue
-        if not ms.training:
+        if not ms.training or isinstance(ms,FrozenBatchNorm2d):
             _nr += 1
         else:
             not_freeze_nr += 1
