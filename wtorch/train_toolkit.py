@@ -94,7 +94,7 @@ def simple_split_parameters(model,filter=None,return_unused=False):
             else:
                 biases.append(v.bias)  # biases
                 parameters_set.add(k+".bias")
-        if isinstance(v, _NORMS) or "bn" in k and hasattr(v,'weight'):
+        if (isinstance(v, _NORMS) or "bn" in k) and hasattr(v,'weight'):
             if v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
                 unbn_weights.append(v.weight)
