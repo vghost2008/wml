@@ -97,6 +97,12 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
     Because we want to use models that were trained off a different
     number of classes.
     """
+    ignore_key = ['num_batches_tracked']
+    def _is_ignore_key(k):
+        for v in ignore_key:
+            if v in k:
+                return True
+            return False
 
     if 'state_dict' in loaded_dict:
         loaded_dict = loaded_dict['state_dict']
@@ -123,7 +129,7 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
 
     print(f"---------------------------------------------------")
     for k in loaded_dict:
-        if k not in new_loaded_dict and k not in used_loaded_dict_key:
+        if k not in new_loaded_dict and k not in used_loaded_dict_key and not _is_ignore_key(k):
             print(f"Skip {k} in loaded dict, shape={loaded_dict[k].shape}")
     if verbose:
         print(f"---------------------------------------------------")
