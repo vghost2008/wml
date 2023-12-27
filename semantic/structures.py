@@ -6,7 +6,6 @@ from .mask_utils import get_bboxes_by_contours,npresize_mask
 import object_detection2.bboxes as odb
 import basic_img_utils as bwmli
 import object_detection2.bboxes as odb
-import mmcv
 
 class WBaseMask:
     HORIZONTAL = 'horizontal'
