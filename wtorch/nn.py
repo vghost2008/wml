@@ -422,6 +422,7 @@ def get_norm(norm, out_channels,norm_args={}):
             "LayerNorm2d": LayerNorm2d,
             "LayerNorm":LayerNorm2d,
             "EvoNormS0": EvoNormS0,
+            "InstanceNorm":nn.InstanceNorm2d,
         }[norm]
     return norm(num_features=out_channels,**norm_args)
 

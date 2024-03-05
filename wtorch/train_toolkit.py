@@ -25,8 +25,12 @@ _NORMS = (
     LayerNorm,
     LayerNorm2d,
     EvoNormS0,
-    EvoNormS01D
+    EvoNormS01D,
+    FrozenBatchNorm2d,
 )
+
+def is_norm(model):
+    return isinstance(model,_NORMS)
 
 def __is_name_of(name, names):
     for x in names:
@@ -95,7 +99,9 @@ def simple_split_parameters(model,filter=None,return_unused=False):
                 biases.append(v.bias)  # biases
                 parameters_set.add(k+".bias")
         if (isinstance(v, _NORMS) or "bn" in k) and hasattr(v,'weight'):
-            if v.weight.requires_grad is False:
+            if v.weight is None:
+                continue
+            elif v.weight.requires_grad is False:
                 print(f"{k}.weight requires grad == False, skip.")
                 unbn_weights.append(v.weight)
                 _add_to_dict(k+".weight",[unused_parameters_set,parameters_set])
@@ -184,7 +190,7 @@ def __fix_bn(m):
     if classname.find('BatchNorm') != -1:
         m.eval()
 
-def __freeze_bn0(model:torch.nn.Module,names2freeze=None):
+def __freeze_bn(model:torch.nn.Module,names2freeze=None):
 
     _nr = 0
     _nr_skip = 0
@@ -202,7 +208,7 @@ def __freeze_bn0(model:torch.nn.Module,names2freeze=None):
     sys.stdout.flush()
     return model
 
-def __freeze_bn(model,names2freeze=None):
+def __freeze_bn2(model,names2freeze=None):
     '''
     names2freeze: str/list[str] names to freeze
     '''
@@ -215,12 +221,25 @@ def freeze_bn(model,names2freeze=None):
     names2freeze: str/list[str] names to freeze
     '''
     if names2freeze is None:
+        model.apply(__fix_bn)
+    else:
+        if isinstance(names2freeze,(str,bytes)):
+            names2freeze = [names2freeze]
+        model = __freeze_bn(model,names2freeze)
+    
+    return model
+
+def freeze_bn2(model,names2freeze=None):
+    '''
+    names2freeze: str/list[str] names to freeze
+    '''
+    if names2freeze is None:
         #model.apply(__fix_bn)
         model = FrozenBatchNorm2d.convert_frozen_batchnorm(model)
     else:
         if isinstance(names2freeze,(str,bytes)):
             names2freeze = [names2freeze]
-        model = __freeze_bn(model,names2freeze)
+        model = __freeze_bn2(model,names2freeze)
     
     return model
 
