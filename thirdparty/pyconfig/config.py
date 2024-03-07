@@ -659,7 +659,7 @@ class Config:
 
     def dump(self, file=None):
         cfg_dict = super(Config, self).__getattribute__('_cfg_dict').to_dict()
-        if self.filename.endswith('.py'):
+        if self.filename is None or self.filename.endswith('.py'):
             if file is None:
                 return self.pretty_text
             else:

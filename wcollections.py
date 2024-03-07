@@ -54,6 +54,7 @@ class AlwaysNullObj(object):
     def __call__(self, *args, **kwargs):
         return self
 
+
 class MDict(dict):
     def __init__(self, *args, **kwargs):
         '''
@@ -89,11 +90,14 @@ class MDict(dict):
         super().__init__(*args,**kwargs)
 
     @classmethod
-    def from_dict(cls,data:dict):
+    def from_dict(cls,data:dict,auto_dtype=True):
         x = data.values()
         assert len(x)>0, "error dict data"
-        dtype = type(list(x)[0])
-        ret = cls(dtype=dtype)
+        if auto_dtype:
+            dtype = type(list(x)[0])
+            ret = cls(dtype=dtype)
+        else:
+            ret = cls(dvalue=None)
         for k,v in data.items():
             ret[k] = v
         return ret
@@ -116,7 +120,7 @@ class MDict(dict):
             return super().__getitem__(key)
         elif self.default_value is not None:
             super().__setitem__(key,self.default_value)
-        return super().__getitem__(key)
+        return None
 
     def __delattr__(self, key):
         del self[key]
