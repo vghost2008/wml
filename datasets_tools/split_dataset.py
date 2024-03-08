@@ -40,16 +40,22 @@ def parse_args():
 
     return args
 
-def copy_files(files,save_dir,add_nr):
+def copy_files(files,save_dir,add_nr,src_dir):
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
     for i,(imgf,annf) in enumerate(files):
-        basename = wmlu.base_name(imgf)
+        #basename = wmlu.base_name(imgf)
+        basename = wmlu.get_relative_path(imgf,src_dir)
+        basename = osp.splitext(basename)[0]
         if add_nr:
             basename = basename+f"_{i}"
         suffix = osp.splitext(imgf)[1]
-        print(imgf,"--->",osp.join(save_dir,basename+suffix))
-        wmlu.try_link(imgf,osp.join(save_dir,basename+suffix))
+        save_path = osp.join(save_dir,basename+suffix)
+        cur_save_dir = osp.dirname(save_path)
+        os.makedirs(cur_save_dir,exist_ok=True)
+
+        print(imgf,"--->",save_path)
+        wmlu.try_link(imgf,save_path)
         suffix = osp.splitext(annf)[1]
         print(annf,"--->",osp.join(save_dir,basename+suffix))
         wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
@@ -94,5 +100,5 @@ if __name__ == "__main__":
             t_nr = len(tmp_files)
         print(f"split {v} {t_nr} files")
         wmlu.show_list(tmp_files)
-        copy_files(tmp_files,t_save_dir,add_nr)
+        copy_files(tmp_files,t_save_dir,add_nr,src_dir=args.src_dir)
 
