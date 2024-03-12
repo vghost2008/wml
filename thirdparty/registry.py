@@ -77,6 +77,9 @@ class Registry(object):
         return ret
     
     def build(self,cfg):
+        if isinstance(cfg,(list,tuple)):
+            return [self.build(ccfg) for ccfg in cfg]
+            
         if 'type' not in cfg:
             if 'default' in cfg and 'cfgs' in cfg:
                 default = cfg['default']
