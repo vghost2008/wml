@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import copy
 
 def _safe_persent(v0,v1):
     if v1==0:
@@ -176,6 +177,75 @@ class BPrecisionAndRecall(PrecisionAndRecall):
 
     def to_string(self):
         return f"BP={self.precision:.2f}, BR={self.recall:.2f}"
+
+class ConfusionMatrix:
+    def __init__(self,num_classes=-1,**kwargs):
+        self.all_target = []
+        self.all_pred = []
+        self.accuracy = 100.0
+        self.num_classes = num_classes
+        self.cm = []
+
+    def __call__(self,output,target):
+        '''
+        output: [N0,...,Nn,num_classes]
+        target: [N0,...,Nn]
+        '''
+        if self.num_classes<=0:
+            self.num_classes = output.shape[-1]
+        idx = np.argsort(output,axis=-1)
+        pred = idx[...,-1]
+        self.all_pred.append(copy.deepcopy(np.reshape(pred,[-1])))
+        self.all_target.append(copy.deepcopy(np.reshape(target,[-1])))
+    
+    def num_examples(self):
+        if len(self.all_pred)==0:
+            return
+        all_pred= np.concatenate(self.all_pred,axis=0)
+        return all_pred.size
+
+
+    def evaluate(self):
+        if len(self.all_pred)==0:
+            return ""
+
+        cm = np.zeros([self.num_classes,self.num_classes],dtype=np.int32)
+        all_pred= np.concatenate(self.all_pred,axis=0)
+        all_target = np.concatenate(self.all_target,axis=0)
+
+        for p,t in zip(all_pred,all_target):
+            cm[t,p] = cm[t,p]+1
+        
+        self.cm = cm
+
+        return cm
+
+
+
+    def show(self,name=""):
+        sys.stdout.flush()
+        self.evaluate()
+        print(self.to_string())
+        return self.accuracy
+
+    def to_string(self,blod=True):
+        res = "\n"
+        for i in range(self.num_classes):
+            line = ""
+            for j in range(self.num_classes):
+                if blod and i==j:
+                    #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
+                    line += f"{self.cm[i,j]:<4}*, "
+                else:
+                    line += f"{self.cm[i,j]:<5}, "
+            res += line+"\n"
+        return res
+
+    def __repr__(self):
+        return self.to_string()
+    
+    def value(self):
+        return self.cm
 
 class ClassesWiseModelPerformace:
     def __init__(self,num_classes,classes_begin_value=0,model_type=PrecisionAndRecall,model_args={},label_trans=None,
