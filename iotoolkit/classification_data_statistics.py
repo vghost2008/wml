@@ -11,3 +11,4 @@ def labels_statistics(labels,name=""):
         print(name)
     for l,v in counter:
         print(f"{l:>8}: {v:<8},  {v*100.0/len(labels):>3.2f}%")
+    print(f"Total {len(labels)} samples.")
