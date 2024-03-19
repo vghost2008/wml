@@ -249,6 +249,7 @@ class ConfusionMatrix:
 
 class ClassesWiseModelPerformace:
     def __init__(self,num_classes,classes_begin_value=0,model_type=PrecisionAndRecall,model_args={},label_trans=None,
+                  name=None,
                  **kwargs):
         self.num_classes = num_classes
         self.clases_begin_value = classes_begin_value
@@ -259,6 +260,7 @@ class ClassesWiseModelPerformace:
         self.label_trans = label_trans
         self.have_data = np.zeros([num_classes],dtype=np.bool)
         self.accuracy = Accuracy(topk=1)
+        self.name = name
 
     @staticmethod
     def select_labels(labels,target,classes):
@@ -315,7 +317,10 @@ class ClassesWiseModelPerformace:
         self.accuracy.evaluate()
 
     def to_string(self):
-        return ";".join([str(idx)+": "+d.to_string() for idx,d in enumerate(self.data)]+[self.accuracy.to_string()])
+        res = ";".join([str(idx)+": "+d.to_string() for idx,d in enumerate(self.data)]+[self.accuracy.to_string()])
+        if self.name is not None:
+            res = f"{self.name}: "+res
+        return res
 
     def __repr__(self):
         return self.to_string()
