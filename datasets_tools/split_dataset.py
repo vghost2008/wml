@@ -5,10 +5,15 @@ import os
 import math
 import random
 import time
+import copy
 
 '''
-将数据集按split指定的比例拆分到不同的目录中
 主要用于拆分训练集，测试集等场景
+
+将数据集按split指定的比例拆分到不同的目录中
+也可以使用绝对的数量，使用绝对数量时，-1表示剩余的其它文件
+
+sub-dir为True时表示，百分比对一级子目录当独计算，否则对所有目标统一计算
 '''
 
 def parse_args():
@@ -36,6 +41,7 @@ def parse_args():
         '--allow-empty',
         action='store_true',
         help='include img files without annotation')
+    parser.add_argument('--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
     args = parser.parse_args()
 
     return args
@@ -61,18 +67,12 @@ def copy_files(files,save_dir,add_nr,src_dir):
         wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
 
 
+def split_one_dir(src_dir,out_dir,splits,args):
 
+    print(f"Process {src_dir}, save dir {out_dir}")
+    splits = copy.deepcopy(splits)
 
-if __name__ == "__main__":
-    args = parse_args()
-    splits = args.split
-    sum = 0.0
-    for x in splits:
-        sum += x
-    if math.fabs(sum-1.0)>0.01:
-        print(f"Error split, sum(split)==1")
-        exit(-1)
-    img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
+    img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
     ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
     basenames = [wmlu.base_name(x) for x in img_files]
     if len(basenames) == len(set(basenames)):
@@ -83,22 +83,59 @@ if __name__ == "__main__":
     all_files = list(zip(img_files,ann_files))
     if not args.allow_empty:
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
-    save_dir = wmlu.get_unused_path(args.out_dir)
+    save_dir = wmlu.get_unused_path(out_dir)
     os.makedirs(save_dir)
     random.seed(int(time.time()))
     random.shuffle(all_files)
-    print(f"Find {len(all_files)} files")
+    print(f"Find {len(all_files)} files in {src_dir}")
+
+    use_percent = True
+    total_nr = 0
+    for v in splits:
+        if v<0 or v>=1:
+            use_percent = False
+            if v>0:
+                total_nr += v
+    for i,v in enumerate(splits):
+        if v<0:
+            old_splits = copy.deepcopy(splits)
+            splits[i] = len(all_files)-total_nr
+            print(f"Update splits from {old_splits} to {splits}")
+            break
+    
 
     for i,v in enumerate(splits):
         t_save_dir = osp.join(save_dir,"data_"+str(v))
         if i<len(splits)-1:
-            t_nr = int(v*len(all_files)+0.5)
+            if use_percent:
+                t_nr = int(v*len(all_files)+0.5)
+            else:
+                t_nr = int(v)
             tmp_files = all_files[:t_nr]
             all_files = all_files[t_nr:]
         else:
             tmp_files = all_files
             t_nr = len(tmp_files)
-        print(f"split {v} {t_nr} files")
+        print(f"split {v} as {t_nr} files")
         wmlu.show_list(tmp_files)
-        copy_files(tmp_files,t_save_dir,add_nr,src_dir=args.src_dir)
+        copy_files(tmp_files,t_save_dir,add_nr,src_dir=src_dir)
 
+
+if __name__ == "__main__":
+    args = parse_args()
+    splits = args.split
+    if splits[0]>0 and splits[0]<1:
+        sum = 0.0
+        for x in splits:
+            sum += x
+        if math.fabs(sum-1.0)>0.01:
+            print(f"Error split, sum(split)==1")
+            exit(-1)
+    
+    if args.sub_dir:
+        for sub_dir in wmlu.get_subdir_in_dir(args.src_dir):
+            cur_src_dir = osp.join(args.src_dir,sub_dir)
+            cur_out_dir = osp.join(args.out_dir,sub_dir)
+            split_one_dir(cur_src_dir,cur_out_dir,splits,args)
+    else:
+        split_one_dir(args.src_dir,args.out_dir,splits,args)

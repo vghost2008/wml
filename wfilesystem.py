@@ -144,6 +144,9 @@ def recurse_get_subdir_in_dir(dir_path,predicte_fn=None,append_self=False):
     return res
 
 def get_subdir_in_dir(dir_path,sort=True,append_self=False,absolute_path=False):
+    '''
+    返回子目录名，如果absolute_path为True则返回子目录的绝对路径
+    '''
 
     res=[]
     for file in os.listdir(dir_path):
