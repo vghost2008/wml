@@ -50,9 +50,9 @@ class WPolygonMaskItem:
         
         w_scale = size[0]/width
         h_scale = size[1]/height
-        scale = np.array([[w_scale,h_scale]],dtype=np.float)
+        scale = np.array([[w_scale,h_scale]],dtype=np.float32)
         ori_type = self.points[0].dtype
-        points = [p.astype(np.float)*scale for p in self.points]
+        points = [p.astype(np.float32)*scale for p in self.points]
         self.points = [p.astype(ori_type) for p in points]
         self.width = size[0]
         self.height = size[1]

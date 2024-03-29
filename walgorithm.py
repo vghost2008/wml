@@ -156,3 +156,15 @@ def sign_point_line(point,line):
     vec0 = line[1]-p0
     vec1 = point-p0
     return vec0[0]*vec1[1]-vec0[1]*vec1[0]<0
+
+def in_range(v,*kargs):
+    if len(kargs)==1:
+        min_v = kargs[0][0]
+        max_v = kargs[0][1]
+    elif len(kargs)==2:
+        min_v = kargs[0]
+        max_v = kargs[1]
+    else:
+        raise RuntimeError(f"in_range: ERROR args {kargs}")
+
+    return v>=min_v and v<=max_v

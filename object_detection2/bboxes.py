@@ -686,7 +686,7 @@ def iou_matrix(bboxes0,bboxes1):
     return wmath.npsafe_divide(inter_vol,union_vol)
 
 def giou_matrix(atlbrs, btlbrs):
-    ious = np.zeros((len(atlbrs), len(btlbrs)), dtype=np.float)
+    ious = np.zeros((len(atlbrs), len(btlbrs)), dtype=np.float32)
     if ious.size == 0:
         return ious
 

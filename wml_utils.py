@@ -1,6 +1,7 @@
 #coding=utf-8
 from wcollections import *
 from wfilesystem import *
+from walgorithm import *
 import numpy as np
 import random
 import time
@@ -383,7 +384,7 @@ def file_md5(path):
         data = f.read()
     return hashlib.md5(data).hexdigest()
 
-def nparray(data,default_shape=[0],dtype=np.float):
+def nparray(data,default_shape=[0],dtype=np.float32):
     res = np.array(data)
     if res.size == 0:
         return np.zeros(default_shape,dtype=dtype)
