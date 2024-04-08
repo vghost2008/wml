@@ -67,10 +67,13 @@ def copy_files(files,save_dir,add_nr,src_dir):
         wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
 
 
-def split_one_dir(src_dir,out_dir,splits,args):
+def split_one_dir(src_dir,out_dir,splits,args,sub_dir_name=None):
 
     print(f"Process {src_dir}, save dir {out_dir}")
     splits = copy.deepcopy(splits)
+
+    if sub_dir_name is not None:
+        src_dir = osp.join(src_dir,sub_dir_name)
 
     img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
     ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
@@ -83,8 +86,11 @@ def split_one_dir(src_dir,out_dir,splits,args):
     all_files = list(zip(img_files,ann_files))
     if not args.allow_empty:
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
-    save_dir = wmlu.get_unused_path(out_dir)
-    os.makedirs(save_dir)
+    if sub_dir_name is None:
+        save_dir = wmlu.get_unused_path(out_dir)
+    else:
+        save_dir = out_dir
+    os.makedirs(save_dir,exist_ok=True)
     random.seed(int(time.time()))
     random.shuffle(all_files)
     print(f"Find {len(all_files)} files in {src_dir}")
@@ -96,16 +102,19 @@ def split_one_dir(src_dir,out_dir,splits,args):
             use_percent = False
             if v>0:
                 total_nr += v
+    old_splits = copy.deepcopy(splits)
     for i,v in enumerate(splits):
         if v<0:
-            old_splits = copy.deepcopy(splits)
             splits[i] = len(all_files)-total_nr
             print(f"Update splits from {old_splits} to {splits}")
             break
     
 
     for i,v in enumerate(splits):
-        t_save_dir = osp.join(save_dir,"data_"+str(v))
+        if sub_dir_name is not None:
+            t_save_dir = osp.join(save_dir,"data_"+str(old_splits[i]),sub_dir_name)
+        else:
+            t_save_dir = osp.join(save_dir,"data_"+str(v))
         if i<len(splits)-1:
             if use_percent:
                 t_nr = int(v*len(all_files)+0.5)
@@ -134,8 +143,9 @@ if __name__ == "__main__":
     
     if args.sub_dir:
         for sub_dir in wmlu.get_subdir_in_dir(args.src_dir):
-            cur_src_dir = osp.join(args.src_dir,sub_dir)
+            '''cur_src_dir = osp.join(args.src_dir,sub_dir)
             cur_out_dir = osp.join(args.out_dir,sub_dir)
-            split_one_dir(cur_src_dir,cur_out_dir,splits,args)
+            split_one_dir(cur_src_dir,cur_out_dir,splits,args)'''
+            split_one_dir(args.src_dir,args.out_dir,splits,args,sub_dir_name=sub_dir)
     else:
         split_one_dir(args.src_dir,args.out_dir,splits,args)

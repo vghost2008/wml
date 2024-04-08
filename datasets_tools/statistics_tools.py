@@ -277,6 +277,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     labels_counter.sort(key=lambda x:x[1],reverse=True)
 
     classes = [x[0] for x in labels_counter]
+    print(f"num classes={len(classes)}")
     print(tuple(classes))
 
     total_nr = 0

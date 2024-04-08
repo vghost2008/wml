@@ -85,8 +85,10 @@ class PascalVOCData(object):
                 keep = [x is not None for x in labels]
                 labels = [x if x is not None else -1 for x in labels]
                 labels = np.array(labels,dtype=np.int32)
+                difficult = np.array(difficult,dtype=np.int32)
                 labels = labels[keep]
                 bboxes = bboxes[keep]
+                difficult = difficult[keep]
                 labels_names = np.array(labels_names)[keep]
             else:
                 labels = None
