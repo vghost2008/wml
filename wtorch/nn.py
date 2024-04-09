@@ -748,3 +748,18 @@ class DropPath(nn.Module):
 
     def extra_repr(self):
         return f'drop_prob={round(self.drop_prob,3):0.3f}'
+
+
+class CHW2HWC(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self,x):
+        return x.permute(0,2,3,1)
+
+class HWC2CHW(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self,x):
+        return x.permute(0,3,1,2)
