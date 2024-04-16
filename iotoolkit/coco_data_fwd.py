@@ -1,8 +1,10 @@
 import numpy as np
 
 COCO_KP_NR = 17
-ID_TO_COMPRESSED_ID = {}
-COMPRESSED_ID_TO_ID = {}
+ID_TO_COMPRESSED_ID = {}  #第一个类别的编号为1
+ZERO_ID_TO_COMPRESSED_ID = {}  #第一个类别的编号为0
+COMPRESSED_ID_TO_ID = {} #第一个类别的编号为1
+ZERO_COMPRESSED_ID_TO_ID = {} #第一个类别的编号为0
 
 ID_TO_TEXT={1: {u'supercategory': u'person', u'id': 1, u'name': u'person'},
             2: {u'supercategory': u'vehicle', u'id': 2, u'name': u'bicycle'},
@@ -112,7 +114,9 @@ for i in range(1,81):
     while j not in ID_TO_TEXT:
         j += 1
     ID_TO_COMPRESSED_ID[j] = i
+    ZERO_ID_TO_COMPRESSED_ID[j] = i-1
     COMPRESSED_ID_TO_ID[i] = j
+    ZERO_COMPRESSED_ID_TO_ID[i-1] = j
     j += 1
 
 for k,v in COMPRESSED_ID_TO_ID.items():

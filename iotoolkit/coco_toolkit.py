@@ -15,6 +15,8 @@ import copy
 import os.path as osp
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
 from collections import defaultdict
+from .common import *
+from functools import partial
 
 
 
@@ -51,7 +53,10 @@ class COCOData:
         self.include_masks = include_masks
         self.category_index = None
         self.id2name = None #same as category_index
-        self.trans_label = trans_label
+        if isinstance(trans_label,dict):
+            self.trans_label= partial(dict_label_text2id,dict_data=trans_label)
+        else:
+            self.trans_label = trans_label
         self.filename2image = None
         self.is_relative_coordinate = is_relative_coordinate
         self.ids = []
@@ -74,6 +79,7 @@ class COCOData:
     def read_data(self,annotations_file,image_dir=None,*args,**kwargs):
         if image_dir is None:
             image_dir = self.get_image_dir_by_annotations_file(annotations_file)
+            print(f"image dir {image_dir}")
         if self.trans_label is not None:
             print(f"Trans label is not None")
         sys.stdout.flush()
@@ -106,6 +112,7 @@ class COCOData:
                     if bbox is None:
                         continue
                     annotation['bbox'] = bbox
+                    annotation['name'] = category_index[category_id]['name']
                     if image_id not in annotations_index:
                         annotations_index[image_id] = []
                     annotations_index[image_id].append(copy.deepcopy(annotation))
@@ -273,7 +280,7 @@ class COCOData:
 
             is_crowd.append(object_annotations['iscrowd'])
             category_ids.append(category_id)
-            category_names.append(str(self.category_index[org_category_id]['name'].encode('utf8'),encoding='utf-8'))
+            category_names.append(object_annotations['name'])
             area.append(object_annotations['area'])
 
             if self.include_masks:
