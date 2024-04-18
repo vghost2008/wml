@@ -5,6 +5,7 @@ from .conv_ws import ConvWS2d
 from collections import Iterable
 from torch.nn import Parameter
 import math
+from collections import OrderedDict
 #from einops import rearrange
 
 
@@ -763,3 +764,29 @@ class HWC2CHW(nn.Module):
     
     def forward(self,x):
         return x.permute(0,3,1,2)
+
+class ParallelModule(nn.Module):
+    def __init__(self, *args):
+        super().__init__()
+        if len(args) == 1 and isinstance(args[0], (OrderedDict,dict)):
+            for key, module in args[0].items():
+                self.add_module(key, module)
+        else:
+            for idx, module in enumerate(args):
+                self.add_module(str(idx), module)
+
+    def forward(self,x):
+        res = []
+        for k,m in self._modules.items():
+            res.append(m(x))
+        return res
+
+class SumModule(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self,xs):
+        res = xs[0]
+        for i in range(1,len(xs)):
+            res += xs[i]
+        return res

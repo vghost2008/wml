@@ -160,7 +160,7 @@ class Attention(nn.Module):
             rel_pos (bool): If True, add relative positional embeddings to the attention map.
             rel_pos_zero_init (bool): If True, zero initialize relative positional parameters.
             input_size (tuple(int, int) or None): Input resolution for calculating the relative
-                positional parameter size.
+                positional parameter size. (H,W)
         """
         super().__init__()
         self.num_heads = num_heads
