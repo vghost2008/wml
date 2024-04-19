@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         '--img-suffix',
         type=str,
-        default=".jpg;;.jpeg;;.bmp;;.png",
+        default=".jpg;;.jpeg;;.bmp;;.png;;.tif",
         help='img suffix')
     parser.add_argument(
         '--split',
