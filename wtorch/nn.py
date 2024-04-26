@@ -556,9 +556,18 @@ class AttentionPool2d(nn.Module):
         self.c_proj = nn.Linear(in_channels, out_channels or in_channels)
         self.num_heads = num_heads
 
-    def forward(self, x):
+    def forward(self, x,query=None):
+        '''
+        query: [B,C]
+        return:
+        [B,C]
+        '''
         x = x.flatten(start_dim=2).permute(2, 0, 1)  # NCHW -> (HW)NC
-        x = torch.cat([x.mean(dim=0, keepdim=True), x], dim=0)  # (HW+1)NC
+        if query is None:
+            query = x.mean(dim=0, keepdim=True)
+        else:
+            query = torch.unsqueeze(query,dim=0)
+        x = torch.cat([query, x], dim=0)  # (HW+1)NC
         x = x + self.positional_embedding[:, None, :].to(x.dtype)  # (HW+1)NC
         x, _ = F.multi_head_attention_forward(
             query=x[:1], key=x, value=x,
