@@ -18,9 +18,14 @@ class WBaseMask:
 class WPolygonMaskItem:
     def __init__(self,points,*,width=None,height=None):
         '''
-        points:  list[[N,2]]
+        points:  list[[N,2]],
+        example:
+        [np.zeros(3,2),np.zeros(11,2)]
         '''
-        self.points = [p.copy().astype(np.int) for p in points]
+        for p in points:
+            if len(p.shape)!=2 or p.shape[1]!=2:
+                raise RuntimeError(f"ERROR: error polygon mask item points, p shape {p.shape}, expected [N,2]")
+        self.points = [p.copy().astype(np.int) for p in points] # shape of p is [Ni,2]
         self.width = width
         self.height = height
 

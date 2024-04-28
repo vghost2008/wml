@@ -91,7 +91,8 @@
             "request": "launch",
             "program": "datasets_tools/view_dataset.py",
             "console": "integratedTerminal",
-            "args":["/home/wj/ai/mldata1/B11ACT/datas/train_s0" "/home/wj/ai/mldata1/B11ACT/tmp/view" "--type" "LabelMeData"],
+            //"args":["/home/wj/ai/mldata1/B11ACT/datas/train_s0" "/home/wj/ai/mldata1/B11ACT/tmp/view" "--type" "LabelMeData"],
+            "args":["~/ai/mldata1/B10CF/datasets/testv1.0/" "~/ai/mldata1/B10CF/tmp/view" "--type" "LabelMeData"],
         },
         {
             "name": "Python: view imgs in bboxes",

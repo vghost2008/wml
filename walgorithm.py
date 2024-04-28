@@ -168,3 +168,22 @@ def in_range(v,*kargs):
         raise RuntimeError(f"in_range: ERROR args {kargs}")
 
     return v>=min_v and v<=max_v
+
+def points_on_circle(center=None,r=None,points_nr=100):
+    '''
+    将圆离散化为散点
+    '''
+    points = []
+    for i in range(points_nr):
+        angle = math.pi*2*i/points_nr
+        x = math.cos(angle)
+        y = math.sin(angle)
+        points.append([x,y])
+    if r is not None:
+        points = np.array(points)*r
+    if center is not None:
+        center = np.reshape(np.array(center),[1,2])
+        points = points + center
+    
+    return points
+

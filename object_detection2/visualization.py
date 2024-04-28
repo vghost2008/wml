@@ -7,7 +7,7 @@ from PIL import Image
 from basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large, PSEUDOCOLOR
 from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
-from semantic.structures import WPolygonMasks
+from semantic.structures import WPolygonMasks,WBitmapMasks
 import math
 from .basic_visualization import *
 
@@ -404,6 +404,7 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
         or WPolygonMasks
     '''
     if isinstance(masks,WPolygonMasks):
+        print(f"draw WPolygonMasks")
         img = draw_maskv2_polygon(img,
                                   classes=classes,
                                   bboxes=bboxes,
@@ -413,6 +414,14 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
                                   alpha=alpha,
                                   fill=fill,
                                   thickness=thickness)
+    elif isinstance(masks,WBitmapMasks):
+        img = draw_maskv2_bitmap(img,
+                                  classes=classes,
+                                  bboxes=bboxes,
+                                  masks=masks.to_ndarray(),
+                                  color_fn=color_fn,
+                                  is_relative_coordinate=is_relative_coordinate,
+                                  alpha=alpha)
     elif isinstance(masks,np.ndarray):
         img = draw_maskv2_bitmap(img,
                                   classes=classes,

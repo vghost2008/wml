@@ -19,7 +19,9 @@ import glob
 class LabelMeData(object):
     def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,
                  filter_empty_files=False,
-                 resample_parameters=None):
+                 resample_parameters=None,
+                 use_polygon_mask=False,
+                 read_data_kwargs={'circle_points_nr':20}):
         '''
         label_text2id: func(name)->int
         '''
@@ -31,6 +33,8 @@ class LabelMeData(object):
         self.shuffle = shuffle
         self.absolute_coord = absolute_coord
         self.filter_empty_files = filter_empty_files
+        self.read_data_kwargs = read_data_kwargs
+        self.use_polygon_mask = use_polygon_mask
         if resample_parameters is not None:
             self.resample_parameters = {}
             for k,v in resample_parameters.items():
@@ -63,7 +67,9 @@ class LabelMeData(object):
         new_files = []
         for fs in files:
             img_file,json_file = fs
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False)
+            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
+                                                        use_polygon_mask=self.use_polygon_mask,
+                                                        **self.read_data_kwargs)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
             is_none = [x is None for x in labels]
@@ -78,7 +84,9 @@ class LabelMeData(object):
         all_labels = []
         for fs in files:
             img_file,json_file = fs
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False)
+            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
+                                                        use_polygon_mask=self.use_polygon_mask,
+                                                        **self.read_data_kwargs)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
             all_labels.append(labels)
@@ -123,20 +131,23 @@ class LabelMeData(object):
         bboxes:[N,4] (ymin,xmin,ymax,xmax)
         '''
         img_file, json_file = self.files[idx]
-        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True)
+        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,
+                                                    use_polygon_mask=self.use_polygon_mask,
+                                                    **self.read_data_kwargs)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         difficult = np.array([v['difficult'] for v in annotations_list],dtype=np.bool)
         masks = [ann["segmentation"] for ann in annotations_list]
-        if len(masks)>0:
+        img_height = image['height']
+        img_width = image['width']
+
+        if self.use_polygon_mask:
+            masks = WPolygonMasks(masks,width=img_width,height=img_height)
+        elif len(masks)>0:
             try:
                 masks = np.stack(masks,axis=0)
             except:
-                img_height = image['height']
-                img_width = image['width']
                 masks = np.zeros(shape=[0,img_height,img_width],dtype=np.uint8)
         else:
-            img_height = image['height']
-            img_width = image['width']
             masks = np.zeros(shape=[0,img_height,img_width],dtype=np.uint8)
 
         
@@ -163,7 +174,7 @@ class LabelMeData(object):
         for i,(img_file, json_file) in enumerate(self.files):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
-            image, annotations_list = read_labelme_data(json_file, None)
+            image, annotations_list = read_labelme_data(json_file, None,**self.read_data_kwargs)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
             yield img_file,[image['height'],image['width']],labels, bboxes,  None

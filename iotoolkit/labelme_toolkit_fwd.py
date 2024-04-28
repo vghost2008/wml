@@ -15,6 +15,8 @@ from functools import partial
 from .common import resample
 from semantic.structures import *
 import glob
+import math
+from walgorithm import points_on_circle
 
 
 
@@ -62,6 +64,30 @@ def get_files(data_dir, img_suffix="jpg"):
 
     return res
 
+def _get_shape_points(shape,circle_points_nr=20):
+    shape_type = shape['shape_type']
+    if shape_type == "polygon":
+        return np.array(shape['points']).astype(np.int32)
+    elif shape_type == "rectangle":
+        points = np.array(shape['points']).astype(np.int32)
+        x0 = np.min(points[:,0])
+        x1 = np.max(points[:,0])
+        y0 = np.min(points[:,1])
+        y1 = np.max(points[:,1])
+        n_points  = np.array([[x0,y0],[x1,y0],[x1,y1],[x0,y1]]).astype(np.int32)
+        return n_points
+    elif shape_type == "circle":
+        points = np.array(shape['points']).astype(np.int32)
+        center = points[0]
+        d = points[1]-points[0]
+        r = math.sqrt(d[0]*d[0]+d[1]*d[1])
+        points = points_on_circle(center=center,r=r,points_nr=circle_points_nr)
+        return points
+    else:
+        print(f"WARNING: unsupport labelme shape type {shape_type}")
+        return np.zeros([0,2],dtype=np.int32)
+        
+
 
 '''
 output:
@@ -69,7 +95,9 @@ image_info: {'height','width'}
 annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
 'segmentation' [H,W]
 '''
-def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,use_semantic=True,use_polygon_mask=False):
+def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,use_semantic=True,
+                      use_polygon_mask=False,
+                      circle_points_nr=20):
     if mask_on == False:
         use_semantic = False
     annotations_list = []
@@ -84,10 +112,10 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
             image["width"] = int(img_width)
             image["file_name"] = wmlu.base_name(file_path)
             for shape in json_data["shapes"]:
-                all_points = np.array([shape["points"]]).astype(np.int32) #[1,N,2]
+                all_points = _get_shape_points(shape,circle_points_nr=circle_points_nr).astype(np.int32) #[1,N,2]
                 if len(all_points)<1:
                     continue
-                points = np.transpose(all_points[0])
+                points = np.transpose(all_points)
                 x,y = np.vsplit(points,2)
                 x = np.reshape(x,[-1])
                 y = np.reshape(y,[-1])
@@ -98,6 +126,7 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
                 ymin = np.min(y)
                 ymax = np.max(y)
                 if mask_on:
+                    all_points = np.expand_dims(all_points,axis=0)
                     if use_polygon_mask:
                         segmentation = WPolygonMaskItem(all_points,width=img_width,height=img_height)
                     else:
@@ -130,8 +159,8 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
                                          "points_x":x,
                                          "points_y":y,
                                          "difficult":difficult})
-        except:
-            print(f"Read file {os.path.basename(file_path)} faild.")
+        except Exception as e:
+            print(f"Read file {os.path.basename(file_path)} faild, info {e}.")
             pass
     if use_semantic and not use_polygon_mask:
         '''
