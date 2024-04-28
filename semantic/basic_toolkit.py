@@ -36,3 +36,16 @@ def get_bboxes_by_contours(contours):
         y1 = max(np.max(cn[:,1]),y1)
 
     return np.array([x0,y0,x1,y1],dtype=np.float32)
+
+def findContours(mask,mode=cv2.RETR_LIST,method=cv2.CHAIN_APPROX_SIMPLE):
+    '''
+    mask: [H,W] value is 0 or 1
+    '''
+    _contours,hierarchy = cv2.findContours(mask,mode=mode,method=method)
+    contours = []
+    for cnt in _contours:
+        if len(cnt.shape) == 3 and cnt.shape[1] == 1:
+            contours.append(np.squeeze(cnt,axis=1))
+    
+    return contours,hierarchy
+

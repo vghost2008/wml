@@ -6,6 +6,7 @@ from .mask_utils import get_bboxes_by_contours,npresize_mask
 import object_detection2.bboxes as odb
 import basic_img_utils as bwmli
 import object_detection2.bboxes as odb
+from .basic_toolkit import findContours
 
 class WBaseMask:
     HORIZONTAL = 'horizontal'
@@ -33,6 +34,9 @@ class WPolygonMaskItem:
         return WPolygonMaskItem(self.points,width=self.width,height=self.height)
 
     def bitmap(self,width=None,height=None):
+        '''
+        return: [H,W]
+        '''
         if width is None:
             width = self.width
         if height is None:
@@ -128,7 +132,53 @@ class WPolygonMaskItem:
                 y1 = np.max(ps[:,1])
                 obbox = np.array([x0,y0,x1,y1])
                 iou = odb.npbboxes_intersection_of_box0(obbox[None,:],bbox[None,:])
-                if iou<=1e-3:
+                if iou<=1e-3: #如果剪切框与当前多边形的外包框没有交集，那么剪切的结果为空
+                    continue
+                e_bbox = odb.bbox_of_boxes(np.stack([bbox,obbox],axis=0))
+                sub_cropped_masks = WPolygonMaskItem([ps.copy()],width=self.width,height=self.height)
+                f_cropped_masks = sub_cropped_masks.simple_crop(e_bbox)
+                f_bitmap_masks = WBitmapMasks(f_cropped_masks.bitmap()[None])
+                n_crop_bbox = bbox-np.array([e_bbox[0],e_bbox[1],e_bbox[0],e_bbox[1]])
+                f_bitmap_masks = f_bitmap_masks.crop(n_crop_bbox)
+                t_masks,res_bboxes,keep = f_bitmap_masks.polygon()
+                if not keep[0]:
+                    continue
+                f_poly_masks = t_masks[0]
+                cropped_masks.extend(f_poly_masks)
+            cropped_masks = WPolygonMaskItem(cropped_masks, width=w,height=h)
+        return cropped_masks
+
+    def simple_crop(self, bbox):
+        '''
+        只处理mask完全保留或者masp完全不保留的情况
+        bbox: [x0,y0,x1,y1]
+        offset: [xoffset,yoffset]
+        如果offset is not None, 先offset再用bbox crop
+        ''' 
+        if not isinstance(bbox,np.ndarray):
+            bbox = np.array(bbox)
+        assert bbox.ndim == 1
+
+        # clip the boundary
+        bbox = bbox.copy()
+        bbox[0::2] = np.clip(bbox[0::2], 0, self.width-1)
+        bbox[1::2] = np.clip(bbox[1::2], 0, self.height-1)
+        x1, y1, x2, y2 = bbox
+        w = np.maximum(x2 - x1+1, 1)
+        h = np.maximum(y2 - y1+1, 1)
+
+        if len(self.points) == 0:
+            cropped_masks = WPolygonMaskItem([], height=h, width=w)
+        else:
+            cropped_masks = []
+            for ps in self.points:
+                x0 = np.min(ps[:,0])
+                y0 = np.min(ps[:,1])
+                x1 = np.max(ps[:,0])
+                y1 = np.max(ps[:,1])
+                obbox = np.array([x0,y0,x1,y1])
+                iou = odb.npbboxes_intersection_of_box0(obbox[None,:],bbox[None,:])
+                if iou<=1e-3: #如果剪切框与当前多边形的外包框没有交集，那么剪切的结果为空
                     continue
                 ps = ps.copy()
                 ps[:,0] = ps[:,0] - bbox[0]
@@ -299,7 +349,12 @@ class WPolygonMasks(WBaseMask):
 
     @classmethod
     def from_ndarray(cls,masks,*,width=None,height=None):
-        masks = WBitmapMasks.ndarray2polygon(masks)
+        _masks,bboxes,keep = WBitmapMasks.ndarray2polygon(masks)
+        masks = []
+        for i,k in enumerate(keep):
+            if k:
+                masks.append(_masks[k])
+
         return cls(masks=masks,width=width,height=height)
 
     def copy(self):
@@ -656,6 +711,11 @@ class WBitmapMasks(WBaseMask):
 
     @staticmethod
     def ndarray2polygon(masks,bboxes=None):
+        '''
+        masks: [N,H,W]
+        return:
+        t_masks: list of list [N,2] points
+        '''
         t_masks = []
         keep = np.ones([masks.shape[0]],dtype=np.bool)
         res_bboxes = []
@@ -663,7 +723,7 @@ class WBitmapMasks(WBaseMask):
             if bboxes is not None:
                 contours = bmt.find_contours_in_bbox(masks[i],bboxes[i])
             else:
-                contours,hierarchy = cv2.findContours(masks[i],cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+                contours,hierarchy = findContours(masks[i],cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
             t_bbox = get_bboxes_by_contours(contours)
             if len(contours)==0 or not np.all(t_bbox[2:]-t_bbox[:2]>1):
                 keep[i] = False

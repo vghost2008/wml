@@ -85,9 +85,11 @@ def recurse_get_filepath_in_dir(dir_path,suffix=None,prefix=None,followlinks=Fal
     '''
     suffix: example ".jpg;;.jpeg" , ignore case
     '''
+    dir_path = os.path.expanduser(dir_path)
+
     if os.path.isfile(dir_path):
         return [dir_path]
-    dir_path = os.path.expanduser(dir_path)
+
     if suffix is not None:
         suffix = suffix.split(";;")
         suffix = [x.lower() for x in suffix]
