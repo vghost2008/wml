@@ -7,7 +7,7 @@ from PIL import Image
 from basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large, PSEUDOCOLOR
 from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
-from semantic.structures import WPolygonMasks,WBitmapMasks
+from wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem
 import math
 from .basic_visualization import *
 
@@ -414,6 +414,7 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
                                   alpha=alpha,
                                   fill=fill,
                                   thickness=thickness)
+        return img
     elif isinstance(masks,WBitmapMasks):
         img = draw_maskv2_bitmap(img,
                                   classes=classes,
@@ -422,7 +423,22 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
                                   color_fn=color_fn,
                                   is_relative_coordinate=is_relative_coordinate,
                                   alpha=alpha)
-    elif isinstance(masks,np.ndarray):
+        return img
+    elif isinstance(masks,WMCKeypoints):
+        img = draw_mckeypoints(img,
+                               labels=classes,
+                               keypoints=masks,
+                               color_fn=color_fn)
+        return img
+
+    try:
+        if not isinstance(masks,np.ndarray):
+            masks = np.array(masks)
+        masks = masks.astype(np.uint8)
+    except:
+        pass
+
+    if isinstance(masks,np.ndarray):
         img = draw_maskv2_bitmap(img,
                                   classes=classes,
                                   bboxes=bboxes,
@@ -472,9 +488,6 @@ def draw_bboxes_and_maskv2(img,classes,scores=None,bboxes=None,masks=None,
                            show_text=False,
                            is_relative_coordinate=True,
                            font_scale=0.8):
-    if not isinstance(masks,np.ndarray):
-        masks = np.array(masks)
-    masks = masks.astype(np.uint8)
     img = draw_maskv2(img=img,
                     classes=classes,bboxes=bboxes,
                     masks=masks,color_fn=color_fn,
@@ -513,6 +526,20 @@ def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,255),a
     new_img = image.astype(np.float32)*(1-alpha)+color*alpha
     new_img = np.clip(new_img,0,255).astype(np.uint8)
     return new_img
+
+def draw_mckeypoints(image,labels,keypoints,r=2,color_fn=fixed_color_large_fn):
+    '''
+    gt_labels: [N]
+    keypoints: WMCKeypoints or list of [M,2]
+    '''
+    for i, points in enumerate(keypoints):
+        color = color_fn(labels[i])
+        if isinstance(points,WMCKeypointsItem):
+            points = points.points
+        for p in points:
+            cv2.circle(image, (int(p[0]), int(p[1])), r, color, -1)
+
+    return image
 
 def add_jointsv1(image, joints, color, r=5,line_thickness=2,no_line=False,joints_pair=None,left_node=None):
 

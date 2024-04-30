@@ -513,6 +513,8 @@ return:
 bytes of jpeg string
 '''
 def encode_img(img,quality=95):
+    if isinstance(img,str):
+        img = imread(img)
     pil_image = PIL.Image.fromarray(img)
     output_io = io.BytesIO()
     pil_image.save(output_io, format='JPEG',quality=quality)

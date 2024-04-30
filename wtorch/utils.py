@@ -10,7 +10,7 @@ import wml_utils as wmlu
 import img_utils as wmli
 import cv2
 from thirdparty.config import CfgNode 
-from semantic.structures import WPolygonMasks,WBitmapMasks
+from wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints
 from semantic.basic_toolkit import *
 from itertools import repeat
 import collections.abc
@@ -524,7 +524,7 @@ def npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
     bboxes: [N,4](x0,y0,x1,y1)
     size: (new_w,new_h)
     '''
-    if isinstance(mask,(WPolygonMasks,WBitmapMasks)):
+    if isinstance(mask,(WPolygonMasks,WBitmapMasks,WMCKeypoints)):
         return mask.resize_mask_in_bboxes(bboxes,size=size,r=r)
     if mask.shape[0]==0:
         return np.zeros([0,size[1],size[0]],dtype=mask.dtype),np.zeros([0,4],dtype=bboxes.dtype)

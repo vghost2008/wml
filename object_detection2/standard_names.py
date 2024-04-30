@@ -10,6 +10,7 @@ HEIGHT = "height"
 WIDTH = "width"
 MASKS = "masks"
 ANN_INFO = "ann_info"
+IMG_INFO = "img_info"
 IS_CROWD = 'is_crowd'
 MASK_AREA = "mask_area"
 ORG_HEIGHT = "org_height"

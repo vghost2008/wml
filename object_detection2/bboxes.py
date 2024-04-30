@@ -709,6 +709,23 @@ def is_point_in_bbox(p,bbox):
         return True
     return False
 
+def is_points_in_bbox(p,bbox):
+    '''
+
+    Args:
+        p: [N,2] (x,y)
+        bbox: (x0,y0,x1,y1)
+
+    Returns:
+    '''
+    b0 = p[...,0]>=bbox[0] 
+    b1 = p[...,0]<=bbox[2] 
+    b2 = p[...,1]>=bbox[1] 
+    b3 = p[...,1]<=bbox[3]
+    b01 = np.logical_and(b0,b1)
+    b23 = np.logical_and(b2,b3)
+    return np.logical_and(b01,b23)
+
 def make_yolo_target(bboxes,labels):
     '''
     bboxes: list[[N,4]]
