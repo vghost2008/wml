@@ -10,6 +10,7 @@ import sys
 import datetime
 import hashlib
 import math
+import pickle
 
 
 def _to_chinese_num(i,numbers,unites):
@@ -426,5 +427,17 @@ def to_fraction(v):
             break
     return v,denominator
 
+def dump2file(obj,file):
+    if isinstance(file,(str,bytes)):
+        with open(file,"wb") as f:
+            return pickle.dump(obj,f)
+    else:
+        return pickle.dump(obj,file)
 
+def load_from_file(file):
+    if isinstance(file,(str,bytes)):
+        with open(file,"rb") as f:
+            return pickle.load(f)
+    else:
+        return pickle.load(file)
 

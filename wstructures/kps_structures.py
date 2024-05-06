@@ -9,6 +9,9 @@ from .common import WBaseMaskLike
 
 
 class WMCKeypointsItem(WBaseMaskLike):
+    '''
+    每个WMCKeypointsItem共享同一个标签(label)
+    '''
     def __init__(self,points,*,width=None,height=None):
         '''
         points:  [points_nr,2]
@@ -72,7 +75,7 @@ class WMCKeypointsItem(WBaseMaskLike):
     
     def crop(self, bbox):
         '''
-        bbox: [x0,y0,x1,y1]
+        bbox: [x0,y0,x1,y1], 包含边界
         offset: [xoffset,yoffset]
         如果offset is not None, 先offset再用bbox crop
         ''' 
@@ -96,6 +99,12 @@ class WMCKeypointsItem(WBaseMaskLike):
 
         cropped_kps = WMCKeypointsItem(points, width=w,height=h)
         return cropped_kps
+
+    def filter_out_of_range(self):
+        bbox = [0,0,self.width-1,self.height-1]
+        n_kps = self.crop(bbox)
+        self.points = n_kps.points
+        return self
 
 
     def rotate(self, out_shape, angle, center=None, scale=1.0, fill_val=0):
@@ -142,6 +151,7 @@ class WMCKeypointsItem(WBaseMaskLike):
                                        out_shape[0])
             sheared_points = new_coords.transpose((1, 0))
             sheared_points = WMCKeypointsItem(sheared_points, width=out_shape[1],height=out_shape[0])
+            sheared_points.filter_out_of_range()
         return sheared_points
 
     def translate(self,
@@ -172,6 +182,7 @@ class WMCKeypointsItem(WBaseMaskLike):
                 print(f"ERROR: {type(self).__name__} {info}")
                 raise RuntimeError(info)
             res_points = WMCKeypointsItem(p, width=out_shape[1],height=out_shape[0])
+            res_points.filter_out_of_range()
         
         return res_points
 
@@ -188,16 +199,38 @@ class WMCKeypointsItem(WBaseMaskLike):
         else:
             p = self.points.copy()+offset
             res_masks = WMCKeypointsItem(p, width=w,height=h)
+            res_masks.filter_out_of_range()
         return res_masks
 
     def valid(self):
+        if len(self.points) == 0:
+            return False
         bbox = np.array([0,0,self.width,self.height])
-        keep = odb.is_points_in_bbox(self.points,bbox)
+        try:
+            keep = odb.is_points_in_bbox(self.points,bbox)
+        except Exception as e:
+            print(e)
+            pass
         self.points = self.points[keep]
         return len(self.points)>0
 
+    def split2single_point(self):
+        '''
+        把多个点组成的Item拆分成由单个点组成的Item
+        '''
+        if len(self.points) <= 1:
+            return [copy.deepcopy(self)]
+        else:
+            return [WMCKeypointsItem(np.expand_dims(p,axis=0),width=self.width,height=self.height) for p in self.points]
+        
+
+
 
 class WMCKeypoints(WBaseMaskLike):
+    '''
+    每个WMCKeypoints包含多个WMCKeypointsItem, 每个Item与一个label相对应
+    WMCKeypoints与多个标签相对应
+    '''
     def __init__(self,points,*,width=None,height=None) -> None:
         assert width is not None, f"ERROR: width is None"
         assert height is not None, f"ERROR: height is None"
@@ -456,3 +489,18 @@ class WMCKeypoints(WBaseMaskLike):
     def valid(self):
         mask = [m.valid() for m in self.points]
         return mask
+
+    @staticmethod
+    def split2single_point(kps,labels):
+        '''
+        让每个WMCKeypointsItem仅包含一个点
+        '''
+        res_kps = []
+        res_labels = []
+        for kp,l in zip(kps,labels):
+            n_kp = kp.split2single_point()
+            l = [l]*len(n_kp)
+            res_kps.extend(n_kp)
+            res_labels.extend(l)
+        
+        return WMCKeypoints(res_kps,width=kps.width,height=kps.height),np.array(res_labels,dtype=np.int32)
