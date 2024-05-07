@@ -327,6 +327,16 @@ class WPolygonMaskItem:
         s += f'width={self.width})'
         return s
 
+    @property
+    def shape(self):
+        return [len(self.points),self.height,self.width]
+
+    def _update_shape(self,*,width=None,height=None):
+        if width is not None:
+            self.width = width
+        if height is not None:
+            self.height = height
+
 class WPolygonMasks(WBaseMask):
     def __init__(self,masks,*,width=None,height=None,exclusion=None) -> None:
         super().__init__()
@@ -601,6 +611,21 @@ class WPolygonMasks(WBaseMask):
         gt_bboxes = np.stack(gt_bboxes,axis=0)
 
         return gt_bboxes
+
+    def check_consistency(self):
+        for mask in self.masks:
+            if mask.width != self.width or mask.height != self.height:
+                info = f"Unmatch size WPolygonMasks shape {self.shape} vs WPolygonMakskItem shape {mask.shape}"
+                print(info)
+                raise RuntimeError(info)
+
+    def update_shape(self,*,width=None,height=None):
+        if width is not None:
+            self.width = width
+        if height is not None:
+            self.height = height
+        for mask in self.masks:
+            mask._update_shape(width=width,height=height)
 
     
 class WBitmapMasks(WBaseMask):
@@ -984,3 +1009,15 @@ class WBitmapMasks(WBaseMask):
 
     def copy(self):
         return WBitmapMasks(self.masks.copy(),width=self.width,height=self.height)
+
+
+    def check_consistency(self):
+        pass
+
+    def update_shape(self,*,width=None,height=None):
+        if height is not None:
+            if self.shape[1] != height:
+                print(f"Update WBitmapMasks height faild, {self.shape[1]} vs new {height}")
+        if width is not None:
+            if self.shape[2] != width:
+                print(f"Update WBitmapMasks width faild, {self.shape[2]} vs new {width}")

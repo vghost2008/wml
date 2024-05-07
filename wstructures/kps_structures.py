@@ -91,10 +91,13 @@ class WMCKeypointsItem(WBaseMaskLike):
         w = np.maximum(x2 - x1+1, 1)
         h = np.maximum(y2 - y1+1, 1)
 
-        keep = odb.is_points_in_bbox(self.points,bbox)
-        points = self.points[keep]
-        offset = np.reshape(np.array([x1,y1]),[1,2])
-        points = points-offset
+        if len(self.points)>0:
+            keep = odb.is_points_in_bbox(self.points,bbox)
+            points = self.points[keep]
+            offset = np.reshape(np.array([x1,y1]),[1,2])
+            points = points-offset
+        else:
+            points = np.zeros([0,2],dtype=np.int32)
 
 
         cropped_kps = WMCKeypointsItem(points, width=w,height=h)
@@ -222,6 +225,16 @@ class WMCKeypointsItem(WBaseMaskLike):
             return [copy.deepcopy(self)]
         else:
             return [WMCKeypointsItem(np.expand_dims(p,axis=0),width=self.width,height=self.height) for p in self.points]
+
+    @property
+    def shape(self):
+        return [len(self.points),self.height,self.width]
+
+    def _update_shape(self,*,width=None,height=None):
+        if width is not None:
+            self.width = width
+        if height is not None:
+            self.height = height
         
 
 
@@ -240,7 +253,7 @@ class WMCKeypoints(WBaseMaskLike):
             if not isinstance(p,WMCKeypointsItem):
                 n_points.append(WMCKeypointsItem(p,width=width,height=height))
             else:
-                n_points.append(p)
+                n_points.append(WMCKeypointsItem(p.points,width=width,height=height))
         self.points = copy.deepcopy(n_points)
         self.width = width
         self.height = height
@@ -394,7 +407,7 @@ class WMCKeypoints(WBaseMaskLike):
             if update_size:
                 self.width = points.width
                 self.height = points.height
-        
+        [p._update_shape(width=self.width,height=self.height) for p in self.points] 
         return self
 
 
@@ -504,3 +517,18 @@ class WMCKeypoints(WBaseMaskLike):
             res_labels.extend(l)
         
         return WMCKeypoints(res_kps,width=kps.width,height=kps.height),np.array(res_labels,dtype=np.int32)
+
+    def check_consistency(self):
+        for kp in self.points:
+            if kp.width != self.width or kp.height != self.height:
+                info = f"Unmatch size WMCKeypoints shape {self.shape} vs WMCKeypointsItem shape {kp.shape}"
+                print(info)
+                raise RuntimeError(info)
+
+    def update_shape(self,*,width=None,height=None):
+        if width is not None:
+            self.width = width
+        if height is not None:
+            self.height = height
+        for mask in self.points:
+            mask._update_shape(width=width,height=height)

@@ -30,3 +30,36 @@ def focal_loss_for_heat_map(labels,logits,pos_threshold=0.99,alpha=2,beta=4,sum=
         neg_loss = torch.sum(neg_loss)
     loss = (pos_loss + neg_loss) / (num_pos + 1e-4)
     return loss
+
+def focal_mse_loss_for_head_map(gt_value,pred_value,alpha=0.25,gamma=2):
+    '''
+    gt_value: value range [0,1]
+    '''
+    assert gt_value.numel()==pred_value.numel(), f"ERROR: unmatch gt_value's shape {gt_value.shape} and pred_value's shape {pred_value.shape}"
+    gt_value = gt_value.float()
+    pred_value = pred_value.float()
+    loss = torch.square(gt_value-pred_value)
+    bin_gt_value = torch.greater(gt_value,0).to(pred_value.dtype)
+    total_nr = bin_gt_value.new_tensor(torch.numel(bin_gt_value))
+    #neg_scale = torch.sum(bin_gt_value)/total_nr
+    #pos_scale = bin_gt_value.new_tensor(1.0)-neg_scale
+    num_pos = torch.sum(bin_gt_value)
+    num_neg = total_nr-num_pos
+
+    neg_scale = total_nr/(num_neg*2.0+2e-1)
+    pos_scale = total_nr/(num_pos*2.0+2e-1)
+
+    auto_t = bin_gt_value*pos_scale+(1-bin_gt_value)*neg_scale
+    loss = loss*auto_t
+
+
+    if alpha>0:
+        alpha_t = bin_gt_value*alpha+(1-bin_gt_value)*(1-alpha)
+        alpha_t = alpha_t/torch.clip(torch.mean(alpha_t).detach(),min=1e-6)
+        loss = loss*alpha_t
+    if gamma>0:
+        gamma_t = torch.pow(torch.abs(gt_value-pred_value),gamma)
+        gamma_t = gamma_t/torch.clip(torch.mean(gamma_t).detach(),min=1e-6)
+        loss = loss*gamma_t
+    
+    return loss

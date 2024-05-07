@@ -504,7 +504,7 @@ def draw_bboxes_and_maskv2(img,classes,scores=None,bboxes=None,masks=None,
 
 
 
-def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,255),alpha=0.4):
+def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,0),alpha=0.4):
     '''
     draw semantic on image
     Args:
@@ -521,7 +521,38 @@ def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,255),a
     color_neg = np.reshape(np.array(color_neg),[1,1,3])
     color_pos = color_pos*np.ones_like(image).astype(np.float32)
     color_neg = color_neg*np.ones_like(image).astype(np.float32)
-    scores = np.expand_dims(scores,axis=-1)*alpha
+    scores = np.expand_dims(scores,axis=-1)
+    color = color_pos*scores+color_neg*(1-scores)
+    color = np.clip(color,0,255)
+    new_img = image.astype(np.float32)*(1-alpha)+color*alpha
+    new_img = np.clip(new_img,0,255).astype(np.uint8)
+    return new_img
+
+def try_draw_rgb_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,0),alpha=0.4):
+    '''
+    draw semantic on image
+    Args:
+        image: [H,W,3/1]
+        scores: [C,H,W] scores value, in (0~1)
+        color_map: list[int], [r,g,b]
+        alpha: mask percent
+        ignored_label:
+    Returns:
+        return image*(1-alpha)+semantic+alpha
+    '''
+    if scores.shape[0]>3:
+        scores = np.sum(scores,axis=0,keepdims=False)
+        return draw_heatmap_on_image(image=image,
+                                     scores=scores,
+                                     color_pos=color_pos,color_neg=color_neg,alpha=alpha)
+    if scores.shape[0]<3:
+        scores = np.concatenate([scores,np.zeros([3-scores.shape[0],scores.shape[1],scores.shape[2]],dtype=scores.dtype)],axis=0)
+    color_pos = np.reshape(np.array(color_pos),[1,1,3])
+    color_neg = np.reshape(np.array(color_neg),[1,1,3])
+    color_pos = color_pos*np.ones_like(image).astype(np.float32)
+    color_neg = color_neg*np.ones_like(image).astype(np.float32)
+    scores = np.transpose(scores,[1,2,0])
+    scores = scores*alpha
     color = color_pos*scores+color_neg*(1-scores)
     new_img = image.astype(np.float32)*(1-alpha)+color*alpha
     new_img = np.clip(new_img,0,255).astype(np.uint8)
