@@ -204,6 +204,12 @@ class AvgTimeThis():
         if(len(self.datas) == 0):
                 return 0
         return np.mean(np.array(self.datas))
+    
+    def max(self):
+        return np.max(self.datas)
+
+    def min(self):
+        return np.min(self.datas)
 
     def __str__(self):
         return "AVG: "+str(self.get_time())+ f", test_nr = {self.step}"
