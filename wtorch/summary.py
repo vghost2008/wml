@@ -5,6 +5,7 @@ import random
 import numpy as np
 import cv2
 import object_detection2.bboxes as odb
+import basic_img_utils as bwmli
 #from torch.utils.tensorboard import SummaryWriter
 #SummaryWriter.add_image()
 #tb.add_images
@@ -188,10 +189,51 @@ def log_heatmap(tb,name,heat_map,global_step,min_upper_bounder=None,max_lower_bo
         max = np.maximum(max,max_lower_bounder)
     heat_map = (heat_map-min)/(max-min+1e-8)
     img = odv.try_draw_rgb_heatmap_on_image(image=np.zeros([heat_map.shape[1],heat_map.shape[2],3],dtype=np.uint8),
+                                            color_pos=(255,0,0),
+                                            color_neg=(0,0,255),
                                             scores=heat_map,alpha=1.0)
     tb.add_image(name,img,global_step,dataformats="HWC")
 
     
+def log_heatmap_on_imgv2(tb,name,img,heat_map,global_step,min_upper_bounder=None,max_lower_bounder=None):
+    '''
+    使用更复杂的伪彩色
+    img: [H,W,C] (0~255)
+    heat_map: [C,H,W]
+    '''
+    heat_map = heat_map.astype(np.float32)
+    min = np.min(heat_map)
+    if min_upper_bounder is not None:
+        min = np.minimum(min,min_upper_bounder)
+    max = np.max(heat_map)
+    if max_lower_bounder is not None:
+        max = np.maximum(max,max_lower_bounder)
+    heat_map = (heat_map-min)/(max-min+1e-8)
+    img = odv.try_draw_rgb_heatmap_on_imagev2(image=img,
+                                            palette=[(0,(0,0,0)),(0.5,(0,0,0)),(1.0,(255,0,0))],
+                                            scores=heat_map)
+    tb.add_image(name,img,global_step,dataformats="HWC")
+
+def log_heatmapv2(tb,name,heat_map,global_step,min_upper_bounder=None,max_lower_bounder=None):
+    '''
+    heat_map: [C,H,W]
+    使用更复杂的伪彩色
+    '''
+    heat_map = heat_map.astype(np.float32)
+    heat_map = np.sum(heat_map,axis=0,keepdims=False)
+    min = np.min(heat_map)
+    if min_upper_bounder is not None:
+        min = np.minimum(min,min_upper_bounder)
+    max = np.max(heat_map)
+    if max_lower_bounder is not None:
+        max = np.maximum(max,max_lower_bounder)
+    heat_map = (heat_map-min)/(max-min+1e-8)
+
+    palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0))]
+    img = bwmli.pseudocolor_img(img=heat_map,palette=palette,auto_norm=False)
+    img = img.astype(np.uint8)
+    tb.add_image(name,img,global_step,dataformats="HWC")
+
 def add_video_with_label(tb,name,video,label,global_step,fps=4,font_scale=1.2):
     '''
     Args:
