@@ -109,7 +109,7 @@ def green_color_fn(label):
     del label
     return (0,255,0)
 
-def default_text_fn(label,score):
+def default_text_fn(label,score=None):
     return str(label)
 
 '''
@@ -613,7 +613,13 @@ def try_draw_rgb_heatmap_on_imagev2(image,scores,palette=[(0,(0,0,255)),(0.5,(25
     new_img = np.clip(new_img,0,255).astype(np.uint8)
     return new_img
 
-def draw_mckeypoints(image,labels,keypoints,r=2,color_fn=fixed_color_large_fn):
+def draw_mckeypoints(image,labels,keypoints,r=2,
+                     color_fn=fixed_color_large_fn,
+                     text_fn=default_text_fn,
+                     show_text=False,
+                     font_scale=0.8,
+                     text_thickness=1,
+                     text_color=(0,0,255)):
     '''
     gt_labels: [N]
     keypoints: WMCKeypoints or list of [M,2]
@@ -624,6 +630,13 @@ def draw_mckeypoints(image,labels,keypoints,r=2,color_fn=fixed_color_large_fn):
             points = points.points
         for p in points:
             cv2.circle(image, (int(p[0]), int(p[1])), r, color, -1)
+            if show_text:
+                text = text_fn(labels[i])
+                cv2.putText(image, text, (int(p[0]), int(p[1])), cv2.FONT_HERSHEY_DUPLEX,
+                            fontScale=font_scale,
+                            color=text_color,
+                            thickness=text_thickness)
+
 
     return image
 

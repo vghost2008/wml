@@ -2,7 +2,7 @@ import numpy as np
 from typing import Iterable
 from .kps_structures import WMCKeypoints,WMCKeypointsItem
 
-class HeatmapGenerator():
+class HeatmapGenerator:
     def __init__(self, output_res, num_joints, sigma=-1):
         self.output_res = output_res
         self.num_joints = num_joints
@@ -43,7 +43,7 @@ class HeatmapGenerator():
                         hms[idx, aa:bb, cc:dd], self.g[a:b, c:d])
         return hms
 
-class MultiClassesHeatmapGenerator():
+class MultiClassesHeatmapGenerator:
     def __init__(self,  num_classes, output_res=None,sigma=1):
         '''
         output_res: [H,W]
