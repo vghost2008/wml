@@ -217,6 +217,28 @@ class WPolygonMaskItem:
             rotated_masks = rotated_masks.crop(np.array([0,0,out_shape[1]-1,out_shape[0]-1]))
         return rotated_masks
 
+    def warp_affine(self,M,out_shape,fill_val=0):
+        #out_shape: [h,w]
+        """See :func:`BaseInstanceMasks.rotate`."""
+        if len(self.points) == 0:
+            affined_masks = WPolygonMaskItem([], width=out_shape[1],height=out_shape[0])
+        else:
+            affined_masks = []
+            for p in self.points:
+                coords = p.copy()
+                # pad 1 to convert from format [x, y] to homogeneous
+                # coordinates format [x, y, 1]
+                coords = np.concatenate(
+                    (coords, np.ones((coords.shape[0], 1), coords.dtype)),
+                    axis=1)  # [n, 3]
+                affined_coords = np.matmul(
+                    M[None, :, :],
+                    coords[:, :, None])[..., 0]  # [n, 2, 1] -> [n, 2]
+                affined_masks.append(affined_coords[:,:2])
+            affined_masks = WPolygonMaskItem(affined_masks, width=out_shape[1],height=out_shape[0])
+            affined_masks = affined_masks.crop(np.array([0,0,out_shape[1]-1,out_shape[0]-1]))
+        return affined_masks
+
     def shear(self,
               out_shape,
               magnitude,
@@ -318,7 +340,25 @@ class WPolygonMaskItem:
         return gt_bbox
     
     def get_bbox(self):
-        raise RuntimeError(f"Not implement.")
+        if len(self.points) == 0:
+            return np.zeros([4],dtype=np.float32)
+
+        points = np.concatenate(self.points,axis=0)
+
+        if len(points) == 0: #len(points)不为0，cocat的结果可能为零
+            return np.zeros([4],dtype=np.float32)
+
+        if len(points)==0:
+            gt_bbox = np.zeros([4],dtype=np.float32)
+        else:
+            xy_min = np.min(points,axis=0)
+            xy_max = np.max(points,axis=0)
+            x0,y0 = xy_min[0],xy_min[1]
+            x1,y1 = xy_max[0],xy_max[1]
+            gt_bbox = np.array([x0,y0,x1,y1],dtype=np.float32)
+        
+
+        return gt_bbox
     
 
     def __repr__(self):
@@ -554,6 +594,14 @@ class WPolygonMasks(WBaseMask):
         width = out_shape[1]
         height = out_shape[0]
         return WPolygonMasks(masks,width=width,height=height)
+    
+    def warp_affine(self,M,out_shape,fill_val=0):
+        #out_shape: [h,w]
+        masks = [m.warp_affine(M,out_shape,fill_val=fill_val) for m in self.masks]
+        width = out_shape[1]
+        height = out_shape[0]
+        return WPolygonMasks(masks,width=width,height=height)
+    
 
     def shear(self,
               out_shape,
@@ -874,6 +922,25 @@ class WBitmapMasks(WBaseMask):
                 angle,
                 center=center,
                 scale=scale,
+                border_value=fill_val)
+            if rotated_masks.ndim == 2:
+                # case when only one mask, (h, w)
+                rotated_masks = rotated_masks[:, :, None]  # (h, w, 1)
+            rotated_masks = rotated_masks.transpose(
+                (2, 0, 1)).astype(self.masks.dtype)
+        return self.new(rotated_masks, height=out_shape[0],width=out_shape[1])
+    
+    def warp_affine(self,M,out_shape,fill_val=0):
+        '''
+        out_shape:[H,W]
+        '''
+        if len(self.masks) == 0:
+            rotated_masks = np.empty((0, *out_shape), dtype=self.masks.dtype)
+        else:
+            rotated_masks = bwmli.im_warp_affine(
+                self.masks.transpose((1, 2, 0)),
+                M=M,
+                out_shape=out_shape[::-1],
                 border_value=fill_val)
             if rotated_masks.ndim == 2:
                 # case when only one mask, (h, w)

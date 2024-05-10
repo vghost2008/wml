@@ -3,6 +3,7 @@ from collections import OrderedDict, Iterable
 import copy
 import cv2
 import math
+import walgorithm as wa
 
 def normal_image(image,min_v=0,max_v=255,dtype=np.uint8):
 
@@ -419,6 +420,26 @@ def imshear(img,
         flags=cv2_interp_codes[interpolation])
     return sheared
 
+def im_warp_affine(img,
+             M,
+             border_value=0,
+             interpolation='bilinear',
+             out_shape = None,
+             ):
+    '''
+    out_shape:[W,H]
+    '''
+    if out_shape is None:
+        h,w = img.shape[:2]
+        out_shape = (w,h)
+    rotated = cv2.warpAffine(
+        img,
+        M, out_shape,
+        flags=cv2_interp_codes[interpolation],
+        borderValue=border_value)
+    return rotated
+
+
 '''
 size:(w,h)
 return:
@@ -548,6 +569,24 @@ def resize_and_pad(img,size,interpolation=cv2.INTER_LINEAR,pad_color=(0,0,0),cen
             return res,r
         else:
             return res
+
+def rotate_img(img,angle,scale=1.0,border_value=0,dsize=None,center=None,interpolation=cv2.INTER_LINEAR):
+    if center is None:
+        center = (img.shape[1]//2,img.shape[0]//2)
+    if dsize is None:
+        dsize=(img.shape[1],img.shape[0])
+        M = cv2.getRotationMatrix2D(center,angle,scale)
+    else:
+        M = wa.getRotationMatrix2D(center,angle,scale,out_offset=(dsize[0]//2,dsize[1]//2))
+    img = cv2.warpAffine(img,M,dsize,borderValue=border_value,flags=interpolation)
+    return img
+
+def rotate_img_file(filepath,angle,scale=1.0):
+    img = cv2.imread(filepath)
+    center = (img.shape[1]//2,img.shape[0]//2)
+    M = cv2.getRotationMatrix2D(center,angle,scale)
+    img = cv2.warpAffine(img,M,(img.shape[1],img.shape[0]))
+    cv2.imwrite(filepath,img)
 
 '''
 box:[ymin,xmin,ymax,xmax], relative coordinate

@@ -362,15 +362,18 @@ class Config:
                                    #f'Duplicate keys: {duplicate_keys}')
                     for key in duplicate_keys:
                         if c[key] is None:
-                            print(f"WARNING: Find duplicate key in config, value in {base_filename[i]} is None, use old value {base_cfg_dict[key]}")
+                            print(f"WARNING: Find duplicate key {key} in config, value in {base_filename[i]} is None, use old value {base_cfg_dict[key]}")
                             c.pop(key)
-                        elif isinstance(c[key],dict) and isinstance(base_cfg_dict[key],dict):
+                        else:
+                            print(f"WARNING: Find duplicate key {key} in config, use {base_filename[i]} for key {key}")
+                        '''elif isinstance(c[key],dict) and isinstance(base_cfg_dict[key],dict):
                             new_value = c[key]
                             new_value.update(base_cfg_dict[key])
-                            print(f"WARNING: Find duplicate key in config, value in {base_filename[i]} is {c[key]}, old value is {base_cfg_dict[key]}, merged to {new_value}")
+                            print(f"WARNING: Find duplicate key {key} in config, value in {base_filename[i]} is:\n {c[key]} \n, old value is:\n {base_cfg_dict[key]}\n merged to:\n {new_value}")
                             c[key] = new_value
                         else:
-                            print(f"WARNING: Find duplicate key in config, use {base_filename[i]} for key {key}")
+                            print(f"WARNING: Find duplicate key {key} in config, use {base_filename[i]} for key {key}")
+                        '''
                     base_cfg_dict.update(c)
                 else:
                     base_cfg_dict.update(c)

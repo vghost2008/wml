@@ -130,6 +130,25 @@ class WMCKeypointsItem(WBaseMaskLike):
             rotated_points = rotated_points.crop(np.array([0,0,out_shape[1]-1,out_shape[0]-1]))
         return rotated_points
 
+    def warp_affine(self,M,out_shape,fill_val=0):
+        #out_shape: [h,w]
+        """See :func:`BaseInstancepoints.rotate`."""
+        if len(self.points) == 0:
+            affined_points = WMCKeypointsItem([], width=out_shape[1],height=out_shape[0])
+        else:
+            coords = self.points.copy()
+            # pad 1 to convert from format [x, y] to homogeneous
+            # coordinates format [x, y, 1]
+            coords = np.concatenate(
+                (coords, np.ones((coords.shape[0], 1), coords.dtype)),
+                axis=1)  # [n, 3]
+            affined_coords = np.matmul(
+                M[None, :, :],
+                coords[:, :, None])[..., 0]  # [n, 2, 1] -> [n, 2]
+            affined_points = WMCKeypointsItem(affined_coords, width=out_shape[1],height=out_shape[0])
+            affined_points = affined_points.crop(np.array([0,0,out_shape[1]-1,out_shape[0]-1]))
+        return affined_points
+
     def shear(self,
               out_shape,
               magnitude,
@@ -441,6 +460,13 @@ class WMCKeypoints(WBaseMaskLike):
         width = out_shape[1]
         height = out_shape[0]
         return WMCKeypoints(points,width=width,height=height)
+    
+    def warp_affine(self,M,out_shape,fill_val=0):
+        points = [m.warp_affine(M,out_shape,fill_val) for m in self.points]
+        width = out_shape[1]
+        height = out_shape[0]
+        return WMCKeypoints(points,width=width,height=height)
+    
 
     def shear(self,
               out_shape,

@@ -34,6 +34,7 @@ FILEINDEX = "fileindex"
 FILENAME = "filename"
 GT_OBJECT_LOGITS = "gt_object_logits"
 
+BBOX_FIELDS = "bbox_fields"
 #Encoded data
 ED_GT_OBJECT_LOGITS = "gt_object_logits"
 ED_SCORES = "scores"
