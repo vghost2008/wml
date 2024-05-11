@@ -102,9 +102,9 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
         use_semantic = False
     annotations_list = []
     image = {}
-    with open(file_path,"r",encoding="gb18030") as f:
-        data_str = f.read()
+    with open(file_path,"r",encoding="utf-8") as f:
         try:
+            data_str = f.read()
             json_data = json.loads(data_str)
             img_width = int(json_data["imageWidth"])
             img_height = int(json_data["imageHeight"])

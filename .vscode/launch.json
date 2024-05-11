@@ -103,6 +103,15 @@
             "console": "integratedTerminal",
             "args":["/home/wj/ai/mldata1/B7mura/feedback/23231128-1130" "/home/wj/ai/mldata1/B7mura/tmp/view_in_bboxes" "--min-size" "128"],
         },
+        {
+            "name": "Python: statistics",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "datasets_tools/statistics_tools.py",
+            "console": "integratedTerminal",
+            "args":["~/ai/mldata1/B10CF/raw_datasets/5.8反馈/" "--type" "json"]
+        },
     ]
     
 }
