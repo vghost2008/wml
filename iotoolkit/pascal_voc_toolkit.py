@@ -41,8 +41,8 @@ class PascalVOCData(object):
         self.filter_empty_files = filter_empty_files
         if isinstance(label_text2id,dict):
             if ignore_case:
-                new_dict = dict([(k.lower(),v) for k,v in label_text2id.items()])
-                self.label_text2id = partial(ignore_case_dict_label_text2id,dict_data=new_dict)
+                self.label_text2id = partial(ignore_case_dict_label_text2id,
+                    dict_data=wmlu.trans_dict_key2lower(label_text2id))
             else:
                 self.label_text2id = partial(dict_label_text2id,dict_data=label_text2id)
         else:

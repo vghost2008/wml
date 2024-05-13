@@ -29,7 +29,8 @@ class FastLabelMeData(object):
         '''
         self.files = None
         if isinstance(label_text2id,dict):
-            self.label_text2id = partial(ignore_case_dict_label_text2id,dict_data=label_text2id)
+            self.label_text2id = partial(ignore_case_dict_label_text2id,
+                                         dict_data=wmlu.trans_dict_key2lower(label_text2id))
         else:
             self.label_text2id = label_text2id
         self.shuffle = shuffle

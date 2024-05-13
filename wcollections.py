@@ -169,3 +169,9 @@ def safe_update_dict(target_dict,src_dict,do_raise=True):
             print(f"ERROR: key {duplicate_keys} already in target dict, target dict keys {list(target_dict.keys())}")
 
     target_dict.update(src_dict)
+
+def trans_dict_key2lower(data):
+    res = type(data)()
+    for k,v in data.items():
+        res[k.lower()] = v
+    return res

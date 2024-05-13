@@ -1082,6 +1082,7 @@ class WBitmapMasks(WBaseMask):
         pass
 
     def update_shape(self,*,width=None,height=None):
+        return
         if height is not None:
             if self.shape[1] != height:
                 print(f"Update WBitmapMasks height faild, {self.shape[1]} vs new {height}")

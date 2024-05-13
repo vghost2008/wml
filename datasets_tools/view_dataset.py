@@ -27,6 +27,8 @@ def parse_args():
     parser.add_argument('--type', type=str, default='PascalVOCData',help='Data set type')
     parser.add_argument(
         '--line-width', type=int, default=2, help='line width')
+    parser.add_argument(
+        '--view-nr', type=int, default=-1, help='view dataset nr.')
     args = parser.parse_args()
 
     return args
@@ -52,9 +54,14 @@ def simple_names(x):
 if __name__ == "__main__":
 
     args = parse_args()
+    view_nr = args.view_nr
+    shuffle = view_nr>0
     print(DATASETS,args.type)
-    data = DATASETS[args.type](label_text2id=None,shuffle=False,absolute_coord=True)
+    data = DATASETS[args.type](label_text2id=None,shuffle=shuffle,absolute_coord=True)
     data.read_data(args.src_dir,img_suffix=args.ext)
+
+    if view_nr>0:
+        data.files = data.files[:view_nr]
 
     for x in data.get_items():
         full_path, img_info,category_ids, category_names, boxes,binary_masks,area,is_crowd,*_ =  x
@@ -87,5 +94,6 @@ if __name__ == "__main__":
             img = odv.draw_maskv2(img,category_names,boxes,binary_masks,is_relative_coordinate=False)
 
         save_path = osp.join(args.out_dir,wmlu.base_name(full_path)+".jpeg")
+        print(save_path)
 
         wmli.imwrite(save_path,img)
