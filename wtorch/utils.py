@@ -371,6 +371,8 @@ def pad_feature(fea, size, pad_value=0, pad_type=TOPLEFT_PAD, return_pad_value=F
             px0 = 0
             px1 = 0
 
+    if isinstance(pad_value,Iterable):
+        pad_value = pad_value[0]
     fea = F.pad(fea, [px0, px1,py0,py1], "constant", pad_value)
 
     if return_pad_value:
