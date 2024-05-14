@@ -191,10 +191,13 @@ class ConfusionMatrix:
         output: [N0,...,Nn,num_classes]
         target: [N0,...,Nn]
         '''
-        if self.num_classes<=0:
-            self.num_classes = output.shape[-1]
-        idx = np.argsort(output,axis=-1)
-        pred = idx[...,-1]
+        if len(output.shape)>len(target.shape):
+            if self.num_classes<=0:
+                self.num_classes = output.shape[-1]
+            idx = np.argsort(output,axis=-1)
+            pred = idx[...,-1]
+        else:
+            pred = output
         self.all_pred.append(copy.deepcopy(np.reshape(pred,[-1])))
         self.all_target.append(copy.deepcopy(np.reshape(target,[-1])))
     
@@ -216,7 +219,7 @@ class ConfusionMatrix:
         for p,t in zip(all_pred,all_target):
             cm[t,p] = cm[t,p]+1
         
-        self.cm = cm
+        self.cm = cm #cm[i,j] 表示gt类别i被分为类别j的数量
 
         return cm
 
