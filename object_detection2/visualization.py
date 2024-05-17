@@ -7,8 +7,9 @@ from PIL import Image
 from basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large, PSEUDOCOLOR
 from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 import object_detection2.bboxes as odb
-from semantic.structures import WPolygonMasks,WBitmapMasks
+from wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem
 import math
+import basic_img_utils as bwmli
 from .basic_visualization import *
 
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
@@ -108,7 +109,7 @@ def green_color_fn(label):
     del label
     return (0,255,0)
 
-def default_text_fn(label,score):
+def default_text_fn(label,score=None):
     return str(label)
 
 '''
@@ -414,6 +415,7 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
                                   alpha=alpha,
                                   fill=fill,
                                   thickness=thickness)
+        return img
     elif isinstance(masks,WBitmapMasks):
         img = draw_maskv2_bitmap(img,
                                   classes=classes,
@@ -422,7 +424,22 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
                                   color_fn=color_fn,
                                   is_relative_coordinate=is_relative_coordinate,
                                   alpha=alpha)
-    elif isinstance(masks,np.ndarray):
+        return img
+    elif isinstance(masks,WMCKeypoints):
+        img = draw_mckeypoints(img,
+                               labels=classes,
+                               keypoints=masks,
+                               color_fn=color_fn)
+        return img
+
+    try:
+        if not isinstance(masks,np.ndarray):
+            masks = np.array(masks)
+        masks = masks.astype(np.uint8)
+    except:
+        pass
+
+    if isinstance(masks,np.ndarray):
         img = draw_maskv2_bitmap(img,
                                   classes=classes,
                                   bboxes=bboxes,
@@ -472,9 +489,6 @@ def draw_bboxes_and_maskv2(img,classes,scores=None,bboxes=None,masks=None,
                            show_text=False,
                            is_relative_coordinate=True,
                            font_scale=0.8):
-    if not isinstance(masks,np.ndarray):
-        masks = np.array(masks)
-    masks = masks.astype(np.uint8)
     img = draw_maskv2(img=img,
                     classes=classes,bboxes=bboxes,
                     masks=masks,color_fn=color_fn,
@@ -491,7 +505,7 @@ def draw_bboxes_and_maskv2(img,classes,scores=None,bboxes=None,masks=None,
 
 
 
-def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,255),alpha=0.4):
+def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,0),alpha=0.4):
     '''
     draw semantic on image
     Args:
@@ -508,11 +522,123 @@ def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,255),a
     color_neg = np.reshape(np.array(color_neg),[1,1,3])
     color_pos = color_pos*np.ones_like(image).astype(np.float32)
     color_neg = color_neg*np.ones_like(image).astype(np.float32)
-    scores = np.expand_dims(scores,axis=-1)*alpha
+    scores = np.expand_dims(scores,axis=-1)
+    color = color_pos*scores+color_neg*(1-scores)
+    color = np.clip(color,0,255)
+    new_img = image.astype(np.float32)*(1-alpha)+color*alpha
+    new_img = np.clip(new_img,0,255).astype(np.uint8)
+    return new_img
+
+def draw_heatmap_on_imagev2(image,scores,palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0))],alpha=0.4):
+    '''
+    使用更复杂的伪彩色
+    draw semantic on image
+    Args:
+        image:
+        scores: [H,W] scores value
+        color_map: list[int], [r,g,b]
+        alpha: mask percent
+        ignored_label:
+    Returns:
+        return image*(1-alpha)+semantic+alpha
+    '''
+
+    color = bwmli.pseudocolor_img(img=scores,palette=palette,auto_norm=False)
+    color = np.clip(color,0,255)
+    new_img = image.astype(np.float32)*(1-alpha)+color*alpha
+    new_img = np.clip(new_img,0,255).astype(np.uint8)
+    return new_img
+
+def try_draw_rgb_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,0),alpha=0.4):
+    '''
+    draw semantic on image
+    Args:
+        image: [H,W,3/1]
+        scores: [C,H,W] scores value, in (0~1)
+        color_map: list[int], [r,g,b]
+        alpha: mask percent
+        ignored_label:
+    Returns:
+        return image*(1-alpha)+semantic+alpha
+    '''
+    if scores.shape[0]>3:
+        scores = np.sum(scores,axis=0,keepdims=False)
+        return draw_heatmap_on_image(image=image,
+                                     scores=scores,
+                                     color_pos=color_pos,color_neg=color_neg,alpha=alpha)
+    if scores.shape[0]<3:
+        scores = np.concatenate([scores,np.zeros([3-scores.shape[0],scores.shape[1],scores.shape[2]],dtype=scores.dtype)],axis=0)
+    color_pos = np.reshape(np.array(color_pos),[1,1,3])
+    color_neg = np.reshape(np.array(color_neg),[1,1,3])
+    color_pos = color_pos*np.ones_like(image).astype(np.float32)
+    color_neg = color_neg*np.ones_like(image).astype(np.float32)
+    scores = np.transpose(scores,[1,2,0])
+    scores = scores*alpha
     color = color_pos*scores+color_neg*(1-scores)
     new_img = image.astype(np.float32)*(1-alpha)+color*alpha
     new_img = np.clip(new_img,0,255).astype(np.uint8)
     return new_img
+
+def try_draw_rgb_heatmap_on_imagev2(image,scores,palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0))],alpha=0.4):
+    '''
+    使用更复杂的伪彩色
+    draw semantic on image
+    Args:
+        image: [H,W,3/1]
+        scores: [C,H,W] scores value, in (0~1)
+        color_map: list[int], [r,g,b]
+        alpha: mask percent
+        ignored_label:
+    Returns:
+        return image*(1-alpha)+semantic+alpha
+    '''
+    if scores.shape[0]>3:
+        scores = np.sum(scores,axis=0,keepdims=False)
+        return draw_heatmap_on_imagev2(image=image,
+                                     scores=scores,
+                                     palette=palette,
+                                     alpha=alpha)
+    if scores.shape[0]<3:
+        scores = np.concatenate([scores,np.zeros([3-scores.shape[0],scores.shape[1],scores.shape[2]],dtype=scores.dtype)],axis=0)
+    color_pos=(255,0,0)
+    color_neg=(0,0,0)
+    color_pos = np.reshape(np.array(color_pos),[1,1,3])
+    color_neg = np.reshape(np.array(color_neg),[1,1,3])
+    color_pos = color_pos*np.ones_like(image).astype(np.float32)
+    color_neg = color_neg*np.ones_like(image).astype(np.float32)
+    scores = np.transpose(scores,[1,2,0])
+    scores = scores*alpha
+    color = color_pos*scores+color_neg*(1-scores)
+    new_img = image.astype(np.float32)*(1-alpha)+color*alpha
+    new_img = np.clip(new_img,0,255).astype(np.uint8)
+    return new_img
+
+def draw_mckeypoints(image,labels,keypoints,r=2,
+                     color_fn=fixed_color_large_fn,
+                     text_fn=default_text_fn,
+                     show_text=False,
+                     font_scale=0.8,
+                     text_thickness=1,
+                     text_color=(0,0,255)):
+    '''
+    gt_labels: [N]
+    keypoints: WMCKeypoints or list of [M,2]
+    '''
+    for i, points in enumerate(keypoints):
+        color = color_fn(labels[i])
+        if isinstance(points,WMCKeypointsItem):
+            points = points.points
+        for p in points:
+            cv2.circle(image, (int(p[0]), int(p[1])), r, color, -1)
+            if show_text:
+                text = text_fn(labels[i])
+                cv2.putText(image, text, (int(p[0]), int(p[1])), cv2.FONT_HERSHEY_DUPLEX,
+                            fontScale=font_scale,
+                            color=text_color,
+                            thickness=text_thickness)
+
+
+    return image
 
 def add_jointsv1(image, joints, color, r=5,line_thickness=2,no_line=False,joints_pair=None,left_node=None):
 

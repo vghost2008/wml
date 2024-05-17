@@ -10,7 +10,7 @@ import wml_utils as wmlu
 import img_utils as wmli
 import cv2
 from thirdparty.config import CfgNode 
-from semantic.structures import WPolygonMasks,WBitmapMasks
+from wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints
 from semantic.basic_toolkit import *
 from itertools import repeat
 import collections.abc
@@ -142,8 +142,9 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
             used_loaded_dict_key.append('module.'+new_k)
         elif 'BN' in k and new_k.replace("BN","bn") in loaded_dict:
             new_k = new_k.replace("BN","bn")
-            new_loaded_dict[k] = loaded_dict[new_k]
-            used_loaded_dict_key.append(new_k)
+            if net_state_dict[k].size() == loaded_dict[new_k].size():
+                new_loaded_dict[k] = loaded_dict[new_k]
+                used_loaded_dict_key.append(new_k)
         elif ".num_batches_tracked" not in k:
             print(f"Skipped loading parameter {k} {net_state_dict[k].shape}")
             unloaded_net_state_key.append(k)
@@ -370,6 +371,8 @@ def pad_feature(fea, size, pad_value=0, pad_type=TOPLEFT_PAD, return_pad_value=F
             px0 = 0
             px1 = 0
 
+    if isinstance(pad_value,Iterable):
+        pad_value = pad_value[0]
     fea = F.pad(fea, [px0, px1,py0,py1], "constant", pad_value)
 
     if return_pad_value:
@@ -524,7 +527,7 @@ def npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
     bboxes: [N,4](x0,y0,x1,y1)
     size: (new_w,new_h)
     '''
-    if isinstance(mask,(WPolygonMasks,WBitmapMasks)):
+    if isinstance(mask,(WPolygonMasks,WBitmapMasks,WMCKeypoints)):
         return mask.resize_mask_in_bboxes(bboxes,size=size,r=r)
     if mask.shape[0]==0:
         return np.zeros([0,size[1],size[0]],dtype=mask.dtype),np.zeros([0,4],dtype=bboxes.dtype)

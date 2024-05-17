@@ -22,6 +22,7 @@ from argparse import ArgumentParser
 from itertools import count
 from iotoolkit.object365v2_toolkit import Object365V2
 from object_detection2.data_process_toolkit import remove_class
+from collections import OrderedDict
 
 def parse_args():
     parser = ArgumentParser()
@@ -55,8 +56,8 @@ ratio: h/w
 def statistics_boxes(boxes,nr=100,name=""):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]
-    print(f"Min area size {min(sizes)}, max area size {max(sizes)} (pixel).")
-    print(f"Min ratio {min(ratios)}, max ratios {max(ratios)}.")
+    print(f"Min area size (sqrt(w*h)) {min(sizes):.2f}, max area size {max(sizes):.2f} (pixel), mean {np.mean(sizes):.2f}.")
+    print(f"Min ratio {min(ratios):.2f}, max ratios {max(ratios):.2f}, mean: {np.mean(ratios):.2f}.")
     '''plt.figure(2,figsize=(10,10))
     n, bins, patches = plt.hist(sizes, nr, normed=None, facecolor='blue', alpha=0.5)
     plt.grid(axis='y', alpha=0.75)
@@ -105,7 +106,7 @@ def statistics_classes_per_img(data,nr=100):
     plt.title("classes nr per img")
     plt.show()
 
-def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5):
+def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5,level=0):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     min_size = min(sizes)
     max_size = max(sizes)
@@ -118,8 +119,12 @@ def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5):
         else:
             l_bboxes[index] = [boxes[i]]
 
-    for k,v in l_bboxes.items():
-        print(k,len(v))
+    print(f"bboxes nr of each range")
+    for k in range(bin_size):
+        if k not in l_bboxes:
+            continue
+        v = l_bboxes[k]
+        print(k,len(v),f"{len(v)*100.0/len(boxes):.2f}%")
 
     for i in range(bin_size):
         if i not in l_bboxes:
@@ -127,6 +132,15 @@ def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5):
         l_size = min_size + i* delta
         h_size = l_size + delta
         statistics_boxes(l_bboxes[i],nr,name=f"area_{l_size:.3f}->{h_size:.3f}")
+
+    if level<1:
+        branch_thr = 0.8
+        for k,v in l_bboxes.items():
+            if len(v)/len(boxes)>branch_thr:
+                print(f"Show branch {k} statistics")
+                statistics_boxes_by_different_area(v,nr=nr,bin_size=bin_size,level=level+1)
+
+    
 
 def statistics_boxes_by_different_ratio(boxes,nr=100,bin_size=5):
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]
@@ -224,7 +238,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         if absolute_size:
             if trans_img_size is not None:
                 img_size = trans_img_size(img_size)
-            bboxes = odb.relative_boxes_to_absolutely_boxes(bboxes,width=img_size[1],height=img_size[0])
+            #bboxes = odb.relative_boxes_to_absolutely_boxes(bboxes,width=img_size[1],height=img_size[0])
+            pass
         classes_nr_per_img.append(len(set(labels_text)))
         file = os.path.basename(file)
         if len(labels_text)==0:
@@ -386,7 +401,7 @@ def pascal_voc_dataset(data_dir,labels=None):
         label_text2id = None
     
     #data = PascalVOCData(label_text2id=label_text2id,resample_parameters={6:8,5:2,7:2})
-    data = PascalVOCData(label_text2id=label_text2id)
+    data = PascalVOCData(label_text2id=label_text2id,absolute_coord=True)
 
     '''data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/train"
     data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/wt_06"
@@ -439,7 +454,7 @@ def coco2014_val_dataset():
     return data.get_items()
 
 def labelme_dataset(data_dir,labels):
-    data = FastLabelMeData(label_text2id=None)
+    data = FastLabelMeData(label_text2id=None,absolute_coord=True)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
     data.read_data(data_dir,img_suffix="bmp;;jpg;;jpeg")
     #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")

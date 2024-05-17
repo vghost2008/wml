@@ -35,9 +35,10 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "object_detection_tools/eval_on_images.py",
+            "program": "object_detection_tools/metrics_tools.py",
             "console": "integratedTerminal",
-            "args":["--test_data_dir" "/home/wj/ai/mldata1/GDS1Crack/val/ng" "--gpus" "3" "--config-file" "gds1"]
+            "args":["/home/wj/ai/mldata1/B10CF/work_dir/cascade_csp/tmp/eval_on_val1/results.pk" "--metrics" "DetConfusionMatrix"],
+            //"args":["/home/wj/ai/mldata1/B10CF/work_dir/cascade_csp/tmp/eval_on_val1/results.pk"],
         },
         {
             "name": "Python: tf2pb",
@@ -102,6 +103,15 @@
             "program": "datasets_tools/view_imgs_in_bboxes.py",
             "console": "integratedTerminal",
             "args":["/home/wj/ai/mldata1/B7mura/feedback/23231128-1130" "/home/wj/ai/mldata1/B7mura/tmp/view_in_bboxes" "--min-size" "128"],
+        },
+        {
+            "name": "Python: statistics",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "datasets_tools/statistics_tools.py",
+            "console": "integratedTerminal",
+            "args":["~/ai/mldata1/B10CF/raw_datasets/5.8反馈/" "--type" "json"]
         },
     ]
     

@@ -2,6 +2,26 @@ import numpy as np
 from collections import OrderedDict, Iterable
 import copy
 import cv2
+import math
+import walgorithm as wa
+
+def normal_image(image,min_v=0,max_v=255,dtype=np.uint8):
+
+    if not isinstance(image,np.ndarray):
+        image = np.array(image)
+
+    t = image.dtype
+    if t!=np.float32:
+        image = image.astype(np.float32)
+
+    i_min = np.min(image)
+    i_max = np.max(image)
+    image = (image-float(i_min))*float(max_v-min_v)/max(float(i_max-i_min),1e-8)+float(min_v)
+
+    if dtype!=np.float32:
+        image = image.astype(dtype)
+
+    return image
 
 
 def _get_translate_matrix(offset, direction='horizontal'):
@@ -400,6 +420,45 @@ def imshear(img,
         flags=cv2_interp_codes[interpolation])
     return sheared
 
+def im_warp_affine(img,
+             M,
+             border_value=0,
+             interpolation='bilinear',
+             out_shape = None,
+             ):
+    '''
+    out_shape:[W,H]
+    '''
+    if out_shape is None:
+        h,w = img.shape[:2]
+        out_shape = (w,h)
+    rotated = cv2.warpAffine(
+        img,
+        M, out_shape,
+        flags=cv2_interp_codes[interpolation],
+        borderValue=border_value)
+    return rotated
+
+def imflip(img, direction='horizontal'):
+    """Flip an image horizontally or vertically.
+
+    Args:
+        img (ndarray): Image to be flipped.
+        direction (str): The flip direction, either "horizontal" or
+            "vertical" or "diagonal".
+
+    Returns:
+        ndarray: The flipped image.
+    """
+    assert direction in ['horizontal', 'vertical', 'diagonal']
+    if direction == 'horizontal':
+        return np.flip(img, axis=1)
+    elif direction == 'vertical':
+        return np.flip(img, axis=0)
+    else:
+        return np.flip(img, axis=(0, 1))
+
+
 '''
 size:(w,h)
 return:
@@ -529,6 +588,24 @@ def resize_and_pad(img,size,interpolation=cv2.INTER_LINEAR,pad_color=(0,0,0),cen
             return res,r
         else:
             return res
+
+def rotate_img(img,angle,scale=1.0,border_value=0,dsize=None,center=None,interpolation=cv2.INTER_LINEAR):
+    if center is None:
+        center = (img.shape[1]//2,img.shape[0]//2)
+    if dsize is None:
+        dsize=(img.shape[1],img.shape[0])
+        M = cv2.getRotationMatrix2D(center,angle,scale)
+    else:
+        M = wa.getRotationMatrix2D(center,angle,scale,out_offset=(dsize[0]//2,dsize[1]//2))
+    img = cv2.warpAffine(img,M,dsize,borderValue=border_value,flags=interpolation)
+    return img
+
+def rotate_img_file(filepath,angle,scale=1.0):
+    img = cv2.imread(filepath)
+    center = (img.shape[1]//2,img.shape[0]//2)
+    M = cv2.getRotationMatrix2D(center,angle,scale)
+    img = cv2.warpAffine(img,M,(img.shape[1],img.shape[0]))
+    cv2.imwrite(filepath,img)
 
 '''
 box:[ymin,xmin,ymax,xmax], relative coordinate
@@ -673,3 +750,46 @@ def sub_imagesv2(img,rects):
         res.append(sub_imagev2(img,rect))
 
     return res
+
+def __get_discrete_palette(palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0))],nr=1000):
+    res = np.zeros([nr,3],dtype=np.float32)
+    pre_p = palette[0]
+    for cur_p in palette[1:]:
+        end_idx = min(math.ceil(cur_p[0]*nr),nr)
+        beg_idx = min(max(math.floor(pre_p[0]*nr),0),end_idx)
+        color0 = np.array(pre_p[1],dtype=np.float32)
+        color1 = np.array(cur_p[1],dtype=np.float32)
+        for i in range(beg_idx,end_idx):
+            cur_color = (i-beg_idx)*(color1-color0)/(end_idx-beg_idx)+color0
+            res[i] = cur_color
+        pre_p = cur_p
+
+    
+    res = np.clip(res,0,255)
+    res = res.astype(np.uint8)
+
+    return res
+
+def __get_discrete_img(img,nr=1000):
+    img = img.astype(np.float32)*(nr-1)
+    img = np.clip(img,0,nr-1)
+    img = img.astype(np.int32)
+    return img
+
+
+def pseudocolor_img(img,palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0))],auto_norm=True):
+    '''
+    img: (H,W) #float, value in [0,1] if auto_norm is not True
+    '''
+    if auto_norm:
+        img = normal_image(img,0.0,1.0,dtype=np.float32)
+    color_nr = 256
+    img = __get_discrete_img(img,nr=color_nr)
+    palette = __get_discrete_palette(palette,nr=color_nr)
+    H,W = img.shape
+    img = np.reshape(img,[-1])
+    new_img = palette[img]
+    new_img = np.reshape(new_img,[H,W,3])
+
+    return new_img
+

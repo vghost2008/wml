@@ -14,6 +14,7 @@ from pycocotools.cocoeval import COCOeval
 import wml_utils as wmlu
 from .build import METRICS_REGISTRY
 from abc import ABCMeta, abstractclassmethod
+from .classifier_toolkit import ConfusionMatrix
 
 class BaseMetrics(metaclass=ABCMeta):
     def __init__(self) -> None:
@@ -1573,6 +1574,113 @@ class WMAP(BaseMetrics):
     
     def value(self):
         return self.map
+
+@METRICS_REGISTRY.register()
+class DetConfusionMatrix(BaseMetrics):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.1,iou_thr=0.1):
+        super().__init__()
+        if categories_list is None:
+            print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
+            self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(num_classes)]
+        else:
+            self.categories_list = categories_list
+        self.num_classes = num_classes
+        self.label_trans = label_trans
+        self.iou_thr = iou_thr
+        self.score_thr = score_thr
+        self.pred_labels = []
+        self.gt_labels = []
+        self.kernel = ConfusionMatrix(num_classes=self.num_classes+1)
+        self.image_id = 0
+
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
+                 gtmasks=None,
+                 masks=None,is_crowd=None,use_relative_coord=False):
+        if probability is None:
+            probability = np.ones_like(labels,dtype=np.float32)
+        if not isinstance(gtboxes,np.ndarray):
+            gtboxes = np.array(gtboxes)
+        if not isinstance(gtlabels,np.ndarray):
+            gtlabels = np.array(gtlabels)
+        if not isinstance(boxes,np.ndarray):
+            boxes = np.array(boxes)
+        if not isinstance(labels,np.ndarray):
+            labels = np.array(labels)
+        if self.label_trans is not None:
+            gtlabels = self.label_trans(gtlabels)
+            labels = self.label_trans(labels)
+        if probability is not None and not isinstance(probability,np.ndarray):
+            probability = np.array(probability)
+        
+        if self.score_thr is not None:
+            keep = probability>self.score_thr
+            labels = labels[keep]
+            boxes = boxes[keep]
+            probability = probability[keep]
+
+        tmp_pred_labels = []
+        tmp_gt_labels = []
+        gt_set = set(list(range(gtlabels.shape[0])))
+        pred_set = set(list(range(labels.shape[0])))
+
+        if len(gt_set)>0 and len(pred_set)>0:
+            iou_matrix = odb.iou_matrix(boxes,gtboxes) #boxes_nr x gtboxes_nr
+            max_idx = np.argmax(iou_matrix,axis=0)
+            ious = np.max(iou_matrix,axis=0)
+    
+            sorted_idx = np.argsort(ious)[::-1]
+    
+            for gt_idx in sorted_idx:
+                iou = ious[gt_idx]
+                if iou<self.iou_thr:
+                    break
+                pred_idx = max_idx[gt_idx]
+                if pred_idx not in pred_set:
+                    continue
+                tmp_gt_labels.append(gtlabels[gt_idx])
+                tmp_pred_labels.append(labels[pred_idx])
+                gt_set.remove(gt_idx)
+                pred_set.remove(pred_idx)
+        
+        for idx in gt_set:
+            v = gtlabels[idx]
+            tmp_gt_labels.append(v)
+            tmp_pred_labels.append(self.num_classes) #使用self.num_classes+1作为背景
+
+        for idx in pred_set:
+            v = labels[idx]
+            tmp_gt_labels.append(self.num_classes)
+            tmp_pred_labels.append(v)
+
+        self.pred_labels.extend(tmp_pred_labels)
+        self.gt_labels.extend(tmp_gt_labels)
+        self.image_id += 1
+        #self.show()
+
+    def evaluate(self):
+        print(f"Test size {self.num_examples()}")
+        self.kernel(output=np.array(self.pred_labels,dtype=np.int32),
+                    target=np.array(self.gt_labels,dtype=np.int32))
+        self.kernel.evaluate()
+
+    def show(self,name=""):
+        sys.stdout.flush()
+        print(f"Test size {self.num_examples()}")
+        self.evaluate()
+        return self.kernel.show()
+
+    def to_string(self):
+        return self.kernel.to_string()
+
+    def __repr__(self):
+        return self.to_string()
+    
+    def value(self):
+        return self.kernel.value()
+
+    def num_examples(self):
+        return self.image_id
+
 
 class ComposeMetrics(BaseMetrics):
     def __init__(self,*args,**kwargs):

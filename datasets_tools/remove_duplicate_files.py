@@ -1,6 +1,7 @@
 import os
 import wml_utils as wmlu
 import argparse
+import glob
 
 #如果在exclude_dir和src_dir文件夹中同时出现，则从src_dir中删除
 
@@ -8,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")
     parser.add_argument("exc_dir",type=str,help="src dir")
-    parser.add_argument("--ext",type=str,default=".jpg",help="img ext")
+    parser.add_argument("--ext",type=str,default=".xml",help="annotation ext or img files")
     parser.add_argument('--basename', action='store_true',help='whether to compare by basename.')
     args = parser.parse_args()
     return args
@@ -17,10 +18,20 @@ def remove_file(file):
     #print(f"Remove {file}.")
     #return
     os.remove(file)
-    img_file = wmlu.change_suffix(file,"jpg")
+    '''img_file = wmlu.change_suffix(file,"jpg")
     if os.path.exists(img_file):
         print(f"Remove {img_file}")
-        os.remove(img_file)
+        os.remove(img_file)'''
+
+def get_ext_files(files):
+    res = []
+    for f in files:
+        pf = wmlu.change_suffix(f,"*")
+        t_files = glob.glob(pf)
+        for tf in t_files:
+            if tf != f:
+                res.append(tf)
+    return res
 
 def relative_path(path,ref_path):
     return wmlu.get_relative_path(path,ref_path)
@@ -65,6 +76,16 @@ if __name__ == "__main__":
 
     for file in files_to_remove:
         remove_file(file)
+
+    ext_files = get_ext_files(files_to_remove)
+    wmlu.show_list(ext_files)
+    res = input(f"remove {len(ext_files)} ext files [y/n]")
+    if res != 'y':
+        print(f"Cancel.")
+        ext_files = []
+    else:
+        for file in ext_files:
+            remove_file(file)
     
     print(f"Total files in src dir {len(files0)}, total files in exclude dir {len(files1)}.")
-    print(f"Total skip {total_skip}, total remove {total_remove}, total process {total_skip+total_remove}")
+    print(f"Total skip {total_skip}, total remove {total_remove}, total remove {len(ext_files)} ext files, total process {total_skip+total_remove}")

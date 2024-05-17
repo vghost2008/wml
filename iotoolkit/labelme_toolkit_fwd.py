@@ -102,9 +102,9 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
         use_semantic = False
     annotations_list = []
     image = {}
-    with open(file_path,"r",encoding="gb18030") as f:
-        data_str = f.read()
+    with open(file_path,"r",encoding="utf-8") as f:
         try:
+            data_str = f.read()
             json_data = json.loads(data_str)
             img_width = int(json_data["imageWidth"])
             img_height = int(json_data["imageHeight"])
@@ -550,6 +550,44 @@ def read_labelme_kp_data(file_path,label_text_to_id=lambda x:int(x)):
     image_info['width'] = int(data['imageWidth'])
     image_info['height'] = int(data["imageHeight"])
     image_info['file_name'] = wmlu.base_name(data["imagePath"])
+
+    return image_info,labels,points
+
+
+def read_labelme_mckp_data(file_path,label_text_to_id=None):
+    '''
+
+    Args:
+        file_path: json file path
+        label_text_to_id: int f(string)
+
+    Returns:
+        labels:[N]
+        points:list of [N,2] points, [x,y]
+    '''
+    labels = []
+    points = []
+    image_info = {}
+    with open(file_path,"r") as f:
+        data = json.load(f)
+
+    kp_datas = wmlu.MDict(dtype=list)
+
+    for d in data['shapes']:
+        label = d['label']
+        point = np.reshape(np.array(d['points']),[-1,2])
+        if label_text_to_id is not None:
+            label = label_text_to_id(label)
+        kp_datas[label.lower()].append(point)
+
+    image_info[WIDTH] = int(data['imageWidth'])
+    image_info[HEIGHT] = int(data["imageHeight"])
+    image_info[FILENAME] = wmlu.base_name(data["imagePath"])
+
+    for k,v in kp_datas.items():
+        #v is [N,2]
+        labels.append(k)
+        points.append(np.concatenate(v,axis=0))
 
     return image_info,labels,points
 

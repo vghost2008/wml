@@ -10,6 +10,7 @@ HEIGHT = "height"
 WIDTH = "width"
 MASKS = "masks"
 ANN_INFO = "ann_info"
+IMG_INFO = "img_info"
 IS_CROWD = 'is_crowd'
 MASK_AREA = "mask_area"
 ORG_HEIGHT = "org_height"
@@ -33,6 +34,7 @@ FILEINDEX = "fileindex"
 FILENAME = "filename"
 GT_OBJECT_LOGITS = "gt_object_logits"
 
+BBOX_FIELDS = "bbox_fields"
 #Encoded data
 ED_GT_OBJECT_LOGITS = "gt_object_logits"
 ED_SCORES = "scores"

@@ -2,6 +2,7 @@
 from multiprocessing import Pool
 import numpy as np
 import math
+import cv2
 
 def _edit_distance(v0,v1):
     if v0 == v1:
@@ -187,3 +188,20 @@ def points_on_circle(center=None,r=None,points_nr=100):
     
     return points
 
+def getRotationMatrix2D(center, angle, scale,out_offset=None):
+    if out_offset is None:
+        '''
+        cv2为先平移-center,scale,rotate,再平移center
+        M(center)*M(rotate)*M(scale)*M(-center)*X
+        '''
+        return cv2.getRotationMatrix2D(center=center,angle=angle,scale=scale)
+    offset_in = np.array([[1,0,-center[0]],[0,1,-center[1]]],dtype=np.float32)
+    rotate_m = cv2.getRotationMatrix2D(center=[0,0],angle=angle,scale=scale)
+    offset_out = np.array([[1,0,out_offset[0]],[0,1,out_offset[1]]],dtype=np.float32)
+    line3 = np.array([[0,0,1]],dtype=np.float32)
+    offset_in = np.concatenate([offset_in,line3],axis=0)
+    rotate_m = np.concatenate([rotate_m,line3],axis=0)
+    offset_out = np.concatenate([offset_out,line3],axis=0)
+    m = np.dot(rotate_m,offset_in)
+    m = np.dot(offset_out,m)
+    return m[:2]
