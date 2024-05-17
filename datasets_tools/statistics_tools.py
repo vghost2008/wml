@@ -22,6 +22,7 @@ from argparse import ArgumentParser
 from itertools import count
 from iotoolkit.object365v2_toolkit import Object365V2
 from object_detection2.data_process_toolkit import remove_class
+from collections import OrderedDict
 
 def parse_args():
     parser = ArgumentParser()
@@ -105,7 +106,7 @@ def statistics_classes_per_img(data,nr=100):
     plt.title("classes nr per img")
     plt.show()
 
-def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5):
+def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5,level=0):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     min_size = min(sizes)
     max_size = max(sizes)
@@ -118,8 +119,12 @@ def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5):
         else:
             l_bboxes[index] = [boxes[i]]
 
-    for k,v in l_bboxes.items():
-        print(k,len(v))
+    print(f"bboxes nr of each range")
+    for k in range(bin_size):
+        if k not in l_bboxes:
+            continue
+        v = l_bboxes[k]
+        print(k,len(v),f"{len(v)*100.0/len(boxes):.2f}%")
 
     for i in range(bin_size):
         if i not in l_bboxes:
@@ -127,6 +132,15 @@ def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5):
         l_size = min_size + i* delta
         h_size = l_size + delta
         statistics_boxes(l_bboxes[i],nr,name=f"area_{l_size:.3f}->{h_size:.3f}")
+
+    if level<1:
+        branch_thr = 0.8
+        for k,v in l_bboxes.items():
+            if len(v)/len(boxes)>branch_thr:
+                print(f"Show branch {k} statistics")
+                statistics_boxes_by_different_area(v,nr=nr,bin_size=bin_size,level=level+1)
+
+    
 
 def statistics_boxes_by_different_ratio(boxes,nr=100,bin_size=5):
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]

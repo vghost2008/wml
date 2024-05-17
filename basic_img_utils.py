@@ -439,6 +439,25 @@ def im_warp_affine(img,
         borderValue=border_value)
     return rotated
 
+def imflip(img, direction='horizontal'):
+    """Flip an image horizontally or vertically.
+
+    Args:
+        img (ndarray): Image to be flipped.
+        direction (str): The flip direction, either "horizontal" or
+            "vertical" or "diagonal".
+
+    Returns:
+        ndarray: The flipped image.
+    """
+    assert direction in ['horizontal', 'vertical', 'diagonal']
+    if direction == 'horizontal':
+        return np.flip(img, axis=1)
+    elif direction == 'vertical':
+        return np.flip(img, axis=0)
+    else:
+        return np.flip(img, axis=(0, 1))
+
 
 '''
 size:(w,h)
