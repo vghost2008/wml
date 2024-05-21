@@ -248,6 +248,9 @@ class WMCKeypointsItem(WBaseMaskLike):
     @property
     def shape(self):
         return [len(self.points),self.height,self.width]
+    
+    def numel(self):
+        return len(self.points)
 
     def _update_shape(self,*,width=None,height=None):
         if width is not None:
