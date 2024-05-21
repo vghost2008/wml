@@ -54,7 +54,7 @@ def trans_absolute_coord_to_relative_coord(image_info,annotations_list):
         return np.zeros([0,4],dtype=np.float32),np.zeros([0],dtype=np.int32),np.zeros([0,H,W],dtype=np.uint8)
 
 
-def get_files(data_dir, img_suffix="jpg"):
+def get_files(data_dir, img_suffix=wmli.BASE_IMG_SUFFIX):
     img_files = wmlu.recurse_get_filepath_in_dir(data_dir, suffix=img_suffix)
     res = []
     for img_file in img_files:
@@ -266,6 +266,38 @@ def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_
         annotatios_list.append(annotatios)
     save_labelme_datav2(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)
 
+def save_labelme_points_data(file_path,image_path,image,points,labels):
+    '''
+    points: [N,2] (x,y)
+    labels: [N]
+    '''
+    data={}
+    shapes = []
+    data["version"] = "4.2.9"
+    data["flags"] = {}
+
+    if image is None:
+        h,w = wmli.get_img_size(image_path)
+        image = dict(width=w,height=h)
+
+    for point,label in zip(points,labels):
+        shape = {}
+        shape["label"] = str(label)
+        shape['group_id'] = None
+        shape["shape_type"]="point"
+        shape["points"] = [[point[0],point[1]]]
+        flags = dict(ignore=False,difficult=False,crowd=False)
+        shape['flags'] = flags
+        shapes.append(shape)
+
+    data["shapes"] = shapes
+    data["imagePath"] = os.path.basename(image_path)
+    data["imageWidth"] = image["width"]
+    data["imageHeight"] = image["height"]
+    data["imageData"] = None
+
+    with open(file_path,"w") as f:
+        json.dump(data,f)
 
 def get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=False):
     labels = []

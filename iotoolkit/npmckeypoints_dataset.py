@@ -32,6 +32,7 @@ class NPMCKeypointsDataset(object):
         :param shuffle:
         :param image_sub_dir:
         :param xml_sub_dir:
+        可以使用datasets_trans/trans_labelme_to_npkp.py将labelme转换为NPMCKeypointsDataset可用的格式
         '''
         self.files = None
         self.shuffle = shuffle
