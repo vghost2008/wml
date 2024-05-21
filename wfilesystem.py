@@ -3,6 +3,8 @@ import os.path as osp
 import shutil
 import sys
 import socket
+from functools import partial
+from basic_img_utils import BASE_IMG_SUFFIX
 
 def get_filenames_in_dir(dir_path,suffix=None,prefix=None):
     if suffix is not None:
@@ -127,6 +129,7 @@ def recurse_get_filepath_in_dir(dir_path,suffix=None,prefix=None,followlinks=Fal
     return res
 
 get_files = recurse_get_filepath_in_dir
+get_img_files = partial(recurse_get_filepath_in_dir,suffix=BASE_IMG_SUFFIX)
 
 def recurse_get_subdir_in_dir(dir_path,predicte_fn=None,append_self=False):
     res=[]

@@ -5,6 +5,9 @@ import cv2
 import math
 import walgorithm as wa
 
+BASE_IMG_SUFFIX=".jpg;;.jpeg;;.bmp;;.png;;.gif;;.tif"
+
+
 def normal_image(image,min_v=0,max_v=255,dtype=np.uint8):
 
     if not isinstance(image,np.ndarray):
