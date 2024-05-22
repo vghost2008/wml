@@ -553,7 +553,11 @@ class WMCKeypoints(WBaseMaskLike):
         res_points = []
         for p in points:
             res_points.append(p.points)
-        res = np.concatenate(res_points,axis=0)
+        if len(res_points)>0:
+            res = np.concatenate(res_points,axis=0)
+        else:
+            res = np.zeros([0,2],dtype=np.float32)
+            labels = np.zeros([0],dtype=np.int32)
         return res,labels
 
     def check_consistency(self):

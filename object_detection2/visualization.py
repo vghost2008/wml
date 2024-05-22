@@ -622,7 +622,7 @@ def draw_mckeypoints(image,labels,keypoints,r=2,
                      text_color=(0,0,255)):
     '''
     gt_labels: [N]
-    keypoints: WMCKeypoints or list of [M,2]
+    keypoints: WMCKeypoints or list (size is N) of [M,2]
     '''
     for i, points in enumerate(keypoints):
         color = color_fn(labels[i])
@@ -636,6 +636,30 @@ def draw_mckeypoints(image,labels,keypoints,r=2,
                             fontScale=font_scale,
                             color=text_color,
                             thickness=text_thickness)
+
+
+    return image
+
+def draw_npmckeypoints(image,labels,keypoints,r=2,
+                     color_fn=fixed_color_large_fn,
+                     text_fn=default_text_fn,
+                     show_text=False,
+                     font_scale=0.8,
+                     text_thickness=1,
+                     text_color=(0,0,255)):
+    '''
+    gt_labels: [N]
+    keypoints: [N,2]
+    '''
+    for l,p in zip(labels,keypoints):
+        color = color_fn(l)
+        cv2.circle(image, (int(p[0]), int(p[1])), r, color, -1)
+        if show_text:
+            text = text_fn(l)
+            cv2.putText(image, text, (int(p[0]), int(p[1])), cv2.FONT_HERSHEY_DUPLEX,
+                        fontScale=font_scale,
+                        color=text_color,
+                        thickness=text_thickness)
 
 
     return image

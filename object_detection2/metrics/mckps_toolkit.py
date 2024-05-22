@@ -24,10 +24,10 @@ def getMCKpsPrecision(gtkps,gtlabels,kps,labels,sigma=3,ext_info=False,is_crowd=
     
     if kps.size == 0:
         if gtkps.size == 0:
-            return 100.0
+            return 100.0,100.0
         return 0.0
     elif gtkps.size == 0:
-        return 0.0
+        return 0.0,100.0
 
     gt_shape = gtkps.shape
     #indict if there have some kps match with this ground-truth kps
@@ -199,7 +199,7 @@ class BaseMCKpsMetrics(BaseMetrics):
         if probability is not None and scores is None:
             scores = probability
         c_offset = max(np.max(gtkps) if gtkps.size>0 else 0,np.max(kps) if kps.size>0 else 0)
-        c_offset += self.sigma
+        c_offset += self.sigma+1
         self.all_gt_keypoints.append(gtkps+self.offset)
         self.all_gt_labels.append(gtlabels)
         self.all_keypoints.append(kps+self.offset)
@@ -268,4 +268,5 @@ class MCKpsPrecisionAndRecall(BaseMCKpsMetrics):
         if self.value is None:
             self.evaluate()
         p,r = self.value
-        return f"P={p:.2f}, R={r:.2f}"
+        f1 = p*r/max(p+r,1e-6)
+        return f"P={p:.2f}, R={r:.2f}, f1={f1:.2f}"
