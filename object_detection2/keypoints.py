@@ -274,3 +274,19 @@ def cut2size(kps,bbox,dst_size):
         bbox_h = max(1.0,bbox_h)
     kps[...,:2] = kps[...,:2]*np.array([[dst_size[0]/bbox_w,dst_size[1]/bbox_h]],dtype=np.float32)
     return kps
+
+
+def mckps_distance_matrix(kps0,kps1):
+    '''
+    kps0: [N,2]
+    kps1: [M,2]
+    return:
+    [N,M]
+    '''
+    kps0 = np.expand_dims(kps0,axis=1)
+    kps1 = np.expand_dims(kps1,axis=0)
+    delta = kps0-kps1
+    pdelta = np.square(delta)
+    ssquare = np.sum(pdelta,axis=-1,keepdims=False)
+    dis = np.sqrt(ssquare)
+    return dis

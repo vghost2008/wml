@@ -13,30 +13,9 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 import wml_utils as wmlu
 from .build import METRICS_REGISTRY
-from abc import ABCMeta, abstractclassmethod
 from .classifier_toolkit import ConfusionMatrix
+from .common import *
 
-class BaseMetrics(metaclass=ABCMeta):
-    def __init__(self) -> None:
-        self._current_info = ""
-        pass
-
-    def current_info(self):
-        return self._current_info
-
-    def __repr__(self):
-        return self.to_string()
-
-    @abstractclassmethod
-    def show(self):
-        pass
-    
-
-def __safe_persent(v0,v1):
-    if v1==0:
-        return 100.
-    else:
-        return v0*100./v1
 
 def getF1(gtboxes,gtlabels,boxes,labels,threshold=0.5):
     gt_shape = gtboxes.shape
@@ -66,7 +45,7 @@ def getF1(gtboxes,gtlabels,boxes,labels,threshold=0.5):
         boxes_mask[max_index] = 1
 
     correct_num = np.sum(gt_mask)
-    f1 = __safe_persent(2*correct_num,correct_num+gt_shape[0])
+    f1 = safe_persent(2*correct_num,correct_num+gt_shape[0])
 
     return f1
 
@@ -107,6 +86,8 @@ def getmAP(gtboxes,gtlabels,boxes,labels,probability=None,threshold=0.5,is_crowd
     data_nr = boxes.shape[0]
 
     if data_nr==0:
+        if gtboxes.size == 0:
+            return 100.0
         return 0.0
 
     if data_nr>max_nr:
@@ -261,7 +242,7 @@ def getAccuracy(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshold
     TP_v = correct_bbox_num
     FP_v = boxes_size-correct_num
 
-    return __safe_persent(TP_v,r_gt_size+boxes_size-correct_bbox_num)
+    return safe_persent(TP_v,r_gt_size+boxes_size-correct_bbox_num)
 
 def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshold=True,ext_info=False,is_crowd=None):
     '''
@@ -320,8 +301,8 @@ def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshol
     correct_gt_num = np.sum(r_gt_mask)
     correct_bbox_num = np.sum(boxes_mask)
 
-    recall = __safe_persent(correct_gt_num,gt_size)
-    precision = __safe_persent(correct_bbox_num,boxes_size)
+    recall = safe_persent(correct_gt_num,gt_size)
+    precision = safe_persent(correct_bbox_num,boxes_size)
     P_v = gt_size
     TP_v = correct_bbox_num
     FP_v = boxes_size-correct_bbox_num
@@ -400,8 +381,8 @@ def getEasyPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.05,auto_scale_thr
     correct_num = np.sum(gt_mask)
     correct_num1 = np.sum(boxes_mask)
 
-    recall = __safe_persent(correct_num,gt_size)
-    precision = __safe_persent(correct_num1,boxes_size)
+    recall = safe_persent(correct_num,gt_size)
+    precision = safe_persent(correct_num1,boxes_size)
     P_v = gt_size
     TP_v = correct_num
     FP_v = boxes_size-correct_num1
@@ -454,11 +435,11 @@ def getPrecisionV2(gt_data,pred_data,pred_func,threshold,return_f1=False):
 
     correct_num = np.sum(gt_mask)
 
-    recall = __safe_persent(correct_num,NR_GT)
-    precision = __safe_persent(correct_num,NR_PRED)
+    recall = safe_persent(correct_num,NR_GT)
+    precision = safe_persent(correct_num,NR_PRED)
 
     if return_f1:
-        f1 = __safe_persent(2*correct_num,NR_PRED+NR_GT)
+        f1 = safe_persent(2*correct_num,NR_PRED+NR_GT)
         return precision,recall,f1
 
     return precision,recall
@@ -1682,23 +1663,4 @@ class DetConfusionMatrix(BaseMetrics):
         return self.image_id
 
 
-class ComposeMetrics(BaseMetrics):
-    def __init__(self,*args,**kwargs):
-        super().__init__()
-        self.metrics = list(args)+list(kwargs.values())
 
-    def __call__(self, *args,**kwargs):
-        [m(*args,**kwargs) for m in self.metrics]
-        self._current_info = "; ".join([m.current_info() for m in self.metrics])
-
-    def evaluate(self):
-        [m.evaluate() for m in self.metrics]
-
-    def show(self,name=""):
-        [m.show(name=name) for m in self.metrics]
-
-    def to_string(self):
-        return ";".join([m.to_string() for m in self.metrics])
-
-    def value(self):
-        return self.metrics[0].value()

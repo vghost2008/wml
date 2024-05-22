@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 from object_detection2.metrics.build import *
 from object_detection2.metrics.toolkit import *
+from object_detection2.standard_names import *
 
 def parse_args():
     parser = ArgumentParser()
@@ -51,15 +52,24 @@ if __name__ == "__main__":
             metrics = build_metrics(metrics_cfg)
         for d in data:
             file = d.pop('file',"")
-            keep = d['probability']>=score
-            d['probability'] = d['probability'][keep]
+            if 'probability' in d:
+                scores_key = 'probability'
+            elif 'scores' in d:
+                scores_key = 'scores'
+            else:
+                raise RuntimeError(f"Find scores key faind: {list(d.keys())}")
+            keep = d[scores_key]>=score
+            d[scores_key] = d[scores_key][keep]
             d['labels'] = d['labels'][keep]
-            d['boxes'] = d['boxes'][keep]
+            if BOXES in d:
+                d['boxes'] = d['boxes'][keep]
+            if "kps" in d:
+                d["kps"] = d["kps"][keep]
             metrics(**d)
             cur_info = metrics.current_info()
             if args.verbose and  len(cur_info)>0:
                 print(file,cur_info)
-        print(f"Score threshold: {score}")
+        print(f"Score threshold: {score:.2f}")
         metrics.show()
         try:
             if hasattr(metrics,"value") and metrics.value()>best_value:

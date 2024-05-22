@@ -5,13 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: train fcos_m",
+            "name": "Python: metrics_tools",
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "object_detection_tools/train_net_on_multi_gpus.py",
+            "program": "object_detection_tools/metrics_tools.py",
             "console": "integratedTerminal",
-            "args":["--config-file" "FCOS_M" "--gpus" "0"]
+            "args":["/home/wj/ai/mldata1/B8AOI/work_dir/hrnet_fl/tmp/eval_on_datasetnpv11/results.pk" "--metrics" "MCKpsPrecisionAndRecall"]
         },
         {
             "name": "Python: train gds1",

@@ -544,6 +544,15 @@ class WMCKeypoints(WBaseMaskLike):
         
         return WMCKeypoints(res_kps,width=kps.width,height=kps.height),np.array(res_labels,dtype=np.int32)
 
+    @staticmethod
+    def split2single_nppoint(kps,labels):
+        points,labels = WMCKeypoints.split2single_point(kps,labels)
+        res_points = []
+        for p in points:
+            res_points.append(p.points)
+        res = np.concatenate(res_points,axis=0)
+        return res,labels
+
     def check_consistency(self):
         for kp in self.points:
             if kp.width != self.width or kp.height != self.height:
