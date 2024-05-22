@@ -141,11 +141,11 @@ class Counter(dict):
         b: 1
     }
     '''
-    def add(self,key):
+    def add(self,key,nr=1):
         if key in self:
-            self[key] += 1
+            self[key] += nr
         else:
-            self[key] = 1
+            self[key] = nr
         return self[key]
 
 class EDict(dict):
