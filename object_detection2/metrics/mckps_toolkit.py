@@ -25,7 +25,7 @@ def getMCKpsPrecision(gtkps,gtlabels,kps,labels,sigma=3,ext_info=False,is_crowd=
     if kps.size == 0:
         if gtkps.size == 0:
             return 100.0,100.0
-        return 0.0
+        return 100.0,0.0
     elif gtkps.size == 0:
         return 0.0,100.0
 
