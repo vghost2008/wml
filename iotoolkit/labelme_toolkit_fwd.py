@@ -54,12 +54,12 @@ def trans_absolute_coord_to_relative_coord(image_info,annotations_list):
         return np.zeros([0,4],dtype=np.float32),np.zeros([0],dtype=np.int32),np.zeros([0,H,W],dtype=np.uint8)
 
 
-def get_files(data_dir, img_suffix=wmli.BASE_IMG_SUFFIX):
+def get_files(data_dir, img_suffix=wmli.BASE_IMG_SUFFIX,keep_no_json_img=False):
     img_files = wmlu.recurse_get_filepath_in_dir(data_dir, suffix=img_suffix)
     res = []
     for img_file in img_files:
         json_file = wmlu.change_suffix(img_file, "json")
-        if os.path.exists(json_file):
+        if keep_no_json_img or os.path.exists(json_file):
             res.append((img_file, json_file))
 
     return res
@@ -586,7 +586,7 @@ def read_labelme_kp_data(file_path,label_text_to_id=lambda x:int(x)):
     return image_info,labels,points
 
 
-def read_labelme_mckp_data(file_path,label_text_to_id=None):
+def read_labelme_mckp_data(file_path,label_text_to_id=None,keep_no_json_img=False):
     '''
 
     Args:
@@ -600,17 +600,18 @@ def read_labelme_mckp_data(file_path,label_text_to_id=None):
     labels = []
     points = []
     image_info = {}
-    with open(file_path,"r") as f:
-        data = json.load(f)
 
     kp_datas = wmlu.MDict(dtype=list)
 
-    for d in data['shapes']:
-        label = d['label']
-        point = np.reshape(np.array(d['points']),[-1,2])
-        if label_text_to_id is not None:
-            label = label_text_to_id(label)
-        kp_datas[label.lower()].append(point)
+    if os.path.exists(file_path):
+        with open(file_path,"r") as f:
+            data = json.load(f)
+        for d in data['shapes']:
+            label = d['label']
+            point = np.reshape(np.array(d['points']),[-1,2])
+            if label_text_to_id is not None:
+                label = label_text_to_id(label)
+            kp_datas[label.lower()].append(point)
 
     image_info[WIDTH] = int(data['imageWidth'])
     image_info[HEIGHT] = int(data["imageHeight"])

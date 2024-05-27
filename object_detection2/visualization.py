@@ -653,7 +653,7 @@ def draw_npmckeypoints(image,labels,keypoints,r=2,
     '''
     for l,p in zip(labels,keypoints):
         color = color_fn(l)
-        cv2.circle(image, (int(p[0]), int(p[1])), r, color, -1)
+        cv2.circle(image, (int(p[0]+0.5), int(p[1]+0.5)), r, color, -1)
         if show_text:
             text = text_fn(l)
             cv2.putText(image, text, (int(p[0]), int(p[1])), cv2.FONT_HERSHEY_DUPLEX,

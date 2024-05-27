@@ -26,6 +26,7 @@ class LabelmeMCKeypointsDataset(object):
     def __init__(self, label_text2id=None, shuffle=False,
                  filter_empty_files=False,
                  resample_parameters=None,
+                 keep_no_json_img=False,
                  ignore_case=True):
         '''
 
@@ -37,6 +38,7 @@ class LabelmeMCKeypointsDataset(object):
         self.files = None
         self.shuffle = shuffle
         self.filter_empty_files = filter_empty_files
+        self.keep_no_json_img = keep_no_json_img
         if isinstance(label_text2id,dict):
             if ignore_case:
                 new_dict = dict([(k.lower(),v) for k,v in label_text2id.items()])
@@ -96,12 +98,13 @@ class LabelmeMCKeypointsDataset(object):
             if not os.path.exists(dir_path):
                 print(f"Data path {dir_path} not exists.")
                 return False
-            self.files = get_files(dir_path,img_suffix=img_suffix)
+            self.files = get_files(dir_path,img_suffix=img_suffix,keep_no_json_img=self.keep_no_json_img)
         elif isinstance(dir_path,(list,tuple)) and isinstance(dir_path[0],(str,bytes)) and os.path.isdir(dir_path[0]):
             self.files = []
             for dp in dir_path:
                 self.files.extend(get_files(dp,
-                                            img_suffix=img_suffix))
+                                            img_suffix=img_suffix,
+                                            keep_no_json_img=self.keep_no_json_img))
         else:
             self.files = dir_path
         if self.filter_empty_files and self.label_text2id:
@@ -119,7 +122,7 @@ class LabelmeMCKeypointsDataset(object):
 
     def read_one_file(self,data):
         img_file,json_file = data 
-        image_info,labels,points = read_labelme_mckp_data(json_file)
+        image_info,labels,points = read_labelme_mckp_data(json_file,keep_no_json_img=self.keep_no_json_img)
         datas = {}
         datas[IMG_INFO] = image_info
         datas[GT_LABELS] = labels

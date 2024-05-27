@@ -81,6 +81,62 @@ gtlabels:[N]
 kps: [M]
 labels: [M]
 scores: [M]
+'''
+def getMCKpsAccuracy(gtkps,gtlabels,kps,labels,sigma=3,ext_info=False,is_crowd=None):
+    if not isinstance(gtkps,np.ndarray):
+        gtkps = np.array(gtkps)
+    if not isinstance(gtlabels,np.ndarray):
+        gtlabels = np.array(gtlabels)
+    if is_crowd is None:
+        is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+    if not isinstance(is_crowd,np.ndarray):
+        is_crowd = np.array(is_crowd)
+    
+    if kps.size == 0:
+        if gtkps.size == 0:
+            return 100.0
+        return 0.0
+    elif gtkps.size == 0:
+        return 0.0
+
+    gt_shape = gtkps.shape
+    #indict if there have some kps match with this ground-truth kps
+    gt_mask = np.zeros([gt_shape[0]],dtype=np.int32)
+    kps_shape = kps.shape
+    #indict if there have some ground-truth kps match with this kps
+    kps_mask = np.zeros(kps_shape[0],dtype=np.int32)
+    gt_size = gtlabels.shape[0]
+    kps_size = labels.shape[0]
+    dis_m = mckps_distance_matrix(gtkps,kps)
+    for i in range(gt_size):
+
+        cur_dis = dis_m[i]
+        idxs = np.argsort(cur_dis)
+        for idx in idxs:
+            if kps_mask[idx] or gtlabels[i] != labels[idx]:
+                continue
+            cur_d = cur_dis[idx]
+            if cur_d > sigma:
+                break
+            gt_mask[i] = 1
+            kps_mask[idx] = 1
+
+    r_gt_mask = np.logical_or(gt_mask,is_crowd)
+    correct_gt_num = np.sum(r_gt_mask)
+    #correct_bkps_num = np.sum(kps_mask)
+    all_num = gt_size+kps_size-correct_gt_num
+
+    acc = safe_persent(correct_gt_num,all_num)
+
+    return acc
+
+
+'''
+gtkps:[N,2]
+gtlabels:[N]
+kps: [M]
+labels: [M]
+scores: [M]
 return:
 mAP:[0,100]
 '''
@@ -247,6 +303,7 @@ class MCKpsPrecisionAndRecall(BaseMCKpsMetrics):
     def __init__(self,threshold=None,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.threshold = threshold
+        self.acc = None
 
     def evaluate(self):
         super().evaluate()
@@ -261,6 +318,12 @@ class MCKpsPrecisionAndRecall(BaseMCKpsMetrics):
                         labels=self.npall_labels,
                         #scores=self.npall_scores,
                         sigma=self.sigma)
+        self.acc = getMCKpsAccuracy(gtkps=self.npall_gt_keypoints,
+                        gtlabels=self.npall_gt_labels,
+                        kps=self.npall_keypoints,
+                        labels=self.npall_labels,
+                        #scores=self.npall_scores,
+                        sigma=self.sigma)
         self.p,self.r = self.value
         return self.value
 
@@ -269,4 +332,4 @@ class MCKpsPrecisionAndRecall(BaseMCKpsMetrics):
             self.evaluate()
         p,r = self.value
         f1 = p*r/max(p+r,1e-6)
-        return f"P={p:.2f}, R={r:.2f}, f1={f1:.2f}"
+        return f"P={p:.2f}, R={r:.2f}, f1={f1:.2f}, acc={self.acc:.2f}"
