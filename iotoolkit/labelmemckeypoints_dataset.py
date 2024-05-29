@@ -85,7 +85,8 @@ class LabelmeMCKeypointsDataset(object):
                 data[GT_LABELS] = labels
                 data[GT_KEYPOINTS] = WMCKeypoints(keypoints,width=img_info[WIDTH],height=img_info[HEIGHT])
             else:
-                labels = None
+                keypoints = data[GT_KEYPOINTS]
+                data[GT_KEYPOINTS] = WMCKeypoints(keypoints,width=img_info[WIDTH],height=img_info[HEIGHT])
 
         except Exception as e:
             print(f"Read {fs} {e} faild.")
@@ -123,6 +124,7 @@ class LabelmeMCKeypointsDataset(object):
     def read_one_file(self,data):
         img_file,json_file = data 
         image_info,labels,points = read_labelme_mckp_data(json_file,keep_no_json_img=self.keep_no_json_img)
+        image_info[FILEPATH] = img_file
         datas = {}
         datas[IMG_INFO] = image_info
         datas[GT_LABELS] = labels

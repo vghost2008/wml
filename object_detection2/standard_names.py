@@ -32,6 +32,7 @@ GT_KEYPOINTS = 'gt_keypoints'
 GT_SEMANTIC_LABELS = 'gt_semantic_mask_labels'
 FILEINDEX = "fileindex"
 FILENAME = "filename"
+FILEPATH = "filepath"
 GT_OBJECT_LOGITS = "gt_object_logits"
 
 BBOX_FIELDS = "bbox_fields"

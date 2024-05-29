@@ -544,8 +544,11 @@ class WMCKeypoints(WBaseMaskLike):
             l = [l]*len(n_kp)
             res_kps.extend(n_kp)
             res_labels.extend(l)
+
+        if len(res_labels)>0 and isinstance(res_labels[0],(int,float)):
+            res_labels = np.array(res_labels,dtype=np.int32)
         
-        return WMCKeypoints(res_kps,width=kps.width,height=kps.height),np.array(res_labels,dtype=np.int32)
+        return WMCKeypoints(res_kps,width=kps.width,height=kps.height),res_labels
 
     @staticmethod
     def split2single_nppoint(kps,labels):

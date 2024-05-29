@@ -14,15 +14,6 @@
             "args":["/home/wj/ai/mldata1/B8AOI/work_dir/hrnet_fl/tmp/eval_on_datasetnpv11/results.pk" "--metrics" "MCKpsPrecisionAndRecall"]
         },
         {
-            "name": "Python: train gds1",
-            "type": "python",
-            "justMyCode": false,
-            "request": "launch",
-            "program": "object_detection_tools/train_net_on_multi_gpus.py",
-            "console": "integratedTerminal",
-            "args":["--config-file" "gds1v2" "--gpus" "3"]
-        },
-        {
             "name": "Python: normal",
             "type": "python",
             "justMyCode": false,
@@ -48,6 +39,15 @@
             "program": "object_detection_tools/tf2pb.py",
             "console": "integratedTerminal",
             "args":["--gpus" "1"  "--config-file" "gds1v2" "--save_pb_path" "model.pb"]
+        },
+        {
+            "name": "Python: cmp kps datasets",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "datasets_tools/cmp_kps_datasets.py",
+            "console": "integratedTerminal",
+            "args":["~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125" "~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125b"],
         },
         {
             "name": "Python: check split dataset",
@@ -94,6 +94,16 @@
             "console": "integratedTerminal",
             //"args":["/home/wj/ai/mldata1/B11ACT/datas/train_s0" "/home/wj/ai/mldata1/B11ACT/tmp/view" "--type" "LabelMeData"],
             "args":["~/ai/mldata1/B10CF/datasets/testv1.0/" "~/ai/mldata1/B10CF/tmp/view" "--type" "LabelMeData"],
+        },
+        {
+            "name": "Python: view kps dataset",
+            "type": "python",
+            "justMyCode": true,
+            "request": "launch",
+            "program": "datasets_tools/view_kps_dataset.py",
+            "console": "integratedTerminal",
+            //"args":["/home/wj/ai/mldata1/B11ACT/datas/train_s0" "/home/wj/ai/mldata1/B11ACT/tmp/view" "--type" "LabelMeData"],
+            "args":["~/ai/mldata1/B8AOI/datasets/datasetv3.2/val/"  "~/ai/mldata1/B8AOI/tmp/view_val" "--suffix" "_gt" "--new-width" "1120"],
         },
         {
             "name": "Python: view imgs in bboxes",

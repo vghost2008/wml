@@ -616,6 +616,7 @@ def read_labelme_mckp_data(file_path,label_text_to_id=None,keep_no_json_img=Fals
     image_info[WIDTH] = int(data['imageWidth'])
     image_info[HEIGHT] = int(data["imageHeight"])
     image_info[FILENAME] = wmlu.base_name(data["imagePath"])
+    image_info[FILEPATH] = data["imagePath"]
 
     for k,v in kp_datas.items():
         #v is [N,2]

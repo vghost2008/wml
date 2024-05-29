@@ -331,5 +331,5 @@ class MCKpsPrecisionAndRecall(BaseMCKpsMetrics):
         if self.value is None:
             self.evaluate()
         p,r = self.value
-        f1 = p*r/max(p+r,1e-6)
+        f1 = 2*p*r/max(p+r,1e-6)
         return f"P={p:.2f}, R={r:.2f}, f1={f1:.2f}, acc={self.acc:.2f}"
