@@ -243,6 +243,7 @@ class BaseMCKpsMetrics(BaseMetrics):
         self.offset = 0
         self.img_id = 0
         self.value = None
+        print(f"Sigma={self.sigma}")
 
     '''
     gtkeypoitns:[N,2]
