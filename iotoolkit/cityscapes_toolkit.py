@@ -6,6 +6,7 @@ import cv2 as cv
 import sys
 import random
 from iotoolkit.labelme_toolkit import get_labels_and_bboxes
+from .common import *
 
 def read_json(file_path):
     annotations_list = []
@@ -110,7 +111,7 @@ class CityscapesData(object):
             else:
                 labels = None
 
-            yield img_file, [image['height'], image['width']], labels, labels_names, bboxes, masks, None, None, None
+            yield DetData(img_file, [image['height'], image['width']], labels, labels_names, bboxes, masks, None, None, None)
 
     def get_boxes_items(self):
         '''
@@ -123,7 +124,7 @@ class CityscapesData(object):
             image, annotations_list = read_json(json_file)
             labels_names, bboxes = get_labels_and_bboxes(image, annotations_list)
             labels = [self.label_text2id(x) for x in labels_names]
-            yield img_file, [image['height'], image['width']], labels, labels_names,bboxes, None,None,None,None
+            yield DetBboxesData(img_file, [image['height'], image['width']], labels,bboxes, None)
 
 if __name__ == "__main__":
     # data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")

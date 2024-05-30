@@ -19,6 +19,7 @@ from .common import *
 import object_detection2.bboxes as odb
 from .pascal_voc_toolkit_fwd import *
 from wstructures import WMCKeypoints
+from easydict import EasyDict
 
 
 class NPMCKeypointsDataset(object):
@@ -91,7 +92,7 @@ class NPMCKeypointsDataset(object):
         except Exception as e:
             print(f"Read {bin_file} {e} faild.")
             return None
-        return data
+        return EasyDict(data)
 
     def read_data(self,dir_path,suffix=".bin"):
         if isinstance(dir_path,str):

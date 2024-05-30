@@ -2,6 +2,7 @@ import wml_utils as wmlu
 import os
 import numpy as np
 import os.path as osp
+from .common import *
 
 class SportsMOTDatasets(object):
     def __init__(self,dirs,absolute_coord=False,use_det=False):
@@ -72,6 +73,6 @@ class SportsMOTDatasets(object):
                     if len(labels)>0:
                         img_name = '{:06d}.jpg'.format(fid)
                         img_path = os.path.join(seq_root,seq,"img1",img_name)
-                        yield img_path, [seq_height,seq_width], labels, None, bboxes, None, None, None,dir_idx
+                        yield DetData(img_path, [seq_height,seq_width], labels, None, bboxes, None, None, None,dir_idx)
 
         print(f"Last tid value {self.tid_curr}")

@@ -6,6 +6,7 @@ import object_detection2.visualization as odv
 import wml_utils as wmlu
 import PIL.Image as Image
 import img_utils as wmli
+from .common import *
 
 
 class Object365:
@@ -86,7 +87,7 @@ class Object365:
             '''
             bboxes: [N,4] (y0,x0,y1,x1)
             '''
-            return img_file, shape, labels, labels_names, bboxes, None, None, is_crowd, None
+            return DetData(img_file, shape, labels, labels_names, bboxes, None, None, is_crowd, None)
         except Exception as e:
             print(e)
             return None

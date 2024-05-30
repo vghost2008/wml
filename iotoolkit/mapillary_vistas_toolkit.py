@@ -7,6 +7,7 @@ import sys
 import random
 from iotoolkit.labelme_toolkit import get_labels_and_bboxes
 import re
+from .common import *
 
 
 def get_files(dir_path):
@@ -104,7 +105,7 @@ class MapillaryVistasData(object):
             else:
                 labels = None
 
-            yield img_file, [image['height'], image['width']], labels, labels_names, bboxes, masks, None, None, None
+            yield DetData(img_file, [image['height'], image['width']], labels, labels_names, bboxes, masks, None, None, None)
 
     def get_boxes_items(self):
         '''
@@ -121,7 +122,7 @@ class MapillaryVistasData(object):
             else:
                 labels = None
             #file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _
-            yield img_file, [image['height'], image['width']], labels, labels_names,bboxes, None,None,None,None
+            yield DetBboxesData(img_file, [image['height'], image['width']], labels, bboxes, None)
 
     def read_json(self,file_path,use_semantic=True):
         annotations_list = []

@@ -95,7 +95,7 @@ class PascalVOCData(object):
 
         except Exception as e:
             print(f"Read {xml_file} {e} faild.")
-            return img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None
+            return DetData(img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None)
         #使用difficult表示is_crowd
         return DetData(img_file, shape[:2],labels, labels_names, bboxes, None, None, difficult, probs)
 

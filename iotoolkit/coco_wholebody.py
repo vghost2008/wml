@@ -204,6 +204,7 @@ class COCOWholeBodyData:
     def __getitem__(self, item):
         image = self.images[item]
         res = self.get_image_annotation(image)
+        return res
 
     @staticmethod
     def trans2bboxes(data):
