@@ -10,7 +10,7 @@ from object_detection2.metrics.toolkit import *
 from object_detection2.standard_names import *
 from wstructures import WMCKeypoints
 from object_detection2.keypoints import mckps_distance_matrix
-
+import shutil
 import os
 
 def parse_args():
@@ -23,7 +23,12 @@ def parse_args():
         default='.jpg;;.bmp;;.jpeg;;.png',
         help='video file extensions')
     parser.add_argument('--type', type=str, default='LabelmeMCKeypointsDataset',help='Data set type')
+    parser.add_argument('--save-dir', type=str, default=None,help='Data set type')
     parser.add_argument('--sigma', type=float, default=1.1,help='sigma')
+    parser.add_argument(
+        '--new-width', type=int, default=0, help='resize image width')
+    parser.add_argument(
+        '--new-height', type=int, default=0, help='resize image height')
     args = parser.parse_args()
 
     return args
@@ -89,7 +94,7 @@ def cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=1.1,total_same_sigma=0.1)
             match_dis.append(cur_d)
             if cur_d<total_same_sigma:
                 total_same_nr += 1
-
+    
     match_nr = np.sum(lh_mask)
     lh_unmatch_nr = lh_mask.size-match_nr
     rh_unmatch_nr = rh_mask.size-match_nr
@@ -99,6 +104,52 @@ def cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=1.1,total_same_sigma=0.1)
     return match_dis,match_nr,total_same_nr,lh_unmatch_nr,rh_unmatch_nr
 
 
+def save_data(data,save_dir,suffix,save_raw_img=False,args=None):
+    full_path = data[IMG_INFO][FILEPATH]
+
+    kps = data[GT_KEYPOINTS]
+    img = wmli.imread(full_path)
+    if args.new_width > 1:
+        img = wmli.resize_width(img,args.new_width)
+        kps = kps.resize(img.shape[:2][::-1])
+        if save_raw_img:
+            save_path = wmlu.change_dirname(full_path,save_dir)
+            wmli.imwrite(save_path,img)
+    elif args.new_height > 1:
+        img = wmli.resize_height(img,args.new_height)
+        kps = kps.resize(img.shape[:2][::-1])
+        if save_raw_img:
+            save_path = wmlu.change_dirname(full_path,save_dir)
+            wmli.imwrite(save_path,img)
+    elif save_raw_img:
+        shutil.copy(full_path,save_dir)
+
+    img = odv.draw_maskv2(img,classes=data[GT_LABELS],masks=kps)
+    save_path = wmlu.change_dirname(full_path,save_dir)
+    if suffix is not None or save_raw_img:
+        if suffix is None:
+            suffix = "_0"
+        save_path = osp.splitext(save_path)
+        save_path = save_path[0]+suffix+save_path[1]
+    wmli.imwrite(save_path,img)
+
+
+
+def save_datas(data_info,save_dir,args):
+    for key,datas in data_info.items():
+        c_save_dir = osp.join(save_dir,key)
+        os.makedirs(c_save_dir,exist_ok=True)
+        for d in datas:
+            if d[0] is not None and d[1] is not None:
+                save_data(d[0],c_save_dir,"_a",save_raw_img=True,args=args)
+                save_data(d[1],c_save_dir,"_b",save_raw_img=False,args=args)
+            elif d[0] is not None:
+                save_data(d[0],c_save_dir,None,save_raw_img=True,args=args)
+            elif d[1] is not None:
+                save_data(d[1],c_save_dir,None,save_raw_img=True,args=args)
+
+        
+
 def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
     '''
     :param lh_ds:
@@ -107,6 +158,7 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
     :param mask_on:
     :return:
     '''
+    print(f"Sigma={sigma}")
     rh_ds_dict = {}
     rh_total_box_nr = 0
     lh_total_box_nr = 0
@@ -117,13 +169,16 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
     diff_nr = 0
     all_dis = []
     sample_in_two_dataset = 0
+    diff_info = wmlu.MDict(dtype=list)
     
     for data in rh_ds:
         full_path = data[IMG_INFO][FILEPATH]
         category_ids = data[GT_LABELS]
-        rh_ds_dict[os.path.basename(full_path)] = data
+        base_name = os.path.basename(full_path)
+        rh_ds_dict[base_name] = data
         rh_total_box_nr += len(category_ids)
-    
+
+    matched_key = set() 
     for i,data in enumerate(lh_ds):
         full_path = data[IMG_INFO][FILEPATH]
         category_ids = data[GT_LABELS]
@@ -132,7 +187,9 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
         base_name = os.path.basename(full_path)
         if base_name not in rh_ds_dict:
             print(f"Error find {base_name} in rh_ds faild.")
+            diff_info['not_find_0'].append((data,None))
             continue
+        matched_key.add(base_name)
         sample_in_two_dataset += 1
         rh_data = rh_ds_dict[base_name]
         rh_kps,rh_labels = WMCKeypoints.split2single_nppoint(rh_data[GT_KEYPOINTS],rh_data[GT_LABELS])
@@ -147,11 +204,24 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
             same_sample_nr += 1
             if match_nr == tsame_nr:
                 total_same_sample_nr += 1
+                diff_info['total_same'].append((data,None))
+            else:
+                diff_info['same'].append((data,rh_data))
+        else:
+            diff_info['diff'].append((data,rh_data))
 
+    for base_name in rh_ds_dict.keys():
+        if base_name in matched_key:
+            continue
+        print(f"Error find {base_name} in lh_ds faild.")
+        diff_info['not_find_1'].append((None,data))
 
+    if args.save_dir is not None and len(args.save_dir)>0:
+        save_datas(diff_info,args.save_dir,args)
+        print(f"Save dir: {args.save_dir}")
     all_dis = np.concatenate(all_dis,axis=0)
     print(f"Dataset1 len {len(lh_ds)}, dataset2 len {len(rh_ds)}") 
-    print(f"Sample sample {same_sample_nr}/{len(lh_ds)+len(rh_ds)-sample_in_two_dataset}, total sample {total_same_sample_nr}")
+    print(f"Sample sample {same_sample_nr}/{len(lh_ds)+len(rh_ds)-sample_in_two_dataset}, total same sample {total_same_sample_nr}")
     print(f"Match points {same_nr}, total match points {total_same_nr}, unmatch points {diff_nr}")
     print(f"Match dis min {np.min(all_dis):.2f}, max {np.max(all_dis):.2f}, mean {np.mean(all_dis):.2f}, std {np.std(all_dis):.2f}")
 
