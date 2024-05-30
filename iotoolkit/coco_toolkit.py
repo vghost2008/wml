@@ -303,10 +303,10 @@ class COCOData:
         if len(category_ids)==0:
             print("No annotation: ", full_path)
             sys.stdout.flush()
-            return full_path,img_shape,[],[],np.zeros([0,4],dtype=np.float32),None,[],[],num_annotations_skipped
+            return DetData(full_path,img_shape,[],[],np.zeros([0,4],dtype=np.float32),None,[],[],num_annotations_skipped)
 
         category_ids = np.array(category_ids,dtype=np.int32)
-        return full_path,img_shape,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
+        return DetData(full_path,img_shape,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped)
 
     def get_items(self):
         for image in self.images:
@@ -319,7 +319,7 @@ class COCOData:
             full_path,img_size,category_ids,category_names,boxes,binary_mask,area,is_crowd,num_annotations_skipped = \
             self.get_image_annotation(image)
             if full_path is not None:
-                yield full_path,img_size,category_ids,boxes,is_crowd
+                yield DetBboxesData(full_path,img_size,category_ids,boxes,is_crowd)
 
 
 class TorchCOCOData(COCOData):

@@ -13,6 +13,7 @@ from functools import partial
 import wml_utils as wmlu
 import img_utils as wmli
 import copy
+from easydict import EasyDict
 from object_detection2.standard_names import *
 import pickle
 from .common import *
@@ -91,7 +92,7 @@ class LabelmeMCKeypointsDataset(object):
         except Exception as e:
             print(f"Read {fs} {e} faild.")
             return None
-        return data
+        return EasyDict(data)
 
     def read_data(self,dir_path,img_suffix=wmli.BASE_IMG_SUFFIX):
         if isinstance(dir_path,str):

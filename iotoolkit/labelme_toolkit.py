@@ -165,7 +165,7 @@ class LabelMeData(object):
         else:
             labels = None
             
-        return img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, difficult,None 
+        return DetData(img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, difficult,None)
     
     def get_boxes_items(self):
         '''
@@ -178,7 +178,7 @@ class LabelMeData(object):
             image, annotations_list = read_labelme_data(json_file, None,**self.read_data_kwargs)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
-            yield img_file,[image['height'],image['width']],labels, bboxes,  None
+            yield DetBboxesData(img_file,[image['height'],image['width']],labels, bboxes,  None)
             
 if __name__ == "__main__":
     #data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")

@@ -97,7 +97,7 @@ class PascalVOCData(object):
             print(f"Read {xml_file} {e} faild.")
             return img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None
         #使用difficult表示is_crowd
-        return img_file, shape[:2],labels, labels_names, bboxes, None, None, difficult, probs
+        return DetData(img_file, shape[:2],labels, labels_names, bboxes, None, None, difficult, probs)
 
     def read_data(self,dir_path,silent=False,img_suffix=".jpg",check_xml_file=True):
         if isinstance(dir_path,str):
@@ -195,7 +195,7 @@ class PascalVOCData(object):
                                                                              has_probs=False)
             labels = [self.label_text2id(x) for x in labels_names]
             #使用difficult表示is_crowd
-            yield img_file,shape[:2], labels, bboxes, difficult
+            yield DetBboxesData(img_file,shape[:2], labels, bboxes, difficult)
 
 if __name__ == "__main__":
     #data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")

@@ -6,6 +6,7 @@ import os
 import cv2 as cv
 import sys
 import random
+from .common import *
 
 
 def get_files(dir_path, img_sub_dir=None,label_sub_dir=None):
@@ -82,7 +83,7 @@ class BaiDuMaskData(object):
                     print("ERROR: stack masks faild.")
                     masks = None
 
-            yield img_file, [image['height'], image['width']], labels, labels_names, bboxes, masks, None, None, None
+            yield DetData(img_file, [image['height'], image['width']], labels, labels_names, bboxes, masks, None, None, None)
 
     def get_boxes_items(self):
         '''
@@ -97,7 +98,7 @@ class BaiDuMaskData(object):
             labels_names = [ann['category_name'] for ann in annotations_list]
             bboxes = [ann['bbox'] for ann in annotations_list]
             #file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _
-            yield img_file, [image['height'], image['width']], labels, labels_names,bboxes, None,None,None,None
+            yield DetBboxesData(img_file, [image['height'], image['width']], labels, bboxes, None)
 
     @staticmethod
     def write_json(save_path,mask,labels2name,labels2color,label_trans=None,epsilon=None):

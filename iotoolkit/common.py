@@ -4,6 +4,10 @@ import PIL
 import img_utils as wmli
 import os.path as osp
 import glob
+from collections import namedtuple
+
+DetData = namedtuple('DetData','full_path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data') #img_shape:(H,W)
+DetBboxesData = namedtuple('DetBboxesdata','full_path,img_shape,labels,bboxes,is_crowd')
 
 def __get_resample_nr(labels,resample_parameters):
     nr = 1
@@ -71,3 +75,4 @@ def find_imgs_for_ann_file(ann_path):
             print(f"WARNING: Unknow img format file {file} for {ann_path}")
             img_file = file
     return img_file
+
