@@ -33,6 +33,8 @@ def focal_loss_for_heat_map(labels,logits,pos_threshold=0.99,alpha=2,beta=4,sum=
 
 def focal_mse_loss_for_head_map(gt_value,pred_value,alpha=0.25,gamma=2):
     '''
+    alpha: pos loss x alpha, neg loss x (1-alpha)
+    gamma: loss x loss^gamma
     gt_value: value range [0,1]
     '''
     assert gt_value.numel()==pred_value.numel(), f"ERROR: unmatch gt_value's shape {gt_value.shape} and pred_value's shape {pred_value.shape}"
@@ -53,11 +55,11 @@ def focal_mse_loss_for_head_map(gt_value,pred_value,alpha=0.25,gamma=2):
     loss = loss*auto_t
 
 
-    if alpha>0:
+    if alpha is not None and alpha>0:
         alpha_t = bin_gt_value*alpha+(1-bin_gt_value)*(1-alpha)
         alpha_t = alpha_t/torch.clip(torch.mean(alpha_t).detach(),min=1e-6)
         loss = loss*alpha_t
-    if gamma>0:
+    if gamma is not None and gamma>0:
         gamma_t = torch.pow(torch.abs(gt_value-pred_value),gamma)
         gamma_t = gamma_t/torch.clip(torch.mean(gamma_t).detach(),min=1e-6)
         loss = loss*gamma_t
