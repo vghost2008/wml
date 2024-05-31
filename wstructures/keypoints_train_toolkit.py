@@ -46,6 +46,14 @@ class HeatmapGenerator:
 class MultiClassesHeatmapGenerator:
     def __init__(self,  num_classes, output_res=None,sigma=1):
         '''
+        损失为一次方时：
+        gt与pred相差sigma/2 loss为最大loss的20%, 相差sigma*0.75为29%, 相差sigma为38%, 相差sigma*2为68%，相差sigma*3为86%
+        损失为平方时：
+        gt与pred相差sigma/2 loss为最大loss的6%, 相差sigma*0.75为13%, 相差sigma为22%, 相差sigma*2为63%，相差sigma*3为90%
+        损失为三次方时：
+        gt与pred相差sigma/2 loss为最大loss的1.8%, 相差sigma*0.75为5.7%, 相差sigma为12.5%, 相差sigma*2为57%，相差sigma*3为90%
+        损失为四次方时：
+        gt与pred相差sigma/2 loss为最大loss的0.5%, 相差sigma*0.75为2.5%, 相差sigma为7%, 相差sigma*2为51%，相差sigma*3为90%
         output_res: [H,W]
         '''
         self.set_output_res(output_res)
@@ -69,7 +77,7 @@ class MultiClassesHeatmapGenerator:
 
     def __call__(self, joints,labels,output_res=None):
         '''
-        joints: [points_nr,1,2] (x,y) or WMCKeypoints
+        joints: [points_nr,N,2] (x,y) or WMCKeypoints
         labels: [points_nr]
         return:
         [num_classes,H,W]

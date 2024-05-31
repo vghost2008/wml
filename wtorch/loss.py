@@ -36,6 +36,8 @@ def focal_mse_loss_for_head_map(gt_value,pred_value,alpha=0.25,gamma=2):
     alpha: pos loss x alpha, neg loss x (1-alpha)
     gamma: loss x loss^gamma
     gt_value: value range [0,1]
+    注：
+    
     '''
     assert gt_value.numel()==pred_value.numel(), f"ERROR: unmatch gt_value's shape {gt_value.shape} and pred_value's shape {pred_value.shape}"
     gt_value = gt_value.float()
