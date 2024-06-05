@@ -136,6 +136,7 @@ def save_data(data,save_dir,suffix,save_raw_img=False,args=None):
 
 
 def save_datas(data_info,save_dir,args):
+    wmlu.create_empty_dir_remove_if(save_dir)
     for key,datas in data_info.items():
         c_save_dir = osp.join(save_dir,key)
         os.makedirs(c_save_dir,exist_ok=True)

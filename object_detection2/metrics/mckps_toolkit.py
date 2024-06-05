@@ -50,6 +50,7 @@ def getMCKpsPrecision(gtkps,gtlabels,kps,labels,sigma=3,ext_info=False,is_crowd=
                 break
             gt_mask[i] = 1
             kps_mask[idx] = 1
+            break
 
     r_gt_mask = np.logical_or(gt_mask,is_crowd)
     correct_gt_num = np.sum(r_gt_mask)
@@ -120,6 +121,7 @@ def getMCKpsAccuracy(gtkps,gtlabels,kps,labels,sigma=3,ext_info=False,is_crowd=N
                 break
             gt_mask[i] = 1
             kps_mask[idx] = 1
+            break
 
     r_gt_mask = np.logical_or(gt_mask,is_crowd)
     correct_gt_num = np.sum(r_gt_mask)
@@ -227,7 +229,7 @@ def getKpsmAP(gtkps,gtlabels,kps,labels,scores=None,sigma=3,is_crowd=None):
     return np.mean(precisions)
 
 class BaseMCKpsMetrics(BaseMetrics):
-    def __init__(self,sigma=3,*args,**kwargs):
+    def __init__(self,sigma=5,*args,**kwargs):
         super().__init__()
         self.sigma = sigma
         self.all_gt_keypoints = []

@@ -11,7 +11,8 @@
             "request": "launch",
             "program": "object_detection_tools/metrics_tools.py",
             "console": "integratedTerminal",
-            "args":["/home/wj/ai/mldata1/B8AOI/work_dir/hrnet_fl/tmp/eval_on_datasetnpv11/results.pk" "--metrics" "MCKpsPrecisionAndRecall"]
+            //"args":["/home/wj/ai/mldata1/B8AOI/work_dir/hrnet_fl/tmp/eval_on_datasetnpv11/results.pk" "--metrics" "MCKpsPrecisionAndRecall"]
+            "args":["/home/wj/ai/mldata1/B8AOI/work_dir/hrnet_fl1/tmp/eval_on_val1/results.pk" "--metrics" "MCKpsPrecisionAndRecall" "--beg-score-thr" "0.85"]
         },
         {
             "name": "Python: normal",
@@ -47,7 +48,7 @@
             "request": "launch",
             "program": "datasets_tools/cmp_kps_datasets.py",
             "console": "integratedTerminal",
-            "args":["~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125" "~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125b"],
+            "args":["~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101" "~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101"],
         },
         {
             "name": "Python: check split dataset",
