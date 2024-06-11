@@ -78,9 +78,9 @@ def cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=1.1,total_same_sigma=0.1)
     lh_size = lh_labels.shape[0]
     dis_m = mckps_distance_matrix(lh_kps,rh_kps)
     match_dis = []
+    match_point_dis = []
     total_same_nr = 0
     for i in range(lh_size):
-
         cur_dis = dis_m[i]
         idxs = np.argsort(cur_dis)
         for idx in idxs:
@@ -91,6 +91,7 @@ def cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=1.1,total_same_sigma=0.1)
                 break
             lh_mask[i] = 1
             rh_mask[idx] = 1
+            match_point_dis.append(lh_kps[i]-rh_kps[idx])
             match_dis.append(cur_d)
             if cur_d<total_same_sigma:
                 total_same_nr += 1
@@ -99,12 +100,13 @@ def cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=1.1,total_same_sigma=0.1)
     lh_unmatch_nr = lh_mask.size-match_nr
     rh_unmatch_nr = rh_mask.size-match_nr
     match_dis = np.array(match_dis,dtype=np.float32)
+    match_point_dis = np.array(match_point_dis)
 
 
-    return match_dis,match_nr,total_same_nr,lh_unmatch_nr,rh_unmatch_nr
+    return match_dis,match_point_dis,match_nr,total_same_nr,lh_unmatch_nr,rh_unmatch_nr
 
 
-def save_data(data,save_dir,suffix,save_raw_img=False,args=None):
+def save_data(data,save_dir,suffix,save_raw_img=False,args=None,root_dir=None):
     full_path = data[IMG_INFO][FILEPATH]
 
     kps = data[GT_KEYPOINTS]
@@ -113,19 +115,36 @@ def save_data(data,save_dir,suffix,save_raw_img=False,args=None):
         img = wmli.resize_width(img,args.new_width)
         kps = kps.resize(img.shape[:2][::-1])
         if save_raw_img:
-            save_path = wmlu.change_dirname(full_path,save_dir)
+            if root_dir is None:
+                save_path = wmlu.change_dirname(full_path,save_dir)
+            else:
+                r_path = wmlu.get_relative_path(full_path,root_dir)
+                save_path = osp.join(save_dir,r_path)
             wmli.imwrite(save_path,img)
     elif args.new_height > 1:
         img = wmli.resize_height(img,args.new_height)
         kps = kps.resize(img.shape[:2][::-1])
         if save_raw_img:
-            save_path = wmlu.change_dirname(full_path,save_dir)
+            if root_dir is None:
+                save_path = wmlu.change_dirname(full_path,save_dir)
+            else:
+                r_path = wmlu.get_relative_path(full_path,root_dir)
+                save_path = osp.join(save_dir,r_path)
             wmli.imwrite(save_path,img)
     elif save_raw_img:
-        shutil.copy(full_path,save_dir)
+        if root_dir is None:
+            save_path = wmlu.change_dirname(full_path,save_dir)
+        else:
+            r_path = wmlu.get_relative_path(full_path,root_dir)
+            save_path = osp.join(save_dir,r_path)
+        wmli.imwrite(save_path,img)
 
     img = odv.draw_maskv2(img,classes=data[GT_LABELS],masks=kps)
-    save_path = wmlu.change_dirname(full_path,save_dir)
+    if root_dir is None:
+        save_path = wmlu.change_dirname(full_path,save_dir)
+    else:
+        r_path = wmlu.get_relative_path(full_path,root_dir)
+        save_path = osp.join(save_dir,r_path)
     if suffix is not None or save_raw_img:
         if suffix is None:
             suffix = "_0"
@@ -142,12 +161,12 @@ def save_datas(data_info,save_dir,args):
         os.makedirs(c_save_dir,exist_ok=True)
         for d in datas:
             if d[0] is not None and d[1] is not None:
-                save_data(d[0],c_save_dir,"_a",save_raw_img=True,args=args)
-                save_data(d[1],c_save_dir,"_b",save_raw_img=False,args=args)
+                save_data(d[0],c_save_dir,"_a",save_raw_img=True,args=args,root_dir=args.dir0)
+                save_data(d[1],c_save_dir,"_b",save_raw_img=False,args=args,root_dir=args.dir1)
             elif d[0] is not None:
-                save_data(d[0],c_save_dir,None,save_raw_img=True,args=args)
+                save_data(d[0],c_save_dir,None,save_raw_img=True,args=args,root_dir=args.dir0)
             elif d[1] is not None:
-                save_data(d[1],c_save_dir,None,save_raw_img=True,args=args)
+                save_data(d[1],c_save_dir,None,save_raw_img=True,args=args,root_dir=args.dir1)
 
         
 
@@ -169,6 +188,7 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
     same_nr = 0
     diff_nr = 0
     all_dis = []
+    all_point_dis = []
     sample_in_two_dataset = 0
     diff_info = wmlu.MDict(dtype=list)
     
@@ -195,12 +215,13 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
         rh_data = rh_ds_dict[base_name]
         rh_kps,rh_labels = WMCKeypoints.split2single_nppoint(rh_data[GT_KEYPOINTS],rh_data[GT_LABELS])
         lh_kps,lh_labels = WMCKeypoints.split2single_nppoint(data[GT_KEYPOINTS],data[GT_LABELS])
-        match_dis,match_nr,tsame_nr,lh_unmatch_nr,rh_unmatch_nr = cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=sigma)
+        match_dis,match_point_dis,match_nr,tsame_nr,lh_unmatch_nr,rh_unmatch_nr = cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=sigma)
         same_nr += match_nr
         diff_nr += lh_unmatch_nr+rh_unmatch_nr
         total_same_nr += tsame_nr
         if match_dis.size>0:
             all_dis.append(match_dis)
+            all_point_dis.append(match_point_dis)
         if lh_unmatch_nr==0 and rh_unmatch_nr==0:
             same_sample_nr += 1
             if match_nr == tsame_nr:
@@ -221,10 +242,12 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
         save_datas(diff_info,args.save_dir,args)
         print(f"Save dir: {args.save_dir}")
     all_dis = np.concatenate(all_dis,axis=0)
+    all_point_dis = np.concatenate(all_point_dis,axis=0)
     print(f"Dataset1 len {len(lh_ds)}, dataset2 len {len(rh_ds)}") 
     print(f"Sample sample {same_sample_nr}/{len(lh_ds)+len(rh_ds)-sample_in_two_dataset}, total same sample {total_same_sample_nr}")
     print(f"Match points {same_nr}, total match points {total_same_nr}, unmatch points {diff_nr}")
     print(f"Match dis min {np.min(all_dis):.2f}, max {np.max(all_dis):.2f}, mean {np.mean(all_dis):.2f}, std {np.std(all_dis):.2f}")
+    print(f"Match point dis = {np.mean(all_point_dis,axis=0)}")
 
 if __name__ == "__main__":
 

@@ -285,7 +285,7 @@ def save_labelme_points_data(file_path,image_path,image,points,labels):
         shape["label"] = str(label)
         shape['group_id'] = None
         shape["shape_type"]="point"
-        shape["points"] = [[point[0],point[1]]]
+        shape["points"] = [[int(point[0]),int(point[1])]]
         flags = dict(ignore=False,difficult=False,crowd=False)
         shape['flags'] = flags
         shapes.append(shape)
