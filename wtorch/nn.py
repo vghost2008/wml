@@ -823,3 +823,13 @@ class ChannelAttention(nn.Module):
         out = self.fc(out)
         out = self.act(out)
         return x * out
+
+class MParent:
+    def __init__(self,model):
+        self.model = model
+
+    def __getattr__(self, name):
+        return self.model.__getattr__(name)
+
+    def __getitem__(self, name):
+        return self.model.__getitem__(name)
