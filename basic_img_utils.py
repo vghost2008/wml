@@ -260,7 +260,7 @@ def past_img(dst_img,src_img,pos):
     '''
     dst_img: [H,W,C]
     src_img: [h,w,C]
-    pos: [x,y]
+    pos: [x,y], 粘贴区域的左上角
     '''
     x,y = pos
     dst_img[y:y+src_img.shape[0],x:x+src_img.shape[1]] = src_img
@@ -269,7 +269,7 @@ def past_img(dst_img,src_img,pos):
 def crop_and_past_img(dst_img,src_img,src_bbox,pos):
     '''
     src_box:xmin,ymin,xmax,ymax, absolute corrdinate
-    pos: [x,y]
+    pos: [x,y], 粘贴区域的左上角
     '''
     src_img = crop_img_absolute_xy(src_img,src_bbox)
     return past_img(dst_img,src_img,pos)

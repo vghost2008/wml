@@ -158,6 +158,7 @@ def to_xyminwh(bbox,is_absolute_coordinate=True):
 boxes:[...,4] ymin,xmin,ymax,xmax
 scale:[hscale,wscale]
 max_size: [H,W]
+缩放后中心点位置不变
 '''
 def npscale_bboxes(bboxes,scale,correct=False,max_size=None):
     if not isinstance(scale,Iterable):
@@ -421,8 +422,8 @@ def clamp_bboxes(bboxes,min_size):
     cx = (xmax + xmin) / 2
     h = ymax-ymin
     w = xmax-xmin
-    nh = np.maximum(h,min_size[1])
-    nw = np.maximum(w,min_size[0])
+    nh = np.maximum(h,min_size[1])/2
+    nw = np.maximum(w,min_size[0])/2
     nymin = cy-nh
     nymax = cy+nh
     nxmin = cx-nw
@@ -476,8 +477,8 @@ def torch_clamp_bboxes(bboxes,min_size):
     cx = (xmax + xmin) / 2
     h = ymax-ymin
     w = xmax-xmin
-    nh = torch.clamp(h,min=min_size[1])
-    nw = torch.clamp(w,min=min_size[0])
+    nh = torch.clamp(h,min=min_size[1])/2
+    nw = torch.clamp(w,min=min_size[0])/2
     nymin = cy-nh
     nymax = cy+nh
     nxmin = cx-nw
