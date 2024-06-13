@@ -47,8 +47,10 @@ ratio: h/w
 def statistics_boxes(boxes,nr=100,name=""):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]
-    print(f"Min area size (sqrt(w*h)) {min(sizes):.2f}, max area size {max(sizes):.2f} (pixel), mean {np.mean(sizes):.2f}.")
+    print(f"Min area size (sqrt(w*h)) {min(sizes):.2f}, max area size {max(sizes):.2f} (pixel), mean {np.mean(sizes):.2f}, std {np.std(sizes):.2f}.")
     print(f"Min ratio {min(ratios):.2f}, max ratios {max(ratios):.2f}, mean: {np.mean(ratios):.2f}.")
+    rratios = [x if x>=1 else 1.0/max(x,1e-3) for x in ratios]
+    print(f"Real Ratio:Min {min(rratios):.2f}, max {max(rratios):.2f}, mean: {np.mean(rratios):.2f}, std: {np.std(rratios):.2f}.")
     '''plt.figure(2,figsize=(10,10))
     n, bins, patches = plt.hist(sizes, nr, normed=None, facecolor='blue', alpha=0.5)
     plt.grid(axis='y', alpha=0.75)
