@@ -79,9 +79,9 @@ class LabelmeMCKeypointsDataset(object):
                 labels = [self.label_text2id(x) for x in labels_names]
                 keypoints = data[GT_KEYPOINTS]
                 keep = [x is not None for x in labels]
-                labels = [x if x is not None else -1 for x in labels]
-                labels = np.array(labels,dtype=np.int32)
-                labels = labels[keep]
+                labels = list(filter(lambda x:x is not None,labels))
+                if len(labels)==0 or not isinstance(labels[0],(str,bytes)):
+                    labels = np.array(labels,dtype=np.int32)
                 keypoints = [keypoints[i] for i in np.where(keep)[0]]
                 data[GT_LABELS] = labels
                 data[GT_KEYPOINTS] = WMCKeypoints(keypoints,width=img_info[WIDTH],height=img_info[HEIGHT])

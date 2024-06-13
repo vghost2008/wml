@@ -49,7 +49,8 @@
             "program": "datasets_tools/cmp_kps_datasets.py",
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101" "~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101"],
-            "args":["~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125" "~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125b" "--sigma" "100"],
+            //"args":["~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125" "~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125b" "--sigma" "100"],
+            "args":["~/ai/mldata1/B8AOI/datasets/datasetv3.3/train/OK- PSF-2024.5.23-7#B8F161QH5V101/" "/home/wj/ai/mldata1/B8AOI/tmp/3.3/train/OK- PSF-2024.5.23-7#B8F161QH5V101/" "--ignore-labels" "PSF-OK" "PSA-OK" "--sigma" "4" "--new-width" "768" "--save-dir" "/home/wj/ai/mldata1/B8AOI/tmp/cmp3.3OK"],
         },
         {
             "name": "Python: check split dataset",

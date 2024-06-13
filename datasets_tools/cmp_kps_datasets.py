@@ -10,6 +10,7 @@ from object_detection2.metrics.toolkit import *
 from object_detection2.standard_names import *
 from wstructures import WMCKeypoints
 from object_detection2.keypoints import mckps_distance_matrix
+from functools import partial
 import shutil
 import os
 
@@ -24,6 +25,7 @@ def parse_args():
         help='video file extensions')
     parser.add_argument('--type', type=str, default='LabelmeMCKeypointsDataset',help='Data set type')
     parser.add_argument('--save-dir', type=str, default=None,help='Data set type')
+    parser.add_argument('--ignore-labels', type=str, nargs="+",default=None,help='labels to ignore')
     parser.add_argument('--sigma', type=float, default=1.1,help='sigma')
     parser.add_argument(
         '--new-width', type=int, default=0, help='resize image width')
@@ -64,10 +66,10 @@ def cmp_sample(lh_kps,lh_labels,rh_kps,rh_labels,sigma=1.1,total_same_sigma=0.1)
     
     if rh_kps.size == 0:
         if lh_kps.size == 0:
-            return np.zeros([0]),0,0,0
-        return np.zeros([0]),0,lh_labels.size,rh_kps.size
+            return np.zeros([0]),np.zeros([0,2]),0,0,0,0
+        return np.zeros([0]),np.zeros([0,2]),0,0,lh_labels.size,rh_kps.size
     elif lh_kps.size == 0:
-        return np.zeros([0]),0,lh_labels.size,rh_kps.size
+        return np.zeros([0]),np.zeros([0,2]),0,0,lh_labels.size,rh_kps.size
 
     lh_shape = lh_kps.shape
     #indict if there have some rh_kps match with this ground-truth rh_kps
@@ -207,7 +209,10 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
 
         base_name = os.path.basename(full_path)
         if base_name not in rh_ds_dict:
-            print(f"Error find {base_name} in rh_ds faild.")
+            if len(data[GT_LABELS])>0:
+                print(f"ERROR: find {base_name} in rh_ds faild.")
+            else:
+                print(f"WARNING: find {base_name} in rh_ds faild, lh dataset is empty.")
             diff_info['not_find_0'].append((data,None))
             continue
         matched_key.add(base_name)
@@ -249,14 +254,25 @@ def cmp_datasets(lh_ds,rh_ds,sigma=1.1,**kwargs):
     print(f"Match dis min {np.min(all_dis):.2f}, max {np.max(all_dis):.2f}, mean {np.mean(all_dis):.2f}, std {np.std(all_dis):.2f}")
     print(f"Match point dis = {np.mean(all_point_dis,axis=0)}")
 
+def ignore_label_text2id(l,ignore_labels):
+    if l.upper() in ignore_labels:
+        return None
+    return l
+
 if __name__ == "__main__":
 
     args = parse_args()
+    ignore_labels = args.ignore_labels
+    if ignore_labels is None or len(ignore_labels)==0:
+        label_text2id = None
+    else:
+        ignore_labels = [x.upper() for x in ignore_labels]
+        label_text2id = partial(ignore_label_text2id,ignore_labels=ignore_labels)
     print(DATASETS,args.type)
-    data0 = DATASETS[args.type](label_text2id=None,shuffle=False)
+    data0 = DATASETS[args.type](label_text2id=label_text2id,shuffle=False)
     data0.read_data(args.dir0,img_suffix=args.ext)
 
-    data1 = DATASETS[args.type](label_text2id=None,shuffle=False)
+    data1 = DATASETS[args.type](label_text2id=label_text2id,shuffle=False)
     data1.read_data(args.dir1,img_suffix=args.ext)
 
     cmp_datasets(data0,data1,sigma=args.sigma)
