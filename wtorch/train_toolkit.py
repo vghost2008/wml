@@ -38,6 +38,12 @@ def __is_name_of(name, names):
             return True
     return False
 
+def is_in_scope(name, scopes):
+    for x in scopes:
+        if name.startswith(x) or name.startswith("module."+x):
+            return True
+    return False
+
 def _get_tensor_or_tensors_shape(x):
     if isinstance(x,(list,tuple)):
         res = []
@@ -69,7 +75,7 @@ def _add_to_dict(v,dicts):
             print(f"ERROR: {v} already in dict {i}")
     dicts[0].add(v)
 
-def simple_split_parameters(model,filter=None,return_unused=False):
+def simple_split_parameters(model,filter=None,return_unused=False,silent=False):
     '''
     Example:
     bn_weights,weights,biases = simple_split_parameters(model)
@@ -87,6 +93,8 @@ def simple_split_parameters(model,filter=None,return_unused=False):
     print(f"------------------------------------------")
     total_skip = 0
     for k, v in model.named_modules():
+        if len(k)==0:
+            continue
         if filter is not None and not(filter(k,v)):
             continue
         if hasattr(v, "bias") and isinstance(v.bias, (torch.Tensor,nn.Parameter)):
@@ -152,11 +160,12 @@ def simple_split_parameters(model,filter=None,return_unused=False):
                 parameters_set.add(k+f".{k1}")
 
     print(f"------------------------------------------")
-    for k,p in model.named_parameters():
-        if p.requires_grad == False:
-            continue
-        if k not in parameters_set:
-            print(f"ERROR: {k} not in any parameters set.")
+    if not silent:
+        for k,p in model.named_parameters():
+            if p.requires_grad == False:
+                continue
+            if k not in parameters_set:
+                print(f"ERROR: {k} not in any parameters set.")
     #batch norm weight, weight, bias
     print(f"Total have {len(list(model.named_parameters()))} parameters.")
     print(f"Finaly find {len(bn_weights)} bn weights, {len(weights)} weights, {len(biases)} biases, total {len(bn_weights)+len(weights)+len(biases)}, total skip {total_skip}.")
@@ -180,6 +189,16 @@ def defrost_model(model,defrost_bn=True,silent=False):
             print(name, param.size(), "defrost")
         param.requires_grad = True
 
+def defrost_scope(model,scope,defrost_bn=True,silent=False):
+    if defrost_bn:
+        defrost_bn(model,scope)
+    for name, param in model.named_parameters():
+        if not is_in_scope(name,scope):
+            continue
+        if not silent:
+            print(name, param.size(), "defrost")
+        param.requires_grad = True
+
 def __set_bn_momentum(m,momentum=0.1):
     classname = m.__class__.__name__
     if classname.find('BatchNorm') != -1:
@@ -189,6 +208,24 @@ def __fix_bn(m):
     classname = m.__class__.__name__
     if classname.find('BatchNorm') != -1:
         m.eval()
+
+def defrost_bn(model:torch.nn.Module,scopes=None):
+
+    _nr = 0
+    _nr_skip = 0
+    for name, ms in model.named_modules():
+        if not isinstance(ms, nn.BatchNorm2d):
+            continue
+        if __is_name_of(name, scopes):
+            ms.train()
+            print(f"defrost bn {name}")
+            _nr += 1
+        else:
+            _nr_skip += 1
+            continue
+    print(f"Total defrost {_nr} bn, total {_nr_skip} bn not defrost.")
+    sys.stdout.flush()
+    return model
 
 def __freeze_bn(model:torch.nn.Module,names2freeze=None):
 
