@@ -261,6 +261,7 @@ class ConfusionMatrix:
 class ClassesWiseModelPerformace:
     def __init__(self,num_classes,classes_begin_value=0,model_type=PrecisionAndRecall,model_args={},label_trans=None,
                   name=None,
+                  use_gt_and_pred_select=False,
                  **kwargs):
         self.num_classes = num_classes
         self.clases_begin_value = classes_begin_value
@@ -276,9 +277,17 @@ class ClassesWiseModelPerformace:
         self.have_data = np.zeros([num_classes],dtype=np.bool)
         self.accuracy = Accuracy(topk=1)
         self.name = name
+        self.use_gt_and_pred_select = use_gt_and_pred_select
 
+    def select_labels(self,labels,target,classes):
+        if self.use_gt_and_pred_select:
+            return self.select_labels_by_gt_and_pred(labels,target,classes)
+        else:
+            return self.select_labels_by_gt(labels,target,classes)
+
+    
     @staticmethod
-    def select_labels(labels,target,classes):
+    def select_labels_by_gt_and_pred(labels,target,classes):
         if len(labels) == 0:
             return np.array([],dtype=np.int32),np.array([],dtype=np.int32)
         if not isinstance(labels,np.ndarray):
@@ -286,6 +295,17 @@ class ClassesWiseModelPerformace:
         mask0 = np.equal(labels,classes)
         mask1 = np.equal(target,classes)
         mask = np.logical_or(mask0,mask1)
+        nlabels = (labels[mask]==classes).astype(np.int32)
+        ntarget = (target[mask]==classes).astype(np.int32)
+        return nlabels,ntarget
+
+    @staticmethod
+    def select_labels_by_gt(labels,target,classes):
+        if len(labels) == 0:
+            return np.array([],dtype=np.int32),np.array([],dtype=np.int32)
+        if not isinstance(labels,np.ndarray):
+            labels = np.array(labels)
+        mask = np.equal(target,classes)
         nlabels = (labels[mask]==classes).astype(np.int32)
         ntarget = (target[mask]==classes).astype(np.int32)
         return nlabels,ntarget
