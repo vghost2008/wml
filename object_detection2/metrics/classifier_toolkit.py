@@ -1,6 +1,8 @@
 import numpy as np
 import sys
 import copy
+from .build import CLASSIFIER_METRICS_REGISTRY
+
 
 def _safe_persent(v0,v1):
     if v1==0:
@@ -8,6 +10,7 @@ def _safe_persent(v0,v1):
     else:
         return v0*100./v1
 
+@CLASSIFIER_METRICS_REGISTRY.register()
 class Accuracy:
     def __init__(self,topk=1,**kwargs):
         self.topk = topk
@@ -69,6 +72,7 @@ class Accuracy:
     def value(self):
         return self.accuracy
 
+@CLASSIFIER_METRICS_REGISTRY.register()
 class BAccuracy(Accuracy):
     def __init__(self,num_classes,**kwargs):
         '''
@@ -93,6 +97,7 @@ class BAccuracy(Accuracy):
     def to_string(self):
         return f"BAccuracy={self.accuracy:.2f}"
 
+@CLASSIFIER_METRICS_REGISTRY.register()
 class PrecisionAndRecall:
     def __init__(self,**kwargs):
         self.all_output = []
@@ -153,6 +158,7 @@ class PrecisionAndRecall:
     def value(self):
         return _safe_persent(self.precision*self.recall,self.precision+self.recall) #F1
 
+@CLASSIFIER_METRICS_REGISTRY.register()
 class BPrecisionAndRecall(PrecisionAndRecall):
     def __init__(self,num_classes,**kwargs):
         '''
@@ -178,6 +184,7 @@ class BPrecisionAndRecall(PrecisionAndRecall):
     def to_string(self):
         return f"BP={self.precision:.2f}, BR={self.recall:.2f}"
 
+@CLASSIFIER_METRICS_REGISTRY.register()
 class ConfusionMatrix:
     def __init__(self,num_classes=-1,**kwargs):
         self.all_target = []
@@ -250,6 +257,7 @@ class ConfusionMatrix:
     def value(self):
         return self.cm
 
+@CLASSIFIER_METRICS_REGISTRY.register()
 class ClassesWiseModelPerformace:
     def __init__(self,num_classes,classes_begin_value=0,model_type=PrecisionAndRecall,model_args={},label_trans=None,
                   name=None,
@@ -257,6 +265,10 @@ class ClassesWiseModelPerformace:
         self.num_classes = num_classes
         self.clases_begin_value = classes_begin_value
         model_args['classes_begin_value'] = classes_begin_value
+
+        if isinstance(model_type,(str,bytes)):
+            model_type = CLASSIFIER_METRICS_REGISTRY.get(model_type)
+
         self.data = []
         for i in range(self.num_classes):
             self.data.append(model_type(num_classes=num_classes,**model_args))
@@ -328,6 +340,7 @@ class ClassesWiseModelPerformace:
     def __repr__(self):
         return self.to_string()
 
+@CLASSIFIER_METRICS_REGISTRY.register()
 class ComposeMetrics:
     def __init__(self,*args,**kwargs):
         self.metrics = list(args)+list(kwargs.values())

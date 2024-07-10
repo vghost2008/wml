@@ -1188,12 +1188,17 @@ class COCOKeypointsEvaluation(BaseMetrics):
         else:
             return f"N.A."
 
+@METRICS_REGISTRY.register()
 class ClassesWiseModelPerformace(BaseMetrics):
     def __init__(self,num_classes,threshold=0.5,classes_begin_value=1,model_type=COCOEvaluation,model_args={},label_trans=None,
                  **kwargs):
         self.num_classes = num_classes
         self.clases_begin_value = classes_begin_value
         model_args['classes_begin_value'] = classes_begin_value
+
+        if isinstance(model_type,(str,bytes)):
+            model_type = METRICS_REGISTRY.get(model_type)
+
         self.data = []
         for i in range(self.num_classes):
             self.data.append(model_type(num_classes=num_classes,**model_args))
@@ -1303,6 +1308,7 @@ class ClassesWiseModelPerformace(BaseMetrics):
         elif item=="precision":
             return self.mp.precision
 
+@METRICS_REGISTRY.register()
 class SubsetsModelPerformace(BaseMetrics):
     def __init__(self, num_classes, sub_sets,threshold=0.5, model_type=COCOEvaluation, classes_begin_value=1,model_args={},
                  label_trans=None,
@@ -1463,6 +1469,7 @@ def coco_bbox_eval_file(gt_file, res_file):
 
     return info_str
 
+@METRICS_REGISTRY.register()
 class WMAP(BaseMetrics):
     def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,threshold=0.5):
         if categories_list is None:
