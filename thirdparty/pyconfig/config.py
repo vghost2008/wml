@@ -434,7 +434,9 @@ class Config:
             elif isinstance(v, dict):
                 if k in b and not v.pop(DELETE_KEY, False):
                     allowed_types = (dict, list) if allow_list_keys else dict
-                    if not isinstance(b[k], allowed_types):
+                    if b[k] is None:
+                        b[k] = v
+                    elif not isinstance(b[k], allowed_types):
                         raise TypeError(
                             f'{k}={v} in child config cannot inherit from '
                             f'base because {k} is a dict in the child config '

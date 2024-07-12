@@ -34,6 +34,7 @@ if __name__ == "__main__":
                 num_classes = max(num_classes,max_label+1)
             except:
                 pass
+        print(f"Auto update num_classes to {num_classes}")
     if args.classes_wise:
         metrics_cfg = dict(model_type=METRICS_REGISTRY.get(args.metrics),num_classes=num_classes,classes_begin_value=0)
         metrics = ClassesWiseModelPerformace(**metrics_cfg)
@@ -45,6 +46,7 @@ if __name__ == "__main__":
     best_value = -1
     best_string = ""
     best_score = 0
+    print(f"Total {len(data)} samples.")
     while score<=args.end_score_thr:
         if args.classes_wise:
             metrics = ClassesWiseModelPerformace(**metrics_cfg)

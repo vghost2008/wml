@@ -447,6 +447,7 @@ def getPrecisionV2(gt_data,pred_data,pred_func,threshold,return_f1=False):
 @METRICS_REGISTRY.register()
 class Accuracy(BaseMetrics):
     def __init__(self,threshold=0.1,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
+        super().__init__()
         self.threshold = threshold
         self.gtboxes = []
         self.gtlabels = []
@@ -494,10 +495,17 @@ class Accuracy(BaseMetrics):
         gtlabels = np.concatenate(self.gtlabels,axis=0)
         boxes = np.concatenate(self.boxes,axis=0)
         labels = np.concatenate(self.labels,axis=0)
+        if self.is_crowd is not None and len(self.is_crowd)>0:
+            is_crowd = np.concatenate(self.is_crowd,axis=0)
+        else:
+            is_crowd = None
         self.acc = getAccuracy(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,
                                                   auto_scale_threshold=False,
                                                   ext_info=False,
-                                                  is_crowd=self.is_crowd)
+                                                  is_crowd=is_crowd)
+    def value(self):
+        return self.acc
+
     def show(self,name=""):
         self.evaluate()
         res = f"{name}: total test nr {self.total_test_nr}, acc {self.acc:.3f}"
@@ -1652,6 +1660,7 @@ class DetConfusionMatrix(BaseMetrics):
         self.kernel.evaluate()
 
     def show(self,name=""):
+        #显示的最后一行，列为背景
         sys.stdout.flush()
         print(f"Test size {self.num_examples()}")
         self.evaluate()

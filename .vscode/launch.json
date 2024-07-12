@@ -29,8 +29,10 @@
             "request": "launch",
             "program": "object_detection_tools/metrics_tools.py",
             "console": "integratedTerminal",
-            "args":["/home/wj/ai/mldata1/B10CF/work_dir/cascade_csp/tmp/eval_on_val1/results.pk" "--metrics" "DetConfusionMatrix"],
+            //"args":["/home/wj/ai/mldata1/B10CF/work_dir/cascade_csp/tmp/eval_on_val1/results.pk" "--metrics" "DetConfusionMatrix"],
             //"args":["/home/wj/ai/mldata1/B10CF/work_dir/cascade_csp/tmp/eval_on_val1/results.pk"],
+            //"args":["/home/wj/ai/mldata1/B10CFOD/tmp/eval_on_val1/results.pk" "--metrics" "Accuracy"],
+            "args":["/home/wj/ai/mldata1/B10CFOD/tmp/eval_on_val1/results.pk" "--metrics" "DetConfusionMatrix"],
         },
         {
             "name": "Python: tf2pb",
