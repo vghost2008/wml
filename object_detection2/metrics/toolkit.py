@@ -481,7 +481,10 @@ class Accuracy(BaseMetrics):
         self.total_test_nr += 1
 
         t_bboxes = np.concatenate([gtboxes,boxes],axis=0)
-        t_max = np.max(t_bboxes,axis=0)
+        if t_bboxes.size>0:
+            t_max = np.max(t_bboxes,axis=0)
+        else:
+            t_max = np.zeros([4])
         max_0 = t_max[2]
         max_1 = t_max[3]
         offset = np.array([[max_0,max_1,max_0,max_1]],dtype=np.float32)
@@ -601,7 +604,7 @@ class PrecisionAndRecall(BaseMetrics):
 
     def to_string(self):
         try:
-            return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1}/({self.total_test_nr})"
+            return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1:.3f}/({self.total_test_nr})"
         except:
             return "N.A."
 
