@@ -30,11 +30,17 @@ def find_same_name_files(files,root_path):
         name2path[name].append(file)
         files_nr += 1
     print(f"Total find {files_nr} files")
+    same_nr = 0
+    different_nr = 0
     
     for k,v in name2path.items():
         if len(v)==1:
+            different_nr += 1
             continue
         print_info(k,v,root_path)
+        same_nr += 1
+    
+    print(f"Same nr: {same_nr}, different nr {different_nr}")
 
 def print_info(name,files,root_path):
     print("")
