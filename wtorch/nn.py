@@ -601,6 +601,7 @@ class NormalizedLinear(nn.Module):
     @torch.cuda.amp.autocast(False)
     def forward(self,x):
         x = x.float()
+        x = F.normalize(x,dim=-1)
         '''with torch.no_grad():
             temp_norm = torch.norm(
                 self.weight, p=2,
