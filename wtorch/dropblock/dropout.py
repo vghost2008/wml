@@ -37,4 +37,4 @@ class WDropout(nn.Module):
             return x
         else:
             self.cur_drop_prob = self.drop_prob
-            return F.dropout(input, self.drop_prob, self.training, self.inplace)
+            return F.dropout(x, self.drop_prob, self.training, self.inplace)
