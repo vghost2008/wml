@@ -136,6 +136,16 @@ class EvoNormS0(nn.Module):
     def __repr__(self):
         return f"EvoNormS0 (num_features={self.num_features}, num_groups={self.num_groups}, eps={self.eps})"
 
+class GroupNorm(nn.GroupNorm): #torch.nn.GroupNorm在导出onnx时只支持ndim>=3的tensor
+    def forward(self,x):
+        if x.ndim == 2:
+            x = torch.unsqueeze(x,dim=-1)
+            x = super().forward(x)
+            x = torch.squeeze(x,dim=-1)
+            return x
+        else:
+            return super().forward(x)
+
 class EvoNormS01D(nn.Module):
     def __init__(self, num_groups,num_features, eps=1e-6, scale=True):
         super().__init__()
@@ -409,7 +419,8 @@ def get_norm(norm, out_channels,norm_args={}):
         norm_args = {"num_groups":32}
 
     if norm == 'GN':
-        return nn.GroupNorm(num_channels=out_channels,**norm_args)
+        #return nn.GroupNorm(num_channels=out_channels,**norm_args)
+        return GroupNorm(num_channels=out_channels,**norm_args)
 
     if isinstance(norm, str):
         if len(norm) == 0:
@@ -444,7 +455,8 @@ def get_norm1d(norm, out_channels,norm_args={}):
         norm_args = {"num_groups":32}
 
     if norm == 'GN':
-        return nn.GroupNorm(num_channels=out_channels,**norm_args)
+        #return nn.GroupNorm(num_channels=out_channels,**norm_args)
+        return GroupNorm(num_channels=out_channels,**norm_args)
 
     if isinstance(norm, str):
         if len(norm) == 0:
@@ -802,6 +814,11 @@ class SumModule(nn.Module):
             res += xs[i]
         return res
 
+def hard_sigmoid(x):
+        x = x/6+0.5
+        x = torch.clamp(x,min=0,max=1)
+        return x
+
 class ChannelAttention(nn.Module):
     """Channel attention Module.
 
@@ -823,7 +840,12 @@ class ChannelAttention(nn.Module):
             out = self.global_avgpool(x)
         out = self.fc(out)
         out = self.act(out)
+        '''if torch.jit.is_tracing:
+            out = hard_sigmoid(out)
+        else:
+            out = self.act(out)'''
         return x * out
+
 
 class MParent:
     def __init__(self,model):
@@ -834,3 +856,19 @@ class MParent:
 
     def __getitem__(self, name):
         return self.model.__getitem__(name)
+
+class Unsqueeze(nn.Module):
+    def __init__(self,dim) -> None:
+        super().__init__()
+        self.dim = dim
+
+    def forward(self,x):
+        return torch.unsqueeze(x,dim=self.dim)
+
+class Squeeze(nn.Module):
+    def __init__(self,dim) -> None:
+        super().__init__()
+        self.dim = dim
+
+    def forward(self,x):
+        return torch.squeeze(x,dim=self.dim)
