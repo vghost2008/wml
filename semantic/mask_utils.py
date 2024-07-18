@@ -142,3 +142,15 @@ def npresize_mask(mask,size=None,r=None):
         new_mask.append(cur_m)
     new_mask = np.stack(new_mask,axis=0)
     return new_mask
+
+def resize_mask_structures(mask,size):
+    '''
+    size:[W,H]
+    '''
+    if isinstance(mask,np.ndarray):
+        return npresize_mask(mask,size)
+    if torch.is_tensor(mask):
+        return resize_mask(mask,size)
+    if hasattr(mask,"resize"):
+        return mask.resize(size)
+    raise RuntimeError("Unimplement")
