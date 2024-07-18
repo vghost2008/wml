@@ -76,7 +76,7 @@ def soft_nmsv2(dets, box_scores, thresh=0.001, sigma=0.5, cuda=0):
 
     return keep,scores
 
-def group_nms(bboxes,scores,ids,nms_threshold:float=0.7,max_value:float=12000.0):
+def group_nms(bboxes,scores,ids,nms_threshold:float=0.7,max_value:float=20000.0):
     '''
         boxes (Tensor[N, 4])): boxes to perform NMS on. They
             are expected to be in ``(x1, y1, x2, y2)`` format with ``0 <= x1 < x2`` and
