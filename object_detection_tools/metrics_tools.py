@@ -15,6 +15,7 @@ def parse_args():
     parser.add_argument('--score-step', type=float,default=0.05, help='score step')
     parser.add_argument('--classes-wise', action='store_true', help='score step')
     parser.add_argument('--verbose', action='store_true', help='verbose mode')
+    parser.add_argument('--iou-thr', type=float, help='iou thr')
     args = parser.parse_args()
     return args
 
@@ -37,9 +38,12 @@ if __name__ == "__main__":
         print(f"Auto update num_classes to {num_classes}")
     if args.classes_wise:
         metrics_cfg = dict(model_type=METRICS_REGISTRY.get(args.metrics),num_classes=num_classes,classes_begin_value=0)
+        if args.iou_thr is not None and args.iou_thr >0:
+            metrics_cfg['model_args'] = dict(threshold = args.iou_thr)
         metrics = ClassesWiseModelPerformace(**metrics_cfg)
     else:
         metrics_cfg = dict(type=args.metrics,num_classes=num_classes,classes_begin_value=0)
+        metrics_cfg['threshold'] = args.iou_thr
         metrics = build_metrics(metrics_cfg)
 
     score = args.beg_score_thr
