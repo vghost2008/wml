@@ -93,7 +93,7 @@ def _get_shape_points(shape,circle_points_nr=20):
 output:
 image_info: {'height','width'}
 annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
-'segmentation' [H,W]
+'segmentation' [H,W], 全图
 '''
 def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,use_semantic=True,
                       use_polygon_mask=False,
