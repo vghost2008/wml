@@ -180,7 +180,7 @@ def getRecall(gtboxes,gtlabels,boxes,labels,threshold=0.5):
 
     return 100.*correct_num/total_num
 
-def getAccuracy(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshold=True,ext_info=False,is_crowd=None):
+def getAccuracy(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_crowd=None):
     '''
     :param gtboxes: [N,4]
     :param gtlabels: [N]
@@ -205,26 +205,35 @@ def getAccuracy(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshold
     boxes_mask = np.zeros(boxes_shape[0],dtype=np.int32)
     gt_size = gtlabels.shape[0]
     boxes_size = labels.shape[0]
-    MIN_VOL = 0.005
+    iou_matrix = odb.iou_matrix(gtboxes,boxes)
+    if iou_matrix.size>0:
+        target_idxs = np.argmax(iou_matrix,axis=-1)
+    else:
+        target_idxs = np.ones([gt_size])*-1
     for i in range(gt_size):
         max_index = -1
         max_jaccard = 0.0
 
-        t_threshold = threshold
-        if auto_scale_threshold:
-            #print(i,gtboxes,gtlabels)
-            vol = npod.box_vol(gtboxes[i])
-            if vol < MIN_VOL:
-                t_threshold = vol*threshold/MIN_VOL
-        #iterator on all boxes to find one have the most maximum jacard value with current ground-truth box
-        for j in range(boxes_size):
-            if gtlabels[i] != labels[j] or boxes_mask[j] != 0:
-                continue
+        max_index = target_idxs[i]
+        if max_index<0:
+            continue
 
-            jaccard = npod.box_jaccard(gtboxes[i],boxes[j])
-            if jaccard>t_threshold and jaccard > max_jaccard:
-                max_jaccard = jaccard
-                max_index = j
+        max_jaccard = iou_matrix[i,max_index]
+        if max_jaccard<threshold:
+            continue
+
+        if gtlabels[i] == labels[max_index] and boxes_mask[max_index] == 0:
+            pass
+        else:
+            max_index = -1
+            for j in range(boxes_size):
+                if gtlabels[i] != labels[j] or boxes_mask[j] != 0:
+                    continue
+    
+                jaccard = iou_matrix[i,j]
+                if jaccard>threshold and jaccard > max_jaccard:
+                    max_jaccard = jaccard
+                    max_index = j
 
         if max_index < 0:
             continue
@@ -244,7 +253,7 @@ def getAccuracy(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshold
 
     return safe_persent(TP_v,r_gt_size+boxes_size-correct_bbox_num)
 
-def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshold=True,ext_info=False,is_crowd=None):
+def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_crowd=None):
     '''
     :param gtboxes: [N,4]
     :param gtlabels: [N]
@@ -269,33 +278,42 @@ def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,auto_scale_threshol
     boxes_mask = np.zeros(boxes_shape[0],dtype=np.int32)
     gt_size = gtlabels.shape[0]
     boxes_size = labels.shape[0]
-    MIN_VOL = 0.005
+    iou_matrix = odb.iou_matrix(gtboxes,boxes)
+    if iou_matrix.size>0:
+        target_idxs = np.argmax(iou_matrix,axis=-1)
+    else:
+        target_idxs = np.ones([gt_size])*-1
     #print(">>>>",gtboxes,gtlabels)
     for i in range(gt_size):
         max_index = -1
         max_jaccard = 0.0
 
-        t_threshold = threshold
-        if auto_scale_threshold:
-            #print(i,gtboxes,gtlabels)
-            vol = npod.box_vol(gtboxes[i])
-            if vol < MIN_VOL:
-                t_threshold = vol*threshold/MIN_VOL
-        #iterator on all boxes to find one have the most maximum jacard value with current ground-truth box
-        for j in range(boxes_size):
-            if gtlabels[i] != labels[j] or boxes_mask[j] != 0:
-                continue
+        max_index = target_idxs[i]
+        if max_index<0:
+            continue
+        max_jaccard = iou_matrix[i,max_index]
+        if max_jaccard<threshold:
+            continue
 
-            jaccard = npod.box_jaccard(gtboxes[i],boxes[j])
-            if jaccard>t_threshold and jaccard > max_jaccard:
-                max_jaccard = jaccard
-                max_index = j
+        if gtlabels[i] == labels[max_index] and boxes_mask[max_index] == 0:
+            pass
+        else:
+            max_index = -1
+            for j in range(boxes_size):
+                if gtlabels[i] != labels[j] or boxes_mask[j] != 0:
+                    continue
+    
+                jaccard = iou_matrix[i,j]
+                if jaccard>threshold and jaccard > max_jaccard:
+                    max_jaccard = jaccard
+                    max_index = j
 
         if max_index < 0:
             continue
 
         gt_mask[i] = 1
         boxes_mask[max_index] = 1
+
 
     r_gt_mask = np.logical_or(gt_mask,is_crowd)
     correct_gt_num = np.sum(r_gt_mask)
@@ -503,7 +521,6 @@ class Accuracy(BaseMetrics):
         else:
             is_crowd = None
         self.acc = getAccuracy(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,
-                                                  auto_scale_threshold=False,
                                                   ext_info=False,
                                                   is_crowd=is_crowd)
     def value(self):
@@ -567,7 +584,6 @@ class PrecisionAndRecall(BaseMetrics):
                                                 gtlabels=gtlabels,
                                                 boxes=boxes,labels=labels,
                                                 threshold=self.threshold,
-                                                auto_scale_threshold=False,
                                                 ext_info=False,
                                                 is_crowd=is_crowd)
         self._current_info = f"precision={cur_precision:.3f}, recall={cur_recall:.3f}"
@@ -587,7 +603,6 @@ class PrecisionAndRecall(BaseMetrics):
         boxes = np.concatenate(self.boxes,axis=0)
         labels = np.concatenate(self.labels,axis=0)
         self.precision,self.recall = getPrecision(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,
-                                                  auto_scale_threshold=False,
                                                   ext_info=False,
                                                   is_crowd=is_crowd)
     @property
@@ -807,7 +822,7 @@ class ROC:
             t_labels = labels[mask]
             precision, recall, gt_label_list, pred_label_list, TP_v, FP_v, P_v = \
                 getPrecision(gtboxes, gtlabels, t_boxes, t_labels, threshold=self.threshold,
-                                                  auto_scale_threshold=False, ext_info=True)
+                                                  ext_info=True)
             self.results.append([p,precision,recall])
 
     def show(self,name=""):
