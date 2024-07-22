@@ -62,16 +62,27 @@ def getmAP(gtboxes,gtlabels,boxes,labels,probability=None,threshold=0.5,is_crowd
 
     if not isinstance(gtboxes,np.ndarray):
         gtboxes = np.array(gtboxes)
+    if len(gtboxes)==0:
+        gtboxes = np.zeros([0,4],dtype=np.float32)
     if not isinstance(gtlabels,np.ndarray):
         gtlabels = np.array(gtlabels)
+    if len(gtlabels)==0:
+        gtlabels = np.zeros([0],dtype=np.int32)
     if not isinstance(boxes,np.ndarray):
         boxes = np.array(boxes)
+    if len(boxes)==0:
+        boxes = np.zeros([0,4],dtype=np.float32)
     if not isinstance(labels,np.ndarray):
         labels = np.array(labels)
+    if len(labels)==0:
+        labels = np.zeros([0],dtype=np.int32)
     if is_crowd is None:
         is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+    if len(is_crowd)==0:
+        is_crowd = np.zeros([0],dtype=np.bool)
     if not isinstance(is_crowd,np.ndarray):
         is_crowd = np.array(is_crowd)
+
     gtboxes = copy.deepcopy(np.array(gtboxes))
     gtlabels = copy.deepcopy(np.array(gtlabels))
     boxes = copy.deepcopy(boxes)
@@ -266,6 +277,8 @@ def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_c
         gtboxes = np.array(gtboxes)
     if not isinstance(gtlabels,np.ndarray):
         gtlabels = np.array(gtlabels)
+    if not isinstance(labels,np.ndarray):
+        labels = np.array(labels)
     if is_crowd is None:
         is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
     if not isinstance(is_crowd,np.ndarray):

@@ -25,6 +25,7 @@ def parse_args():
         help='video file extensions')
     parser.add_argument('--type', type=str, default='PascalVOCData',help='Data set type')
     parser.add_argument('--metrics', type=str, default='COCOEvaluation',help='metrics type')
+    parser.add_argument('--save-dir', type=str, help='save dir for different annotation.')
     parser.add_argument('--classes-wise', action='store_true', help='is classes wise')
     args = parser.parse_args()
 
@@ -47,6 +48,23 @@ def simple_names(x):
     if "--" in x:
         return x.split("--")[-1]
     return x
+
+def save_data(lh_data,rh_data,save_dir):
+    save_one_data(lh_data,save_dir,"_0")
+    save_one_data(rh_data,save_dir,"_1")
+
+def save_one_data(data,save_dir,suffix):
+    full_path, shape, category_ids, category_names, boxes, binary_masks, area, is_crowd, num_annotations_skipped = data
+    img = wmli.imread(full_path)
+    img = odv.draw_bboxes(img,category_names,None,boxes,show_text=True,is_relative_coordinate=False)
+    if binary_masks is not None:
+        img = odv.draw_maskv2(img,category_names,boxes,binary_masks)
+    
+    os.makedirs(save_dir,exist_ok=True)
+
+    save_name = wmlu.base_name(full_path)+suffix
+    save_path = osp.join(save_dir,save_name+".jpg")
+    wmli.imwrite(save_path,img)
 
 
 def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_value=1,args=None,**kwargs):
@@ -85,6 +103,9 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
                                         classes_begin_value=classes_begin_value)
     else:
         eval = model(num_classes=num_classes,mask_on=mask_on,**kwargs)
+    
+    total_same_nr = 0
+    cmp_nr = 0
 
     for i,data in enumerate(lh_ds):
         full_path, shape, category_ids, category_names, boxes, binary_masks, area, is_crowd, num_annotations_skipped = data
@@ -94,6 +115,8 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
         if base_name not in rh_ds_dict:
             print(f"Error find {base_name} in rh_ds faild.")
             continue
+
+        cmp_nr += 1
         rh_data = rh_ds_dict[base_name]
             
         kwargs = {}
@@ -101,15 +124,26 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
         kwargs['gtlabels'] = [name2idx[name.lower()] for name in rh_data[3]]
         kwargs['boxes'] = boxes
         kwargs['labels'] = [name2idx[name.lower()] for name in category_names]
+        p,r = getPrecision(**kwargs,threshold=0.8)
+        if p>=99 and r>=99:
+            total_same_nr += 1
+        if args.save_dir is not None:
+            if p<99.0 or r<99:
+                save_data(data,rh_data,args.save_dir)
+            else:
+                save_one_data(data,osp.join(args.save_dir,"same"),suffix="")
         kwargs['probability'] = np.ones([len(category_names)],np.float32)
         kwargs['img_size'] = shape
         eval(**kwargs)
 
-        if i % 100 == 0:
+        if i % 1000 == 0:
             eval.show()
     
     eval.show()
     print(f"bboxes nr {lh_total_box_nr} vs {rh_total_box_nr}")
+    if args.save_dir is not None:
+        print(f"Save dir {args.save_dir}")
+    print(f"Total same nr {total_same_nr}, cmp nr {cmp_nr}, total nr {len(lh_ds)+len(rh_ds)-cmp_nr}.")
     print("Name to label")
     wmlu.show_dict(name2idx)
 
