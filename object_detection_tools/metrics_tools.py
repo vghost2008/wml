@@ -43,7 +43,8 @@ if __name__ == "__main__":
         metrics = ClassesWiseModelPerformace(**metrics_cfg)
     else:
         metrics_cfg = dict(type=args.metrics,num_classes=num_classes,classes_begin_value=0)
-        metrics_cfg['threshold'] = args.iou_thr
+        if args.iou_thr is not None and args.iou_thr >0:
+            metrics_cfg['threshold'] = args.iou_thr
         metrics = build_metrics(metrics_cfg)
 
     score = args.beg_score_thr

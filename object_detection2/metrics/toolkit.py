@@ -138,10 +138,22 @@ def getmAP(gtboxes,gtlabels,boxes,labels,probability=None,threshold=0.5,is_crowd
 
     if min_r > 1e-2:
         res = np.concatenate([np.array([[res[0][0],0.]]),res],axis=0)
+
+    l_precisions = res[-1][0]
+    l_recall = res[-1][1]
+    append_res = []
+    cur_reall = l_recall
+    while cur_reall+10<100.0:
+        cur_reall = cur_reall+10
+        append_res.append([min(l_precisions,l_precisions*l_recall/cur_reall,l_recall),cur_reall])
+    
+    if len(append_res)>0:
+        res = np.concatenate([res,np.array(append_res)],axis=0)
+
     if max_r <100.0-1e-2:
         l_precisions = res[-1][0]
         l_recall = res[-1][1]
-        t_precision = min(l_precisions*l_recall/100.0,l_precisions)
+        t_precision = min(l_precisions*l_recall/100.0,l_precisions,l_recall)
         res = np.concatenate([res,np.array([[t_precision,100.0]])])
 
     res = np.array(res)
@@ -583,6 +595,8 @@ class PrecisionAndRecall(BaseMetrics):
         if boxes.shape[0]>0:
             self.boxes.append(boxes+self.bboxes_offset)
             self.labels.append(np.array(labels))
+        if len(gtboxes)==0:
+            gtboxes = np.zeros([0,4],dtype=gtboxes.dtype)
         
         t_bboxes = np.concatenate([gtboxes,boxes],axis=0)
         t_max = np.max(t_bboxes,axis=0)
@@ -1604,7 +1618,7 @@ class WMAP(BaseMetrics):
 
 @METRICS_REGISTRY.register()
 class DetConfusionMatrix(BaseMetrics):
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.1,iou_thr=0.1):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.1,threshold=0.1):
         super().__init__()
         if categories_list is None:
             print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
@@ -1613,7 +1627,7 @@ class DetConfusionMatrix(BaseMetrics):
             self.categories_list = categories_list
         self.num_classes = num_classes
         self.label_trans = label_trans
-        self.iou_thr = iou_thr
+        self.iou_thr = threshold
         self.score_thr = score_thr
         self.pred_labels = []
         self.gt_labels = []
