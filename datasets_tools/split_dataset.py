@@ -38,6 +38,10 @@ def parse_args():
         default=[0.9,0.1],
         help='split percent')
     parser.add_argument(
+        '--max-nr',
+        type=int,
+        help='split set max nr')
+    parser.add_argument(
         '--allow-empty',
         action='store_true',
         help='include img files without annotation')
@@ -71,6 +75,7 @@ def split_one_dir(src_dir,out_dir,splits,args,sub_dir_name=None):
 
     print(f"Process {src_dir}, save dir {out_dir}")
     splits = copy.deepcopy(splits)
+    max_nr = args.max_nr
 
     if sub_dir_name is not None:
         src_dir = osp.join(src_dir,sub_dir_name)
@@ -127,6 +132,10 @@ def split_one_dir(src_dir,out_dir,splits,args,sub_dir_name=None):
             t_nr = len(tmp_files)
         print(f"split {v} as {t_nr} files")
         wmlu.show_list(tmp_files)
+        if max_nr is not None and max_nr>0:
+            tmp_files = list(tmp_files)
+            random.shuffle(tmp_files)
+            tmp_files = tmp_files[:max_nr]
         copy_files(tmp_files,t_save_dir,add_nr,src_dir=src_dir)
 
 

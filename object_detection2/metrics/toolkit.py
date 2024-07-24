@@ -599,7 +599,10 @@ class PrecisionAndRecall(BaseMetrics):
             gtboxes = np.zeros([0,4],dtype=gtboxes.dtype)
         
         t_bboxes = np.concatenate([gtboxes,boxes],axis=0)
-        t_max = np.max(t_bboxes,axis=0)
+        if len(t_bboxes)>0:
+            t_max = np.max(t_bboxes,axis=0)
+        else:
+            t_max = [0,0,0,0]
         max_0 = t_max[2]
         max_1 = t_max[3]
         offset = np.array([[max_0,max_1,max_0,max_1]],dtype=np.float32)

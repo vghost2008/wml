@@ -83,6 +83,48 @@ def get_filepath_in_dir(dir_path,suffix=None,prefix=None,sort=True):
 
     return res
 
+def find_files(dir_path,suffix=None,prefix=None,followlinks=False):
+    '''
+    suffix: example ".jpg;;.jpeg" , ignore case
+    '''
+    dir_path = os.path.expanduser(dir_path)
+
+    if os.path.isfile(dir_path):
+        return [dir_path]
+
+    if suffix is not None:
+        suffix = suffix.split(";;")
+        suffix = [x.lower() for x in suffix]
+    if prefix is not None:
+        prefix = prefix.split(";;")
+    def check_file(filename):
+        is_suffix_good = False
+        is_prefix_good = False
+        if suffix is not None:
+            for s in suffix:
+                if filename.lower().endswith(s):
+                    is_suffix_good = True
+                    break
+        else:
+            is_suffix_good = True
+        if prefix is not None:
+            for s in prefix:
+                if filename.startswith(s):
+                    is_prefix_good = True
+                    break
+        else:
+            is_prefix_good = True
+
+        return is_prefix_good and is_suffix_good
+
+    for dir_path,_,files in os.walk(dir_path,followlinks=followlinks):
+        for file in files:
+            if suffix is not None or prefix is not None:
+                if check_file(file):
+                    yield os.path.join(dir_path, file)
+            else:
+                yield os.path.join(dir_path,file)
+
 def recurse_get_filepath_in_dir(dir_path,suffix=None,prefix=None,followlinks=False):
     '''
     suffix: example ".jpg;;.jpeg" , ignore case

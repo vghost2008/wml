@@ -28,12 +28,17 @@ from iotoolkit.bboxes_statistics import *
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('src_dir', type=str, help='source video directory')
-    parser.add_argument('--type', type=str, default="xml",help='dataset type')
+    parser.add_argument('--type', type=str, default="auto",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     args = parser.parse_args()
     return args
 
-
+def get_dataset_type(data_dir):
+    for f in wmlu.find_files(data_dir,suffix=".json"):
+        return "json"
+    for f in wmlu.find_files(data_dir,suffix=".xml"):
+        return "xml"
+    return "xml"
 
 if __name__ == "__main__":
     nr = 100
@@ -53,6 +58,9 @@ if __name__ == "__main__":
     args = parse_args()
     data_dir = args.src_dir
     dataset_type = args.type
+    if dataset_type == "auto":
+        dataset_type = get_dataset_type(data_dir)
+
     if dataset_type == "xml":
         dataset = pascal_voc_dataset(data_dir=data_dir,
                                      labels=args.labels,
