@@ -7,6 +7,7 @@ import random
 import time
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
 from iotoolkit.labelme_toolkit import read_labelme_data
+import shutil
 
 '''
 将指定数据集按每一个样本中包含的标签名拷贝到相应的子目录中
@@ -61,7 +62,7 @@ def copy_files(imgf,annf,save_dir,add_nr,silent=False):
     suffix = osp.splitext(annf)[1]
     if not silent:
         print(annf,"--->",osp.join(save_dir,basename+suffix))
-    wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
+    shutil.copy(annf,osp.join(save_dir,basename+suffix))
 
 def get_labels(ann_file,suffix):
     if suffix == "xml":

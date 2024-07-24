@@ -5,3 +5,4 @@ from .coco_toolkit import *
 from .object365v2_toolkit import *
 from .baidu_mask_toolkit import *
 from .labelmemckeypoints_dataset import LabelmeMCKeypointsDataset
+from .common import get_auto_dataset_suffix

@@ -6,6 +6,7 @@ import math
 import random
 import time
 import copy
+import shutil
 
 '''
 主要用于拆分训练集，测试集等场景
@@ -68,7 +69,7 @@ def copy_files(files,save_dir,add_nr,src_dir):
         wmlu.try_link(imgf,save_path)
         suffix = osp.splitext(annf)[1]
         print(annf,"--->",osp.join(save_dir,basename+suffix))
-        wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
+        shutil.copy(annf,osp.join(save_dir,basename+suffix))
 
 
 def split_one_dir(src_dir,out_dir,splits,args,sub_dir_name=None):

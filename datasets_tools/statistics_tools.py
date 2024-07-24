@@ -16,6 +16,7 @@ import object_detection2.bboxes as odb
 import pandas as pd
 import wml_utils as wmlu
 from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
+from iotoolkit import get_auto_dataset_suffix
 from sklearn.cluster import KMeans
 from functools import partial
 from argparse import ArgumentParser
@@ -32,13 +33,6 @@ def parse_args():
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     args = parser.parse_args()
     return args
-
-def get_dataset_type(data_dir):
-    for f in wmlu.find_files(data_dir,suffix=".json"):
-        return "json"
-    for f in wmlu.find_files(data_dir,suffix=".xml"):
-        return "xml"
-    return "xml"
 
 if __name__ == "__main__":
     nr = 100
@@ -59,7 +53,7 @@ if __name__ == "__main__":
     data_dir = args.src_dir
     dataset_type = args.type
     if dataset_type == "auto":
-        dataset_type = get_dataset_type(data_dir)
+        dataset_type = get_auto_dataset_suffix(data_dir)
 
     if dataset_type == "xml":
         dataset = pascal_voc_dataset(data_dir=data_dir,

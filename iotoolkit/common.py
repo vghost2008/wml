@@ -76,3 +76,14 @@ def find_imgs_for_ann_file(ann_path):
             img_file = file
     return img_file
 
+
+def get_auto_dataset_suffix(data_dir,suffix="auto"):
+    if suffix.lower() != "auto":
+        return suffix
+
+    for f in wmlu.find_files(data_dir,suffix=".json"):
+        return "json"
+    for f in wmlu.find_files(data_dir,suffix=".xml"):
+        return "xml"
+
+    return "xml"
