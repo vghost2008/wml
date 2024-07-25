@@ -77,7 +77,7 @@ class LabelMeData(object):
             if not all(is_none):
                 new_files.append(fs)
             else:
-                print(f"File {json_file} is empty, labels names {labels_names}, labels {labels}")
+                print(f"File {json_file} is empty, remove from dataset, labels names {labels_names}, labels {labels}")
 
         return new_files
 
