@@ -296,7 +296,8 @@ def no_throw(func):
     def wraps_func(*args,**kwargs):
         try:
             return func(*args,**kwargs)
-        except:
+        except Exception as e:
+            print(f"ERROR: in no_throw wraps {e}")
             return None
     return wraps_func
 '''

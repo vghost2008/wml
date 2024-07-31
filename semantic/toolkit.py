@@ -1,14 +1,9 @@
 #coding=utf-8
 import sys
 import os
-from .mask_utils import iou,np_iou
+from .mask_utils import np_iou
 import numpy as np
-sys.path.append(os.path.dirname(__file__))
-import semantic.visualization_utils as visu
-import image_visualization as ivs
-import cv2
-from semantic.visualization_utils import MIN_RANDOM_STANDARD_COLORS
-import basic_tftools as btf
+from .visualization_utils import MIN_RANDOM_STANDARD_COLORS, draw_mask_on_image_array
 
 '''
 image:[height,width,3]
@@ -25,7 +20,7 @@ def np_draw_masks_on_image(image, mask, colors, alpha=0.4):
     colors_nr = len(colors)
 
     for i,msk in enumerate(mask):
-        image = visu.draw_mask_on_image_array(image,msk,colors[i%colors_nr],alpha)
+        image = draw_mask_on_image_array(image,msk,colors[i%colors_nr],alpha)
 
     return image
 
@@ -50,10 +45,11 @@ def np_draw_masks_on_images(image,mask,alpha,colors=MIN_RANDOM_STANDARD_COLORS,n
 '''
 masks:[X,H,W]
 labels:[X]
+no_background: 如果为True, 那么labels的值域为[1,num_classes], 生成时labels转换为labels-1
 output:
-[num_classes,H,W]/[num_classes-1,H,W]
+[num_classes,H,W]/[num_classes-1,H,W](no_background=True)
 '''
-def merge_masks(masks,labels,num_classes,size=None,no_background=True):
+def merge_masks(masks,labels,num_classes,size=None,no_background=False):
     if size is not None:
         width = size[1]
         height = size[0]
@@ -74,9 +70,11 @@ def merge_masks(masks,labels,num_classes,size=None,no_background=True):
 
     return res
 
+'''
 def get_fullsize_merged_mask(masks,bboxes,labels,size,num_classes,no_background=True):
     fullsize_masks = ivs.get_fullsize_mask(bboxes,masks,size)
     return merge_masks(fullsize_masks,labels,num_classes,size,no_background)
+'''
 
 class ModelPerformance:
     def __init__(self,no_first_class=True):

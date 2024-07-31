@@ -888,3 +888,61 @@ def draw_polygon(img,polygon,color=(255,255,255),is_line=True,isClosed=True):
         return cv2.polylines(img, [polygon], color=color,isClosed=isClosed)
     else:
         return cv2.fillPoly(img,[polygon],color=color)
+
+def colorize_semantic_seg(seg,color_mapping):
+    '''
+    seg:[H,W], value in [0,classes_num-1]
+    color_mapping: list of color size is color_nr*3
+    '''
+    seg = Image.fromarray(seg.astype(np.uint8)).convert('P')
+    seg.putpalette(color_mapping)
+    seg = seg.convert('RGB')
+    return np.array(seg)
+
+def colorize_semantic_seg_by_label(seg,label,color_mapping):
+    '''
+    seg:[H,W], value in set([0,1])
+    labels: value in range [0,calsses_num-1]
+    color_mapping: list of color size is color_nr*3
+    '''
+    res = np.ones([seg.shape[0],seg.shape[1],3],dtype=np.int32)
+    color = np.array(color_mapping[label*3:label*3+3])
+    for i in range(3):
+        res[...,i] = color[i]
+    seg = np.expand_dims(seg,axis=-1)
+    res = res*seg
+    return res.astype(np.int32)
+
+def draw_seg_on_img(img,seg,color_mapping=DEFAULT_COLOR_MAP,alpha=0.4,ignore_idx=255):
+    '''
+    img:[H,W,3/1]
+    seg:[num_classes,H,W]
+    color_mapping: list of color size is color_nr*3
+    '''
+    if seg.size == 0:
+        return img
+    seg = np.where(seg==ignore_idx,np.zeros_like(seg),seg)
+
+    sum_seg = np.sum(seg,axis=0,keepdims=False)
+    sum_seg = np.clip(sum_seg,a_min=1,a_max=10000)
+    inv_seg = 1.0/sum_seg.astype(np.float32)
+    inv_seg = np.expand_dims(inv_seg,axis=-1)
+
+    res = []
+    for i in range(seg.shape[0]):
+        c_seg = colorize_semantic_seg_by_label(seg[i],i,color_mapping=color_mapping)
+        res.append(c_seg*inv_seg)
+    res = np.stack(res,axis=0)
+    res = np.sum(res,axis=0,keepdims=False)
+
+    valid_mask = (sum_seg>0).astype(np.float32)
+    alpha = valid_mask*alpha
+    img_scale = 1.0-alpha
+
+    img = img*np.expand_dims(img_scale,axis=-1)+res*np.expand_dims(alpha,axis=-1)
+    img = np.clip(img,a_min=0,a_max=255).astype(np.uint8)
+
+    return img
+
+
+

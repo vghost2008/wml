@@ -4,9 +4,8 @@ import os
 import sys
 import random
 from collections import Iterable
-#sys.path.append(os.path.dirname(__file__))
 import math
-import object_detection2.wmath as wmath
+from .wmath import npsafe_divide
 import cv2 as cv
 import torch
 
@@ -30,7 +29,7 @@ def npbboxes_jaccard(bbox_ref, bboxes, name=None):
     union_vol = -inter_vol \
                 + (bboxes[2] - bboxes[0]) * (bboxes[3] - bboxes[1]) \
                 + (bbox_ref[2] - bbox_ref[0]) * (bbox_ref[3] - bbox_ref[1])
-    jaccard = wmath.npsafe_divide(inter_vol, union_vol, 'jaccard')
+    jaccard = npsafe_divide(inter_vol, union_vol, 'jaccard')
     return jaccard
 
 '''
@@ -466,7 +465,7 @@ bbox:[N,4](x0,y0,x1,y1)
 min_size:[W,H]
 return a list of new bbox with the minimum size 'size' 
 '''
-def torch_clamp_bboxes(bboxes,min_size):
+def torch_clamp_bboxes(bboxes,min_size,ignore_zero_size_bboxes=True):
     if not isinstance(min_size,Iterable):
         min_size = (min_size,min_size)
     xmin = bboxes[...,0]
@@ -479,6 +478,9 @@ def torch_clamp_bboxes(bboxes,min_size):
     w = xmax-xmin
     nh = torch.clamp(h,min=min_size[1])/2
     nw = torch.clamp(w,min=min_size[0])/2
+    if ignore_zero_size_bboxes:
+        nh = torch.where(h>0,nh,h)
+        nw = torch.where(w>0,nw,w)
     nymin = cy-nh
     nymax = cy+nh
     nxmin = cx-nw
@@ -686,7 +688,7 @@ def iou_matrix(bboxes0,bboxes1):
     areas1 = np.prod(bboxes1[...,2:]-bboxes1[...,:2],axis=-1)
     union_vol = areas0+areas1-inter_vol
 
-    return wmath.npsafe_divide(inter_vol,union_vol)
+    return npsafe_divide(inter_vol,union_vol)
 
 def giou_matrix(atlbrs, btlbrs):
     ious = np.zeros((len(atlbrs), len(btlbrs)), dtype=np.float32)

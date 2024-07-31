@@ -323,3 +323,9 @@ def log_imgs_with_bboxes(tb,name,imgs,targets,step,max_imgs=None):
     res_imgs = np.ascontiguousarray(res_imgs)
     tb.add_images(name,res_imgs,step,dataformats='NHWC')
 
+
+def log_semantic_seg(tb,name,img,seg,global_step,alpha=0.4,ignore_idx=255):
+    img = odv.draw_seg_on_img(img,seg,alpha=alpha,ignore_idx=ignore_idx)
+    tb.add_image(name,img,global_step,dataformats="HWC")
+
+    
