@@ -1067,7 +1067,8 @@ class GeneralCOCOEvaluation(BaseMetrics):
 
     def to_string(self):
         if 'mAP' in self.cached_values and 'mAP@.50IOU' in self.cached_values:
-            return f"{self.cached_values['mAP@.50IOU']:.3f}/{self.cached_values['mAP']:.3f}"
+            #return f"{self.cached_values['mAP@.50IOU']:.3f}/{self.cached_values['mAP']:.3f}"
+            return f"{self.cached_values['mAP@.50IOU']:.3f}"
         else:
             return f"N.A."
 
@@ -1278,7 +1279,7 @@ class ClassesWiseModelPerformace(BaseMetrics):
         self.data = []
         for i in range(self.num_classes):
             self.data.append(model_type(num_classes=num_classes,**model_args))
-        self.mp = model_type(num_classes=num_classes,cfg_name=self.cfg_name,**model_args)
+        self.mp = model_type(num_classes=num_classes,**model_args)
         self.label_trans = label_trans
         self.have_data = np.zeros([num_classes],dtype=np.bool)
 
