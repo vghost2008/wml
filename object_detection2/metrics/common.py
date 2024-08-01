@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractclassmethod
 
 class BaseMetrics(metaclass=ABCMeta):
-    def __init__(self) -> None:
+    def __init__(self,cfg_name="",**kwargs) -> None:
         self._current_info = ""
+        self.cfg_name = cfg_name
         pass
 
     def current_info(self):

@@ -926,7 +926,9 @@ class GeneralCOCOEvaluation(BaseMetrics):
     def __init__(self,categories_list=None,
                  num_classes=None,mask_on=False,label_trans=None,
                  classes_begin_value=1,
-                 min_bbox_size=0):
+                 min_bbox_size=0,
+                 **kwargs):
+        super().__init__(**kwargs)
         if categories_list is None:
             print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
             self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(num_classes)]
@@ -1030,6 +1032,10 @@ class GeneralCOCOEvaluation(BaseMetrics):
 
     def show(self,name=""):
         sys.stdout.flush()
+
+        if name is None or len(name)==0:
+            name = self.cfg_name
+
         print(f"Test size {self.num_examples()}")
         res = self.coco_evaluator.evaluate()
         str0 = "|配置|"
@@ -1091,6 +1097,7 @@ class COCOEvaluation(BaseMetrics):
     num_classes: 不包含背景 
     '''
     def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,**kwargs):
+        super().__init__(**kwargs)
         self.box_evaluator = COCOBoxEvaluation(categories_list=categories_list,
                                                num_classes=num_classes,
                                                label_trans=label_trans,
@@ -1246,8 +1253,11 @@ class COCOKeypointsEvaluation(BaseMetrics):
 
 @METRICS_REGISTRY.register()
 class ClassesWiseModelPerformace(BaseMetrics):
-    def __init__(self,num_classes,threshold=0.5,classes_begin_value=1,model_type=COCOEvaluation,model_args={},label_trans=None,
+    def __init__(self,num_classes,threshold=0.5,classes_begin_value=1,model_type=COCOEvaluation,
+                 model_args={},
+                 label_trans=None,
                  **kwargs):
+        super().__init__(**kwargs)
         self.num_classes = num_classes
         self.clases_begin_value = classes_begin_value
         model_args['classes_begin_value'] = classes_begin_value
@@ -1258,7 +1268,7 @@ class ClassesWiseModelPerformace(BaseMetrics):
         self.data = []
         for i in range(self.num_classes):
             self.data.append(model_type(num_classes=num_classes,**model_args))
-        self.mp = model_type(num_classes=num_classes,**model_args)
+        self.mp = model_type(num_classes=num_classes,cfg_name=self.cfg_name,**model_args)
         self.label_trans = label_trans
         self.have_data = np.zeros([num_classes],dtype=np.bool)
 
@@ -1331,7 +1341,7 @@ class ClassesWiseModelPerformace(BaseMetrics):
         print(f"Per classes")
         str0 = "|配置|"
         str1 = "|---|"
-        str2 = "||"
+        str2 = f"|{self.cfg_name}|"
         for i in range(self.num_classes):
             classes_id = i+1
             str0 += f"C{i+1}|"
