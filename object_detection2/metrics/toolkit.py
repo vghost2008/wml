@@ -598,6 +598,9 @@ class PrecisionAndRecall(BaseMetrics):
         if len(gtboxes)==0:
             gtboxes = np.zeros([0,4],dtype=gtboxes.dtype)
         
+        if boxes.size == 0:
+            boxes = np.zeros([0,4],dtype=boxes.dtype)
+        
         t_bboxes = np.concatenate([gtboxes,boxes],axis=0)
         if len(t_bboxes)>0:
             t_max = np.max(t_bboxes,axis=0)
@@ -1028,7 +1031,14 @@ class GeneralCOCOEvaluation(BaseMetrics):
 
     def evaluate(self):
         print(f"Test size {self.num_examples()}")
-        return self.coco_evaluator.evaluate()
+        res = self.coco_evaluator.evaluate()
+        for k,v in res.items():
+            index = k.find("/")
+            if index>0:
+                k = k[index+1:]
+            self.cached_values[k] = v
+        
+        return res
 
     def show(self,name=""):
         sys.stdout.flush()
@@ -1057,7 +1067,7 @@ class GeneralCOCOEvaluation(BaseMetrics):
 
     def to_string(self):
         if 'mAP' in self.cached_values and 'mAP@.50IOU' in self.cached_values:
-            return f"{self.cached_values['mAP']:.3f}/{self.cached_values['mAP@.50IOU']:.3f}"
+            return f"{self.cached_values['mAP@.50IOU']:.3f}/{self.cached_values['mAP']:.3f}"
         else:
             return f"N.A."
 
@@ -1342,6 +1352,13 @@ class ClassesWiseModelPerformace(BaseMetrics):
         str0 = "|配置|"
         str1 = "|---|"
         str2 = f"|{self.cfg_name}|"
+
+
+        #总体
+        str0 += f"ALL|"
+        str1 += "---|"
+        str2 += f"{str(self.mp.to_string())}|"
+
         for i in range(self.num_classes):
             classes_id = i+1
             str0 += f"C{i+1}|"
