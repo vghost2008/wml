@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument('src_dir', type=str, help='source video directory')
     parser.add_argument('out_dir', type=str, help='output rawframe directory')
     parser.add_argument(
-        '--split',
+        '--splits',
         type=float,
         nargs="+",
         default=[0.1,0.9], #val, train
@@ -178,6 +178,7 @@ if __name__ == "__main__":
         print("...")
     if not args.allow_empty:
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
+    wmlu.create_empty_dir_remove_if(args.out_dir)
     save_dir = wmlu.get_unused_path(args.out_dir)
     os.makedirs(save_dir)
     random.seed(int(time.time()))
@@ -189,7 +190,7 @@ if __name__ == "__main__":
         for i,(img_f,ann_f) in enumerate(all_files):
             labels = get_labels(ann_f,args.suffix)
             for l in set(labels):
-                label2files.append((img_f,ann_f))
+                label2files[l].append((img_f,ann_f))
         copyed_files = set()
         for k,v in label2files.items():
             copyed_files = split_one_set(v,args.src_dir,save_dir,args.splits,args,copyed_files=copyed_files)

@@ -7,6 +7,7 @@ import random
 import time
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
 from iotoolkit.labelme_toolkit import read_labelme_data
+from iotoolkit import get_auto_dataset_suffix
 import shutil
 
 '''
@@ -21,8 +22,8 @@ def parse_args():
     parser.add_argument(
         '--suffix',
         type=str,
-        default='xml',
-        choices=['json', 'xml', 'txt'],
+        default='auto',
+        choices=['json', 'xml', 'txt','auto'],
         help='annotation suffix')
     parser.add_argument(
         '--img-suffix',
@@ -76,6 +77,9 @@ def get_labels(ann_file,suffix):
 
 if __name__ == "__main__":
     args = parse_args()
+    if args.suffix == "auto":
+        args.suffix = get_auto_dataset_suffix(args.src_dir)
+
     if not args.no_imgs:
         img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
         ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]

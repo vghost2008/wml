@@ -15,6 +15,7 @@ from semantic.basic_toolkit import *
 from itertools import repeat
 import collections.abc
 import math
+import onnx
 
 try:
     from mmcv.parallel import DataContainer as DC
@@ -625,10 +626,30 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
         return _trunc_normal_(tensor, mean, std, a, b)
 
 
-def embedding_version2scores(scores,version,exponent):
+def embedding_version2scores(scores,version,exponent=2):
     assert version>=0 and version<100,f"ERROR: version need in range [0,100)"
     scale = math.pow(10,exponent)
     scores = (scores*scale).to(torch.int32).to(torch.float32)
     version = version/100
     scores = (scores+version)/scale
     return scores
+
+
+def add_version2onnx(onnx_path,save_path,version):
+    model_proto = onnx.load(onnx_path)
+    #graph_proto = model_proto.graph
+    #model_metadata = {}
+    # 添加元数据
+    model_proto.metadata_props.extend([
+        onnx.helper.make_string_initializer(
+            'model_version',
+            onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[type(version)],
+            [1],
+            [version],
+        )
+    ])
+    if save_path is None:
+        save_path = onnx_path
+    onnx.save(model_proto,save_path)
+    
+    
