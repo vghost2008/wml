@@ -6,3 +6,11 @@ from .object365v2_toolkit import *
 from .baidu_mask_toolkit import *
 from .labelmemckeypoints_dataset import LabelmeMCKeypointsDataset
 from .common import get_auto_dataset_suffix
+
+def get_auto_dataset_type(data_dir):
+    for f in wmlu.find_files(data_dir,suffix=".json"):
+        return FastLabelMeData
+    for f in wmlu.find_files(data_dir,suffix=".xml"):
+        return PascalVOCData
+
+    return PascalVOCData

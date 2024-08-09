@@ -9,6 +9,7 @@ import argparse
 import os.path as osp
 import wml_utils as wmlu
 import wtorch.utils as wtu
+from iotoolkit import get_auto_dataset_type
 
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')
@@ -24,7 +25,7 @@ def parse_args():
         '--new-width', type=int, default=0, help='resize image width')
     parser.add_argument(
         '--new-height', type=int, default=0, help='resize image height')
-    parser.add_argument('--type', type=str, default='PascalVOCData',help='Data set type')
+    parser.add_argument('--type', type=str, default='auto',help='Data set type')
     parser.add_argument(
         '--line-width', type=int, default=2, help='line width')
     parser.add_argument(
@@ -57,8 +58,12 @@ if __name__ == "__main__":
     args = parse_args()
     view_nr = args.view_nr
     shuffle = view_nr>0
-    print(DATASETS,args.type)
-    data = DATASETS[args.type](label_text2id=None,shuffle=shuffle,absolute_coord=True)
+    if args.type == "auto":
+        dataset_type = get_auto_dataset_type(args.src_dir)
+    else:
+        print(DATASETS,args.type)
+        dataset_type = DATASETS[args.type]
+    data = dataset_type(label_text2id=None,shuffle=shuffle,absolute_coord=True)
     data.read_data(args.src_dir,img_suffix=args.ext)
 
     if view_nr>0:

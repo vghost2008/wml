@@ -87,3 +87,4 @@ def get_auto_dataset_suffix(data_dir,suffix="auto"):
         return "xml"
 
     return "xml"
+

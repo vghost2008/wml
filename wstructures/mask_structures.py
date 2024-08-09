@@ -148,6 +148,7 @@ class WPolygonMaskItem:
         '''
         只处理mask完全保留或者masp完全不保留的情况
         bbox: [x0,y0,x1,y1]
+        bbox的值可能为负值，如一个大的mask旋转后
         offset: [xoffset,yoffset]
         如果offset is not None, 先offset再用bbox crop
         ''' 
@@ -157,8 +158,6 @@ class WPolygonMaskItem:
 
         # clip the boundary
         bbox = bbox.copy()
-        bbox[0::2] = np.clip(bbox[0::2], 0, self.width-1)
-        bbox[1::2] = np.clip(bbox[1::2], 0, self.height-1)
         x1, y1, x2, y2 = bbox
         w = np.maximum(x2 - x1+1, 1)
         h = np.maximum(y2 - y1+1, 1)
@@ -940,7 +939,7 @@ class WBitmapMasks(WBaseMask):
             rotated_masks = bwmli.im_warp_affine(
                 self.masks.transpose((1, 2, 0)),
                 M=M,
-                out_shape=out_shape[::-1],
+                out_shape=out_shape[:2][::-1],
                 border_value=fill_val)
             if rotated_masks.ndim == 2:
                 # case when only one mask, (h, w)
