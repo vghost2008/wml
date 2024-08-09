@@ -807,3 +807,6 @@ def correct_bboxes(bboxes,size):
     bboxes = np.maximum(bboxes,0)
     bboxes = np.minimum(bboxes,np.array([[size[0],size[1],size[0],size[1]]]))
     return bboxes.astype(old_type)
+
+def equal_bboxes(bbox0,bbox1):
+    return np.all(bbox0==bbox1)
