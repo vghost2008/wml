@@ -130,16 +130,20 @@ class WPolygonMaskItem:
                 iou = odb.npbboxes_intersection_of_box0(obbox[None,:],bbox[None,:])
                 if iou<=1e-3: #如果剪切框与当前多边形的外包框没有交集，那么剪切的结果为空
                     continue
-                e_bbox = odb.bbox_of_boxes(np.stack([bbox,obbox],axis=0))
-                sub_cropped_masks = WPolygonMaskItem([ps.copy()],width=self.width,height=self.height)
-                f_cropped_masks = sub_cropped_masks.simple_crop(e_bbox)
-                f_bitmap_masks = WBitmapMasks(f_cropped_masks.bitmap()[None])
-                n_crop_bbox = bbox-np.array([e_bbox[0],e_bbox[1],e_bbox[0],e_bbox[1]])
-                f_bitmap_masks = f_bitmap_masks.crop(n_crop_bbox)
-                t_masks,res_bboxes,keep = f_bitmap_masks.polygon()
-                if not keep[0]:
-                    continue
-                f_poly_masks = t_masks[0]
+                if 0==bbox[0] and 0==bbox[1] and x1<=bbox[2] and y2<=bbox[3]:
+                    f_poly_masks = ps.copy()
+                else:
+                    e_bbox = odb.bbox_of_boxes(np.stack([bbox,obbox],axis=0))
+                    sub_cropped_masks = WPolygonMaskItem([ps.copy()],width=self.width,height=self.height)
+                    f_cropped_masks = sub_cropped_masks.simple_crop(e_bbox)
+                    f_bitmap_masks = WBitmapMasks(f_cropped_masks.bitmap()[None])
+                    n_crop_bbox = bbox-np.array([e_bbox[0],e_bbox[1],e_bbox[0],e_bbox[1]])
+                    f_bitmap_masks = f_bitmap_masks.crop(n_crop_bbox)
+                    t_masks,res_bboxes,keep = f_bitmap_masks.polygon()
+                    if not keep[0]:
+                        continue
+                    f_poly_masks = t_masks[0]
+
                 cropped_masks.extend(f_poly_masks)
             cropped_masks = WPolygonMaskItem(cropped_masks, width=w,height=h)
         return cropped_masks
