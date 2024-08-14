@@ -77,12 +77,12 @@ def get_text_pos_br(pmin,pmax,bbox,label):
     p1 = (pmax[0],pmax[1])
     return (p1[0]-5,p1[1])
 
-def random_color_fn(label):
+def random_color_fn(label,probs=None):
     del label
     nr = len(colors_tableau)
     return colors_tableau[random.randint(0,nr-1)]
 
-def fixed_color_fn(label):
+def fixed_color_fn(label,probs=None):
     color_nr = len(colors_tableau)
     return colors_tableau[label%color_nr]
 

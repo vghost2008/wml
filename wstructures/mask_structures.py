@@ -134,11 +134,11 @@ class WPolygonMaskItem:
                 e_bbox = odb.bbox_of_boxes(np.stack([bbox,obbox],axis=0)).astype(np.int32)
 
                 if 0==bbox[0] and 0==bbox[1] and x1<=bbox[2] and y2<=bbox[3]:
-                    f_poly_masks = ps.copy()
+                    f_poly_masks = [ps.copy()]
                 elif odb.equal_bboxes(bbox,e_bbox):
                     sub_cropped_masks = WPolygonMaskItem([ps.copy()],width=self.width,height=self.height)
                     f_cropped_masks = sub_cropped_masks.simple_crop(e_bbox)
-                    f_poly_masks = f_cropped_masks.points[0]
+                    f_poly_masks = f_cropped_masks.points
                 else:
                     sub_cropped_masks = WPolygonMaskItem([ps.copy()],width=self.width,height=self.height)
                     f_cropped_masks = sub_cropped_masks.simple_crop(e_bbox)

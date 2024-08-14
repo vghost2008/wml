@@ -27,6 +27,7 @@ else:
 
 BASE_KEY = '_base_'
 DELETE_KEY = '_delete_'
+OVERRIDE_KEY = "_override_"
 DEPRECATION_KEY = '_deprecation_'
 RESERVED_KEYS = ['filename', 'text', 'pretty_text']
 
@@ -134,6 +135,9 @@ class ConfigDict(Dict):
                     raise KeyError(f'Index {k} exceeds the length of list {b}')
                 b[k] = ConfigDict._merge_a_into_b(v, b[k], allow_list_keys)
             elif isinstance(v, dict):
+                if v.pop(OVERRIDE_KEY,False) and k not in b:
+                    info = f"ERROR: {OVERRIDE_KEY}==True and key {k} not in base."
+                    raise RuntimeError(info)
                 if k in b and not v.pop(DELETE_KEY, False):
                     allowed_types = (dict, list) if allow_list_keys else dict
                     if not isinstance(b[k], allowed_types):
@@ -392,7 +396,7 @@ class Config:
         return cfg_dict, cfg_text
 
     @staticmethod
-    def _merge_a_into_b(a, b, allow_list_keys=False):
+    def _merge_a_into_b(a, b, allow_list_keys=False,is_overide=False):
         """merge dict ``a`` into dict ``b`` (non-inplace).
 
         Values in ``a`` will overwrite ``b``. ``b`` is copied first to avoid
@@ -430,8 +434,12 @@ class Config:
                 k = int(k)
                 if len(b) <= k:
                     raise KeyError(f'Index {k} exceeds the length of list {b}')
-                b[k] = Config._merge_a_into_b(v, b[k], allow_list_keys)
+                b[k] = Config._merge_a_into_b(v, b[k], allow_list_keys,is_overide=is_overide)
             elif isinstance(v, dict):
+                n_is_overide = v.pop(OVERRIDE_KEY,is_overide)
+                if n_is_overide and k not in b:
+                    info = f"ERROR: {OVERRIDE_KEY}==True and key {k} not in base."
+                    raise RuntimeError(info)
                 if k in b and not v.pop(DELETE_KEY, False):
                     allowed_types = (dict, list) if allow_list_keys else dict
                     if b[k] is None:
@@ -443,7 +451,7 @@ class Config:
                             f'but is of type {type(b[k])} in base config. '
                             f'You may set `{DELETE_KEY}=True` to ignore the '
                             f'base config.')
-                    b[k] = Config._merge_a_into_b(v, b[k], allow_list_keys)
+                    b[k] = Config._merge_a_into_b(v, b[k], allow_list_keys,is_overide=n_is_overide)
                 else:
                     b[k] = ConfigDict(v)
             else:
