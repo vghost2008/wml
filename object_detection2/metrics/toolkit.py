@@ -1393,6 +1393,115 @@ class ClassesWiseModelPerformace(BaseMetrics):
             return self.mp.precision
 
 @METRICS_REGISTRY.register()
+class SizeWiseModelPerformace(BaseMetrics):
+    def __init__(self,num_classes,sizes=[100],threshold=0.5,classes_begin_value=1,model_type=COCOEvaluation,
+                 model_args={},
+                 label_trans=None,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.num_classes = num_classes
+        self.clases_begin_value = classes_begin_value
+        model_args['classes_begin_value'] = classes_begin_value
+
+        if isinstance(model_type,(str,bytes)):
+            model_type = METRICS_REGISTRY.get(model_type)
+
+        self.sizes = sizes
+        self.data = []
+        for i in range(len(sizes)+1):
+            self.data.append(model_type(num_classes=num_classes,**model_args))
+        self.mp = model_type(num_classes=num_classes,**model_args)
+        self.label_trans = label_trans
+        self.have_data = np.zeros([len(self.data)],dtype=np.bool)
+
+    def get_idx(self,gtbboxes):
+        '''
+        根据最大bboxes的大小确定
+        '''
+        wh = gtbboxes[...,2:]-gtbboxes[...,:2]
+        size = np.max(wh)
+        for i,s in enumerate(self.sizes):
+            if size<s:
+                return i
+        return len(self.sizes)
+
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=None,use_relative_coord=False,is_crowd=None):
+        if not isinstance(gtboxes,np.ndarray):
+            gtboxes = np.array(gtboxes)
+        if not isinstance(gtlabels,np.ndarray):
+            gtlabels = np.array(gtlabels)
+        if not isinstance(labels,np.ndarray):
+            labels = np.array(labels)
+        if self.label_trans is not None:
+            gtlabels = self.label_trans(gtlabels)
+            labels = self.label_trans(labels)
+        
+        if is_crowd is not None and not isinstance(is_crowd,np.ndarray):
+            is_crowd = np.array(is_crowd)
+            
+        
+        idx = self.get_idx(gtboxes)
+        self.data[idx](gtboxes,gtlabels,boxes,labels,probability,is_crowd=is_crowd,img_size=img_size,
+                        use_relative_coord=use_relative_coord)
+        self.have_data[idx] = True
+
+        self._current_info = ""
+
+        return self.mp(gtboxes,gtlabels,boxes,labels,probability,is_crowd=is_crowd,img_size=img_size,
+                        use_relative_coord=use_relative_coord)
+
+    def show(self):
+        sys.stdout.flush()
+        names = []
+        for i,s in enumerate(self.sizes):
+            names.append(f"<={s}")
+        names.append(f">{self.sizes[-1]}")
+        for i in range(len(self.data)):
+            if not self.have_data[i]:
+                continue
+            print(f"{names[i]}")
+            try:
+                self.data[i].show()
+            except:
+                print("N.A.")
+                pass
+        sys.stdout.flush()
+        print(f"---------------------------------------------------------------")
+        print(f"All sizes")
+        sys.stdout.flush()
+        self.mp.show()
+        sys.stdout.flush()
+        print(f"Per sizes")
+        str0 = "|配置|"
+        str1 = "|---|"
+        str2 = f"|{self.cfg_name}|"
+
+
+        #总体
+        str0 += f"ALL|"
+        str1 += "---|"
+        str2 += f"{str(self.mp.to_string())}|"
+
+        for i in range(len(self.data)):
+            str0 += f"{names[i]}|"
+            str1 += "---|"
+            str2 += f"{str(self.data[i].to_string())}|"
+        print(str0)
+        print(str1)
+        print(str2)
+        #wmlu.show_dict(self.classes_wise_results,format="{:.3f}")
+        sys.stdout.flush()
+        return str2
+
+    def __getattr__(self, item):
+        if item=="mAP":
+            return self.mp.mAP
+        elif item =="recall":
+            return self.mp.recall
+        elif item=="precision":
+            return self.mp.precision
+
+@METRICS_REGISTRY.register()
 class SubsetsModelPerformace(BaseMetrics):
     def __init__(self, num_classes, sub_sets,threshold=0.5, model_type=COCOEvaluation, classes_begin_value=1,model_args={},
                  label_trans=None,

@@ -22,6 +22,7 @@ from itertools import count
 from iotoolkit.object365v2_toolkit import Object365V2
 from object_detection2.data_process_toolkit import remove_class
 from collections import OrderedDict
+from walgorithm import lower_bound
 
 class DictDatasetReader:
 
@@ -73,7 +74,7 @@ def statistics_boxes(boxes,nr=100,name=""):
     #pd_sizes.plot(kind = 'kde', color = 'red', label ="kde")
     plt.grid(axis='y', alpha=0.75)
     plt.grid(axis='x', alpha=0.75)
-    plt.title(name+" area")
+    plt.title(name)
 
     plt.figure(1,figsize=(15,10))
     #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
@@ -99,14 +100,24 @@ def statistics_classes_per_img(data,nr=100):
     plt.title("classes nr per img")
     plt.show()
 
-def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5,level=0):
+def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5,level=0,size_array=[]):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     min_size = min(sizes)
     max_size = max(sizes)
     delta = (max_size-min_size)/bin_size
     l_bboxes = {}
+    if size_array is None or len(size_array)==0:
+        size_array = []
+        for i in range(bin_size-1):
+            size_array.append(min_size+delta+i*delta)
+    else:
+        bin_size = len(size_array)+1
+
     for i,s in enumerate(sizes):
-        index = int((s-min_size)/delta)
+        if s>size_array[-1]:
+            index = len(size_array)
+        else:
+            index = lower_bound(size_array,s)
         if index in l_bboxes:
             l_bboxes[index].append(boxes[i])
         else:
@@ -119,14 +130,15 @@ def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5,level=0):
         v = l_bboxes[k]
         print(k,len(v),f"{len(v)*100.0/len(boxes):.2f}%")
 
+    size_array = [min_size]+size_array+[max_size]
     for i in range(bin_size):
         if i not in l_bboxes:
             continue
         l_size = min_size + i* delta
         h_size = l_size + delta
-        statistics_boxes(l_bboxes[i],nr,name=f"area_{l_size:.3f}->{h_size:.3f}")
+        statistics_boxes(l_bboxes[i],nr,name=f"area_{size_array[i]:.3f}->{size_array[i+1]:.3f}: {len(l_bboxes[i])*100/len(sizes):.1f}%")
 
-    if level<1:
+    if False and level<1:
         branch_thr = 0.8
         for k,v in l_bboxes.items():
             if len(v)/len(boxes)>branch_thr:

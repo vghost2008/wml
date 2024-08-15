@@ -703,7 +703,7 @@ class WBitmapMasks(WBaseMask):
         self.height = height if height is not None else masks.shape[1]
 
         if self.width<5 or self.height<5:
-            print(f"WARNING: {self.__class__.__name__}: unnormal mask size, width={self.width}, height={self.height}")
+            print(f"WARNING: {self.__class__.__name__}: unnormal mask size, width={self.width}, height={self.height}, mask shape={masks.shape}")
 
         if len(masks) == 0:
             self.masks = np.zeros((0, self.height, self.width), dtype=np.uint8)

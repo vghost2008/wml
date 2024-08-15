@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument('src_dir', type=str, help='source video directory')
     parser.add_argument('--type', type=str, default="auto",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
+    parser.add_argument('--sizes', nargs="+",type=int,default=[],help='statistics by size')
     args = parser.parse_args()
     return args
 
@@ -81,8 +82,8 @@ if __name__ == "__main__":
                                           #trans_img_size=partial(trans_img_long_size_to,long_size=8192))
     statistics_boxes(statics[0], nr=nr)
     statistics_classes_per_img(statics[3])
-    statistics_boxes_by_different_area(statics[0],nr=nr,bin_size=5)
-    statistics_boxes_by_different_ratio(statics[0],nr=nr,bin_size=5)
+    statistics_boxes_by_different_area(statics[0],nr=nr,bin_size=5,size_array=args.sizes)
+    #statistics_boxes_by_different_ratio(statics[0],nr=nr,bin_size=5)
     #show_boxes_statistics(statics)
     show_classwise_boxes_statistics(statics[1],nr=nr)
 

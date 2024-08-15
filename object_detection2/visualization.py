@@ -405,7 +405,6 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
         or WPolygonMasks
     '''
     if isinstance(masks,WPolygonMasks):
-        print(f"draw WPolygonMasks")
         img = draw_maskv2_polygon(img,
                                   classes=classes,
                                   bboxes=bboxes,

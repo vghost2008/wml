@@ -205,3 +205,20 @@ def getRotationMatrix2D(center, angle, scale,out_offset=None):
     m = np.dot(rotate_m,offset_in)
     m = np.dot(offset_out,m)
     return m[:2]
+
+def lower_bound(datas, target):
+    """
+    对于升序数组，找到第一个大于等于（或不小于）给定值的目标元素的位置
+    """
+    if datas[-1]<target:
+        return -1
+    if datas[0]>=target:
+        return 0
+    left, right = 0, len(datas) - 1  # 闭区间[left, right]
+    while left <= right:  # 区间不为空
+        mid = (left + right) // 2
+        if datas[mid] < target:
+            left = mid + 1  # [mid + 1, right]
+        else:
+            right = mid - 1  # [left, mid - 1]
+    return left
