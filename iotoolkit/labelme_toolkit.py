@@ -67,17 +67,21 @@ class LabelMeData(object):
     def apply_filter_empty_files(self,files):
         new_files = []
         for fs in files:
-            img_file,json_file = fs
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
-                                                        use_polygon_mask=self.use_polygon_mask,
-                                                        **self.read_data_kwargs)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
-            labels = [self.label_text2id(x) for x in labels_names]
-            is_none = [x is None for x in labels]
-            if not all(is_none):
-                new_files.append(fs)
-            else:
-                print(f"File {json_file} is empty, remove from dataset, labels names {labels_names}, labels {labels}")
+            try:
+                img_file,json_file = fs
+                image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
+                                                            use_polygon_mask=self.use_polygon_mask,
+                                                            **self.read_data_kwargs)
+                labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
+                labels = [self.label_text2id(x) for x in labels_names]
+                is_none = [x is None for x in labels]
+                if not all(is_none):
+                    new_files.append(fs)
+                else:
+                    print(f"File {json_file} is empty, remove from dataset, labels names {labels_names}, labels {labels}")
+            except Exception as e:
+                print(f"Read {json_file} faild, info: {e}.")
+                pass
 
         return new_files
 

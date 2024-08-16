@@ -266,6 +266,56 @@ def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_
         annotatios_list.append(annotatios)
     save_labelme_datav2(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)
 
+def save_labelme_datav4(file_path,image_path,image,annotations_list,label_to_text=lambda x:str(x)):
+    '''
+    mask 仅包含bboxes中的部分
+    annotations_list[i]['bbox'] (x0,y0,x1,y1) 绝对坐标
+    annotations_list[i]["segmentation"] list[(N,2)] points
+    '''
+    data={}
+    shapes = []
+    data["version"] = "3.10.1"
+    data["flags"] = {}
+    if isinstance(label_to_text,dict):
+        label_to_text = wmlu.MDict.from_dict(label_to_text)
+    for ann in annotations_list:
+        masks = ann["segmentation"]
+        for mask in masks:
+            shape = {}
+            if label_to_text is not None:
+                shape["label"] = label_to_text(ann["category_id"])
+            else:
+                shape["label"] = ann["category_id"]
+            #shape["line_color"]=None
+            #shape["fill_color"]=None
+            shape["shape_type"]="polygon"
+            if isinstance(mask,np.ndarray):
+                mask = mask.tolist()
+            shape["points"] = mask
+            shapes.append(shape)
+
+    data["shapes"] = shapes
+    data["imagePath"] = os.path.basename(image_path)
+    data["imageWidth"] = image["width"]
+    data["imageHeight"] = image["height"]
+    data["imageData"] = None
+    with open(file_path,"w") as f:
+        json.dump(data,f)
+
+def save_labelme_datav5(file_path,image_path,image,labels,bboxes,masks,label_to_text=lambda x:str(x)):
+    '''
+    labels:[N]
+    bboxes:[N,4](x0,y0,x1,y1), 绝对坐标
+    masks:WPolygonMasks
+    '''
+    annotatios_list = []
+    for i in range(len(labels)):
+        annotatios = {"category_id":labels[i],
+        'segmentation':masks[i].points,
+        'bbox':bboxes[i]}
+        annotatios_list.append(annotatios)
+    save_labelme_datav4(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)
+
 def save_labelme_points_data(file_path,image_path,image,points,labels):
     '''
     points: [N,2] (x,y)

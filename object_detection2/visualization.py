@@ -192,7 +192,7 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                 color = color_fn(classes[i])
             else:
                 color = (random.random()*255, random.random()*255, random.random()*255)
-            print("Error:",img.shape,shape,bboxes[i],classes[i],p10,p2,color,thickness,e)
+            print("ERROR: object_detection2.visualization ",img.shape,shape,bboxes[i],classes[i],p10,p2,color,thickness,e)
             
 
     return img

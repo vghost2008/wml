@@ -40,6 +40,8 @@ def get_bboxes_by_contours(contours):
 def findContours(mask,mode=cv2.RETR_LIST,method=cv2.CHAIN_APPROX_SIMPLE):
     '''
     mask: [H,W] value is 0 or 1
+    return:
+    contours: list[[N,2]] 
     '''
     _contours,hierarchy = cv2.findContours(mask,mode=mode,method=method)
     contours = []

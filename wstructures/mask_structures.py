@@ -416,6 +416,35 @@ class WPolygonMasks(WBaseMask):
 
         return cls(masks=masks,width=width,height=height)
 
+    
+    @classmethod
+    def from_bboxes_masks(cls,bboxes,masks,*,width=None,height=None):
+        '''
+        bboxes: [N,4](x0,y0,x1,y1)
+        masks: [N,h,w] 仅包含bboxes内的部分
+        '''
+        items = []
+        for bbox,mask in zip(bboxes,masks):
+            x0,y0,x1,y1 = bbox
+            scale = np.reshape(np.array([(x1-x0)/mask.shape[1],(y1-y0)/mask.shape[0]],dtype=np.float32),[1,2])
+            offset = np.reshape(np.array([x0,y0],dtype=np.float32),[1,2])
+    
+            contours, hierarchy = findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            
+            shapes = []
+            for cont in contours:
+                points = cont
+                if len(cont.shape)==3 and cont.shape[1]==1:
+                    points = np.squeeze(points,axis=1)
+                points = points*scale+offset
+                points = points.astype(np.int32)
+                if len(points)<=2:
+                    continue
+                shapes.append(points)
+            items.append(WPolygonMaskItem(shapes,width=width,height=height))
+
+        return cls(masks=items,width=width,height=height)
+
     def copy(self):
         return WPolygonMasks(self.masks,width=self.width,height=self.height,exclusion=self.exclusion)
 
