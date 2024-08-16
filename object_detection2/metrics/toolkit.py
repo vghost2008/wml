@@ -650,6 +650,9 @@ class PrecisionAndRecall(BaseMetrics):
     def value(self):
         return self.f1
 
+    def detail_valus(self):
+        return self.precision,self.recall
+
     def to_string(self):
         try:
             return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1:.3f}/({self.total_test_nr})"
@@ -1391,6 +1394,13 @@ class ClassesWiseModelPerformace(BaseMetrics):
             return self.mp.recall
         elif item=="precision":
             return self.mp.precision
+
+    def evaluate(self):
+        [d.evaluate() for d in self.data]
+        self.mp.evaluate()
+    
+    def detail_valus(self):
+        return [d.detail_valus() for d in self.data]
 
 @METRICS_REGISTRY.register()
 class SizeWiseModelPerformace(BaseMetrics):

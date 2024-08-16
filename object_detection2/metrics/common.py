@@ -15,6 +15,12 @@ class BaseMetrics(metaclass=ABCMeta):
     @abstractclassmethod
     def show(self):
         pass
+
+    def value(self):
+        pass
+
+    def detail_valus(self):
+        return self.value()
     
 
 def safe_persent(v0,v1):

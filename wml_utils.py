@@ -266,6 +266,16 @@ class EstimateTimeCost(object):
         if self.auto_log:
             print(info)
 
+    def time_elapse(self):
+        return time.time() - self.begin_time
+
+    def time_remaind(self):
+        return ((time.time() - self.begin_time) / max(self.process_nr-self.begin_step, 1)) * (
+                    self.total_nr- self.process_nr)
+    
+    def total_time(self):
+        return ((time.time() - self.begin_time) / max(self.process_nr-self.begin_step, 1))*self.total_nr
+
     def __repr__(self):
         if self._time_datas is not None and self.process_nr-self._time_datas[0]>self.avg_step:
             self.begin_step = self._time_datas[0]
