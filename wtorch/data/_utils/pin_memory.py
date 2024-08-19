@@ -47,6 +47,7 @@ def _pin_memory_loop(in_queue, out_queue, device_id, done_event):
                 time.sleep(1e-4)
                 break
             except queue.Full:
+                time.sleep(1)
                 continue
         del r  # save memory
 
@@ -96,6 +97,7 @@ def _pin_memory_loop_stream(in_queue, out_queue, device_id, done_event,stream):
                 time.sleep(1e-4)
                 break
             except queue.Full:
+                time.sleep(1)
                 continue
         del r  # save memory
 

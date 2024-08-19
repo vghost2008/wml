@@ -179,7 +179,7 @@ if __name__ == "__main__":
     if not args.allow_empty:
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
     wmlu.create_empty_dir_remove_if(args.out_dir)
-    save_dir = wmlu.get_unused_path(args.out_dir)
+    save_dir = args.out_dir
     os.makedirs(save_dir)
     random.seed(int(time.time()))
     random.shuffle(all_files)
