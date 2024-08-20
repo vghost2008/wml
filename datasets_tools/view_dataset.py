@@ -5,11 +5,14 @@ from iotoolkit.pascal_voc_toolkit import PascalVOCData
 from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
 from iotoolkit.coco_toolkit import COCOData
 from iotoolkit.labelme_toolkit import LabelMeData
+from iotoolkit.fast_labelme import FastLabelMeData
 import argparse
 import os.path as osp
+import os
 import wml_utils as wmlu
 import wtorch.utils as wtu
 from iotoolkit import get_auto_dataset_type
+import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')
@@ -31,6 +34,10 @@ def parse_args():
     parser.add_argument(
         '--view-nr', type=int, default=-1, help='view dataset nr.')
     parser.add_argument('--suffix', type=str, help='suffix to output')
+    parser.add_argument(
+        '--copy-imgs',
+        action='store_true',
+        help='whether copy raw img to target')
     args = parser.parse_args()
 
     return args
@@ -47,6 +54,7 @@ register_dataset(PascalVOCData)
 register_dataset(COCOData)
 register_dataset(MapillaryVistasData)
 register_dataset(LabelMeData)
+register_dataset(FastLabelMeData)
 
 def simple_names(x):
     if "--" in x:
@@ -69,6 +77,10 @@ if __name__ == "__main__":
     if view_nr>0:
         data.files = data.files[:view_nr]
 
+    if args.copy_imgs:
+        if args.suffix is None or len(args.suffix)==0:
+            args.suffix = "_view"
+
     for x in data.get_items():
         full_path, img_info,category_ids, category_names, boxes,binary_masks,area,is_crowd,*_ =  x
         print(full_path)
@@ -84,6 +96,11 @@ if __name__ == "__main__":
             img = wmli.resize_height(img,args.new_height)
             r = img.shape[0]/old_shape[0]
             boxes = boxes*r
+        else:
+            r = None
+        
+        if r is not None and args.copy_imgs:
+            raw_img = img.copy()
 
         img = odv.draw_bboxes(
             img=img, classes=category_names, scores=None, 
@@ -95,12 +112,28 @@ if __name__ == "__main__":
             is_relative_coordinate=False,
             is_crowd=is_crowd)
 
+        filename = wmlu.get_relative_path(full_path,args.src_dir)
+
         if binary_masks is not None:
+            if r is not None:
+                binary_masks = binary_masks.resize(img.shape[:2][::-1])
             img = odv.draw_maskv2(img,category_names,boxes,binary_masks,is_relative_coordinate=False)
         if args.suffix is not None and len(args.suffix)>0:
-            save_path = osp.join(args.out_dir,wmlu.base_name(full_path)+args.suffix+osp.splitext(full_path)[-1])
+            r_filename = osp.splitext(filename)[0]
+            save_path = osp.join(args.out_dir,r_filename+args.suffix+osp.splitext(full_path)[-1])
+            if args.copy_imgs:
+                raw_save_path = osp.join(args.out_dir,filename)
+                t_dir_path = osp.dirname(raw_save_path)
+                if not osp.exists(t_dir_path):
+                    os.makedirs(t_dir_path)
+                if r is None:
+                    shutil.copy(full_path,raw_save_path)
+                else:
+                    wmli.imwrite(raw_save_path,raw_img)
         else:
-            save_path = osp.join(args.out_dir,osp.basename(full_path))
+            save_path = osp.join(args.out_dir,filename)
         print(save_path)
 
         wmli.imwrite(save_path,img)
+
+    print(f"Save dir: {args.out_dir}")

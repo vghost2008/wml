@@ -128,9 +128,13 @@ def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None):
             print(f"Update splits from {old_splits} to {splits}")
             break
     
+    names = ['val','train']
 
     for i,v in enumerate(splits):
-        t_save_dir = osp.join(save_dir,"data_"+str(v))
+        if i<=1:
+            t_save_dir = osp.join(save_dir,names[i])
+        else:
+            t_save_dir = osp.join(save_dir,"data_"+str(v))
         if i<len(splits)-1:
             if use_percent:
                 t_nr = int(v*len(all_files)+0.5)
@@ -180,7 +184,6 @@ if __name__ == "__main__":
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
     wmlu.create_empty_dir_remove_if(args.out_dir)
     save_dir = args.out_dir
-    os.makedirs(save_dir)
     random.seed(int(time.time()))
     random.shuffle(all_files)
     print(f"Find {len(all_files)} files")

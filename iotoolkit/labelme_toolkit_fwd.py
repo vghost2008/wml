@@ -135,7 +135,7 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
                 else:
                     segmentation = None
 
-                flags = shape['flags']
+                flags = shape.get('flags',{})
                 difficult = False
                 for k,v in flags.items():
                     if not v:
@@ -164,6 +164,7 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
             image["width"] = 1
             image["file_name"] = wmlu.base_name(file_path)
             print(f"Read file {os.path.basename(file_path)} faild, info {e}.")
+            annotations_list = []
             pass
     if use_semantic and not use_polygon_mask:
         '''
