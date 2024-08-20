@@ -760,6 +760,34 @@ class WBitmapMasks(WBaseMask):
     @classmethod
     def from_ndarray(cls,masks,*,width=None,height=None):
         return cls(masks=masks,width=width,height=height)
+
+    @classmethod
+    def from_bboxes_masks(cls,bboxes,masks,*,width=None,height=None):
+        '''
+        bboxes: [N,4](x0,y0,x1,y1)
+        masks: [N,h,w] 仅包含bboxes内的部分
+        '''
+        masks = masks.astype(np.uint8)
+
+        bboxes[:,0::2] = np.clip(bboxes[:,0::2],a_min=0,a_max=width)
+        bboxes[:,1::2] = np.clip(bboxes[:,1::2],a_min=0,a_max=height)
+        bitmap = np.zeros([bboxes.shape[0],height,width],dtype=np.uint8)
+        for i,bbox in enumerate(bboxes):
+            x = int(bbox[1])
+            y = int(bbox[0])
+            w = int((bbox[3]-bbox[1]))
+            h = int((bbox[2]-bbox[0]))
+            if w<=0 or h<=0:
+                continue
+            mask = masks[i]
+            mask = cv2.resize(mask,(w,h),interpolation=cv2.INTER_NEAREST)
+            try:
+                bitmap[i,y:y+h,x:x+w] = mask
+            except Exception as e:
+                print(f"ERROR WBitmapMasks: {e}")
+                pass
+    
+        return cls(masks=bitmap,width=width,height=height)
     
     def __getitem__(self, index):
         """Index the BitmapMask.
@@ -774,7 +802,7 @@ class WBitmapMasks(WBaseMask):
             masks = self.masks[index]
             return self.new(masks)
         except Exception as e:
-            print(f"ERROR: {e} index={index}, masks shape={self.masks.shape}, new masks shape {masks.shape}")
+            print(f"ERROR WBitmapMasks: {e} index={index}, masks shape={self.masks.shape}, new masks shape {masks.shape}")
             raise e
 
     def __setitem__(self,idxs,value):
