@@ -714,6 +714,9 @@ class EasyPrecisionAndRecall(BaseMetrics):
     def value(self):
         return self.f1
 
+    def detail_valus(self):
+        return self.precision,self.recall
+
     def to_string(self):
         try:
             return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1}/({self.total_test_nr})"
@@ -784,8 +787,8 @@ class ImgLevelPrecisionAndRecall(BaseMetrics):
         if self.total_test_nr==0:
             self.precision,self.recall = 0,0
             return
-        self.precision = self.tp/(self.fp+self.tp)
-        self.recall = self.tp/(self.fn+self.tp)
+        self.precision = self.tp/max(self.fp+self.tp,1)
+        self.recall = self.tp/max(self.fn+self.tp,1)
 
     @property
     def f1(self):
@@ -798,6 +801,9 @@ class ImgLevelPrecisionAndRecall(BaseMetrics):
 
     def value(self):
         return self.f1
+
+    def detail_valus(self):
+        return self.precision,self.recall
 
     def to_string(self):
         try:
