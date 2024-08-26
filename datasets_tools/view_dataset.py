@@ -33,7 +33,7 @@ def parse_args():
         '--line-width', type=int, default=2, help='line width')
     parser.add_argument(
         '--view-nr', type=int, default=-1, help='view dataset nr.')
-    parser.add_argument('--suffix', type=str, help='suffix to output')
+    parser.add_argument('--suffix', type=str, default="_view",help='suffix to output')
     parser.add_argument(
         '--copy-imgs',
         action='store_true',

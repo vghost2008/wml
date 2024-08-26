@@ -12,6 +12,7 @@ import wtorch.utils as wtu
 from object_detection2.metrics.toolkit import *
 from object_detection2.metrics.build import METRICS_REGISTRY
 from itertools import count
+from iotoolkit import get_auto_dataset_type
 import os
 
 def parse_args():
@@ -23,7 +24,7 @@ def parse_args():
         type=str,
         default='.jpg;;.bmp;;.jpeg;;.png',
         help='video file extensions')
-    parser.add_argument('--type', type=str, default='PascalVOCData',help='Data set type')
+    parser.add_argument('--type', type=str, default='auto',help='Data set type')
     parser.add_argument('--metrics', type=str, default='COCOEvaluation',help='metrics type')
     parser.add_argument('--save-dir', type=str, help='save dir for different annotation.')
     parser.add_argument('--classes-wise', action='store_true', help='is classes wise')
@@ -136,7 +137,7 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
         kwargs['img_size'] = shape
         eval(**kwargs)
 
-        if i % 1000 == 0:
+        if i % 5000 == 99:
             eval.show()
     
     eval.show()
@@ -151,11 +152,15 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
 if __name__ == "__main__":
 
     args = parse_args()
-    print(DATASETS,args.type)
-    data0 = DATASETS[args.type](label_text2id=None,shuffle=False,absolute_coord=True)
+    if args.type == "auto":
+        dataset_type = get_auto_dataset_type(args.dir0)
+    else:
+        print(DATASETS,args.type)
+        dataset_type = DATASETS[args.type]
+    data0 = dataset_type(label_text2id=None,shuffle=False,absolute_coord=True)
     data0.read_data(args.dir0,img_suffix=args.ext)
 
-    data1 = DATASETS[args.type](label_text2id=None,shuffle=False,absolute_coord=True)
+    data1 = dataset_type(label_text2id=None,shuffle=False,absolute_coord=True)
     data1.read_data(args.dir1,img_suffix=args.ext)
 
     model = METRICS_REGISTRY.get(args.metrics)

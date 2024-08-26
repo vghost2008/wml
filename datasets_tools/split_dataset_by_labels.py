@@ -59,7 +59,7 @@ def copy_files(imgf,annf,save_dir,add_nr,silent=False):
     if osp.exists(imgf):
         if not silent:
             print(imgf,"--->",osp.join(save_dir,basename+suffix))
-        wmlu.try_link(imgf,osp.join(save_dir,basename+suffix))
+        shutil.copy(imgf,osp.join(save_dir,basename+suffix))
     suffix = osp.splitext(annf)[1]
     if not silent:
         print(annf,"--->",osp.join(save_dir,basename+suffix))

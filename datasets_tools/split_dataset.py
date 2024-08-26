@@ -66,7 +66,7 @@ def copy_files(files,save_dir,add_nr,src_dir):
         os.makedirs(cur_save_dir,exist_ok=True)
 
         print(imgf,"--->",save_path)
-        wmlu.try_link(imgf,save_path)
+        shutil.copy(imgf,save_path)
         suffix = osp.splitext(annf)[1]
         print(annf,"--->",osp.join(save_dir,basename+suffix))
         shutil.copy(annf,osp.join(save_dir,basename+suffix))
