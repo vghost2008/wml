@@ -32,3 +32,9 @@ class ImageFolder:
 
     def __getitem__(self,idx):
         return self._data[idx]
+
+
+    @staticmethod
+    def get_label(file_path):
+        dirname = osp.dirname(osp.abspath(file_path))
+        return osp.basename(dirname).lower()

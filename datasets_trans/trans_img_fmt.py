@@ -26,7 +26,6 @@ if __name__ == "__main__":
     wmlu.create_empty_dir_remove_if(args.out_dir)
     for f in files:
         rp = wmlu.get_relative_path(f,args.src_dir)
-        print("A",rp,f)
         op = osp.join(args.out_dir,rp)
         op = wmlu.change_suffix(op,suffix=args.out_ext)
         try:
@@ -34,4 +33,4 @@ if __name__ == "__main__":
             wmli.read_and_write_img(f,op)
         except Exception as e:
             print(f"Trans {f} faild, {e}")
-        print(f,op)
+        print(f,"-->",op)

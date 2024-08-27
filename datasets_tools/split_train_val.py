@@ -8,6 +8,7 @@ import argparse
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
 from iotoolkit.labelme_toolkit import read_labelme_data
 from iotoolkit import get_auto_dataset_suffix
+from iotoolkit import ImageFolder
 import shutil
 import copy
 
@@ -42,6 +43,7 @@ def parse_args():
         default=".jpg;;.jpeg;;.bmp;;.png",
         help='img suffix')
     parser.add_argument(
+        '-ae',
         '--allow-empty',
         action='store_true',
         help='include img files without annotation')
@@ -50,6 +52,7 @@ def parse_args():
         action='store_true',
         help='only split xmls')
     parser.add_argument(
+        '-bl',
         '--by-labels',
         action='store_true',
         help='split by labels xmls')
@@ -80,6 +83,10 @@ def copy_files(files,save_dir,add_nr,src_dir):
 
         print(imgf,"--->",save_path)
         shutil.copy(imgf,save_path)
+
+        if not osp.exists(annf):
+            continue
+
         suffix = osp.splitext(annf)[1]
         print(annf,"--->",osp.join(save_dir,basename+suffix))
         shutil.copy(annf,osp.join(save_dir,basename+suffix))
@@ -91,6 +98,8 @@ def get_labels(ann_file,suffix):
         image,annotation_list = read_labelme_data(ann_file,label_text_to_id=None,mask_on=False)
         labels = [x['category_id'] for x in annotation_list]
         return labels
+    elif suffix == "none":
+        return [ImageFolder.get_label(ann_file)]
 
 
 def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None):

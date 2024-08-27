@@ -3,6 +3,8 @@ import wml_utils as wmlu
 def labels_statistics(labels,name=""):
     counter = wmlu.Counter()
     for l in labels:
+        if isinstance(l,(list,tuple)):
+            l = l[0]
         counter.add(l)
     
     counter = list(counter.items())

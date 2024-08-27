@@ -352,7 +352,8 @@ class ClassesWiseModelPerformace:
         self.accuracy.evaluate()
 
     def to_string(self):
-        res = ";".join([str(idx)+": "+d.to_string() for idx,d in enumerate(self.data)]+[self.accuracy.to_string()])
+        res = ";".join([str(idx)+": "+d.to_string() for idx,d in enumerate(self.data)])
+        res += ";; "+self.accuracy.to_string()
         if self.name is not None:
             res = f"{self.name}: "+res
         return res
