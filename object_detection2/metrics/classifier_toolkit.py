@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 import copy
+from .common import BaseClassifierMetrics
 from .build import CLASSIFIER_METRICS_REGISTRY
 
 
@@ -11,7 +12,7 @@ def _safe_persent(v0,v1):
         return v0*100./v1
 
 @CLASSIFIER_METRICS_REGISTRY.register()
-class Accuracy:
+class Accuracy(BaseClassifierMetrics):
     def __init__(self,topk=1,**kwargs):
         self.topk = topk
         self.all_correct = []
@@ -63,8 +64,11 @@ class Accuracy:
         print(f"accuracy={self.accuracy}")
         return self.accuracy
 
+    def value(self):
+        return self.accuracy
+
     def to_string(self):
-        return f"Accuracy={self.accuracy:.2f}"
+        return f"{self.accuracy:.2f}"
 
     def __repr__(self):
         return self.to_string()
@@ -95,10 +99,10 @@ class BAccuracy(Accuracy):
         return super().__call__(labels,target)
 
     def to_string(self):
-        return f"BAccuracy={self.accuracy:.2f}"
+        return f"{self.accuracy:.2f}"
 
 @CLASSIFIER_METRICS_REGISTRY.register()
-class PrecisionAndRecall:
+class PrecisionAndRecall(BaseClassifierMetrics):
     def __init__(self,**kwargs):
         self.all_output = []
         self.all_target = []
@@ -149,6 +153,9 @@ class PrecisionAndRecall:
         print(f"Test size {self.num_examples()}")
         print(self.to_string())
 
+    def value(self):
+        return f"P={self.precision:.2f}/R={self.recall:.2f}"
+
     def to_string(self):
         return f"P={self.precision:.2f}, R={self.recall:.2f}"
 
@@ -185,7 +192,7 @@ class BPrecisionAndRecall(PrecisionAndRecall):
         return f"BP={self.precision:.2f}, BR={self.recall:.2f}"
 
 @CLASSIFIER_METRICS_REGISTRY.register()
-class ConfusionMatrix:
+class ConfusionMatrix(BaseClassifierMetrics):
     def __init__(self,num_classes=-1,**kwargs):
         self.all_target = []
         self.all_pred = []
@@ -238,6 +245,19 @@ class ConfusionMatrix:
         print(self.to_string())
         return self.accuracy
 
+    def value(self,blod=True):
+        res = "\n"
+        for i in range(self.num_classes):
+            line = ""
+            for j in range(self.num_classes):
+                if blod and i==j:
+                    #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
+                    line += f"{self.cm[i,j]:<4}*, "
+                else:
+                    line += f"{self.cm[i,j]:<5}, "
+            res += line+"\n"
+        return res
+
     def to_string(self,blod=True):
         res = "\n"
         for i in range(self.num_classes):
@@ -258,7 +278,7 @@ class ConfusionMatrix:
         return self.cm
 
 @CLASSIFIER_METRICS_REGISTRY.register()
-class ClassesWiseModelPerformace:
+class ClassesWiseModelPerformace(BaseClassifierMetrics):
     def __init__(self,num_classes,classes_begin_value=0,model_type=PrecisionAndRecall,model_args={},label_trans=None,
                   name=None,
                   use_gt_and_pred_select=False,
@@ -357,12 +377,28 @@ class ClassesWiseModelPerformace:
         if self.name is not None:
             res = f"{self.name}: "+res
         return res
+    
+    def mark_down(self,name=""):
+        str0 = "|配置|"
+        str1 = "|---|"
+        str2 = f"|{name}|"
+        str0 += f"ALL|"
+        str1 += "---|"
+        str2 += f"{str(self.accuracy.to_string())}|"
+
+        for i in range(len(self.data)):
+            str0 += f"C{i+1}|"
+            str1 += "---|"
+            str2 += f"{str(self.data[i].to_string())}|"
+        print(str0)
+        print(str1)
+        print(str2)
 
     def __repr__(self):
         return self.to_string()
 
 @CLASSIFIER_METRICS_REGISTRY.register()
-class ComposeMetrics:
+class ComposeMetrics(BaseClassifierMetrics):
     def __init__(self,*args,**kwargs):
         self.metrics = list(args)+list(kwargs.values())
 
@@ -380,3 +416,6 @@ class ComposeMetrics:
 
     def value(self):
         return self.metrics[0].value()
+
+    def mark_down(self,name=""):
+        [m.mark_down(name=name) for m in self.metrics]

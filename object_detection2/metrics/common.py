@@ -49,3 +49,15 @@ class ComposeMetrics(BaseMetrics):
 
     def value(self):
         return self.metrics[0].value()
+
+class BaseClassifierMetrics(metaclass=ABCMeta):
+    def value(self):
+        pass
+    def to_string(self):
+        return str(self.value())
+
+    def __repr__(self):
+        return self.to_string()
+
+    def mark_down(self,name=""):
+        print(name,self.to_string())
