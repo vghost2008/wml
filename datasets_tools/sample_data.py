@@ -4,6 +4,7 @@ import random
 import wml_utils as wmlu
 import shutil
 from argparse import ArgumentParser
+from iotoolkit import get_auto_dataset_suffix
 
 '''
 从指定目录下采样sample-nr个文件，或者(sub-dir==True)从指定目标的每一个子目录中采样sample-nr个文件，并把采样的文件分子目录存在
@@ -15,7 +16,7 @@ def parse_args():
     parser.add_argument('src_dir', type=str, default="/home/wj/ai/mldata1/B7mura/datas/try_s0",help='source video directory')
     parser.add_argument('save_dir', type=str, help='save dir')
     parser.add_argument("--sample-nr",type=int,help="sample nr")
-    parser.add_argument("--suffix",type=str,default="xml", help="annotation suffix")
+    parser.add_argument("--suffix",type=str,default="auto", help="annotation suffix")
     parser.add_argument('--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
     args = parser.parse_args()
     return args
@@ -83,6 +84,8 @@ if __name__ == "__main__":
     args = parse_args()
     data_dir = args.src_dir
     save_dir = args.save_dir
+    if args.suffix == "auto":
+        args.suffix = get_auto_dataset_suffix(data_dir)
     wmlu.create_empty_dir(save_dir,False)
     data = sample_in_dir(data_dir,args.sample_nr,sample_in_sub_dirs=args.sub_dir)
     print(f"Save_path {save_dir}")

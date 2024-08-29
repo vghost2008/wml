@@ -1276,6 +1276,7 @@ class ClassesWiseModelPerformace(BaseMetrics):
     def __init__(self,num_classes,threshold=0.5,classes_begin_value=1,model_type=COCOEvaluation,
                  model_args={},
                  label_trans=None,
+                 classes=None,
                  **kwargs):
         super().__init__(**kwargs)
         self.num_classes = num_classes
@@ -1284,6 +1285,11 @@ class ClassesWiseModelPerformace(BaseMetrics):
 
         if isinstance(model_type,(str,bytes)):
             model_type = METRICS_REGISTRY.get(model_type)
+        
+        if classes is None:
+            classes = [f"C{i+1}" for i in range(num_classes)]
+        
+        self.classes = classes
 
         self.data = []
         for i in range(self.num_classes):
@@ -1371,7 +1377,7 @@ class ClassesWiseModelPerformace(BaseMetrics):
 
         for i in range(self.num_classes):
             classes_id = i+1
-            str0 += f"C{i+1}|"
+            str0 += f"{self.classes[i]}|"
             str1 += "---|"
             str2 += f"{str(self.data[i].to_string())}|"
             try:

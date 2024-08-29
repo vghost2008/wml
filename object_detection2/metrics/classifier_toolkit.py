@@ -14,6 +14,7 @@ def _safe_persent(v0,v1):
 @CLASSIFIER_METRICS_REGISTRY.register()
 class Accuracy(BaseClassifierMetrics):
     def __init__(self,topk=1,**kwargs):
+        super().__init__(**kwargs)
         self.topk = topk
         self.all_correct = []
         self.accuracy = 100.0
@@ -83,7 +84,7 @@ class BAccuracy(Accuracy):
         二分类的正确率，最后一个类别为背景，其它类别为前景，只需要将背景或前景分正确即可
         '''
         self.bk_classes = num_classes-1
-        super().__init__()
+        super().__init__(**kwargs)
 
     def __call__(self,output,target):
         '''
@@ -104,6 +105,7 @@ class BAccuracy(Accuracy):
 @CLASSIFIER_METRICS_REGISTRY.register()
 class PrecisionAndRecall(BaseClassifierMetrics):
     def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         self.all_output = []
         self.all_target = []
         self.recall = 100.0
@@ -194,6 +196,7 @@ class BPrecisionAndRecall(PrecisionAndRecall):
 @CLASSIFIER_METRICS_REGISTRY.register()
 class ConfusionMatrix(BaseClassifierMetrics):
     def __init__(self,num_classes=-1,**kwargs):
+        super().__init__(**kwargs)
         self.all_target = []
         self.all_pred = []
         self.accuracy = 100.0
@@ -282,13 +285,22 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
     def __init__(self,num_classes,classes_begin_value=0,model_type=PrecisionAndRecall,model_args={},label_trans=None,
                   name=None,
                   use_gt_and_pred_select=False,
+                  classes=None,
                  **kwargs):
+
+        super().__init__(**kwargs)
+
         self.num_classes = num_classes
         self.clases_begin_value = classes_begin_value
         model_args['classes_begin_value'] = classes_begin_value
 
         if isinstance(model_type,(str,bytes)):
             model_type = CLASSIFIER_METRICS_REGISTRY.get(model_type)
+
+        if classes is None:
+            classes = [f"C{i+1}" for i in range(num_classes)]
+        
+        self.classes = classes
 
         self.data = []
         for i in range(self.num_classes):
@@ -387,7 +399,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
         str2 += f"{str(self.accuracy.to_string())}|"
 
         for i in range(len(self.data)):
-            str0 += f"C{i+1}|"
+            str0 += f"C{self.classes[i]}|"
             str1 += "---|"
             str2 += f"{str(self.data[i].to_string())}|"
         print(str0)

@@ -51,8 +51,12 @@ class ComposeMetrics(BaseMetrics):
         return self.metrics[0].value()
 
 class BaseClassifierMetrics(metaclass=ABCMeta):
+    def __init__(self,*args,**kwargs):
+        pass
+
     def value(self):
         pass
+
     def to_string(self):
         return str(self.value())
 
