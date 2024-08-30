@@ -97,13 +97,14 @@ annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' 
 '''
 def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,use_semantic=True,
                       use_polygon_mask=False,
-                      circle_points_nr=20):
+                      circle_points_nr=20,
+                      do_raise=False):
     if mask_on == False:
         use_semantic = False
     annotations_list = []
     image = {}
-    with open(file_path,"r",encoding="utf-8") as f:
-        try:
+    try:
+        with open(file_path,"r",encoding="utf-8") as f:
             data_str = f.read()
             json_data = json.loads(data_str)
             img_width = int(json_data["imageWidth"])
@@ -159,13 +160,16 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
                                          "points_x":x,
                                          "points_y":y,
                                          "difficult":difficult})
-        except Exception as e:
-            image["height"] = 1
-            image["width"] = 1
-            image["file_name"] = wmlu.base_name(file_path)
-            print(f"Read file {os.path.basename(file_path)} faild, info {e}.")
-            annotations_list = []
-            pass
+    except Exception as e:
+        if do_raise:
+            raise e
+        image["height"] = 1
+        image["width"] = 1
+        image["file_name"] = wmlu.base_name(file_path)
+        print(f"Read file {os.path.basename(file_path)} faild, info {e}.")
+        annotations_list = []
+        pass
+
     if use_semantic and not use_polygon_mask:
         '''
         Each pixel only belong to one classes, and the latter annotation will overwrite the previous

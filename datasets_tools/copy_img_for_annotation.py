@@ -47,6 +47,7 @@ def copy_imgfiles(ann_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
         if base_name in all_img_files:
             files = all_img_files[base_name]
             if not isinstance(files,list):
+                print(f"{files} --> {ann_dir}")
                 shutil.copy(files,ann_dir)
                 copy_nr += 1
             else:

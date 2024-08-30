@@ -15,111 +15,27 @@ from functools import partial
 from .common import *
 from .labelme_toolkit_fwd import *
 from semantic.structures import *
+from .labelme_base import LabelMeBase
 import glob
 
-class FastLabelMeData(object):
+class FastLabelMeData(LabelMeBase):
     '''
     与LabelMeData的区别为生成的Mask使用多边形的方式保存
     '''
     def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,
                  filter_empty_files=False,
-                 resample_parameters=None):
+                 resample_parameters=None,
+                 read_data_kwargs={'circle_points_nr':20}):
         '''
         label_text2id: func(name)->int
         '''
-        self.files = None
-        if isinstance(label_text2id,dict):
-            self.label_text2id = partial(ignore_case_dict_label_text2id,
-                                         dict_data=wmlu.trans_dict_key2lower(label_text2id))
-        else:
-            self.label_text2id = label_text2id
-        self.shuffle = shuffle
-        self.absolute_coord = absolute_coord
-        self.filter_empty_files = filter_empty_files
-        if resample_parameters is not None:
-            self.resample_parameters = {}
-            for k,v in resample_parameters.items():
-                if isinstance(k,(str,bytes)):
-                    k = self.label_text2id(k)
-                self.resample_parameters[k] = v
-            print("resample parameters")
-            wmlu.show_dict(self.resample_parameters)
-        else:
-            self.resample_parameters = None
+        super().__init__(label_text2id=label_text2id,
+                         shuffle=shuffle,
+                         absolute_coord=absolute_coord,
+                         filter_empty_files=filter_empty_files,
+                         resample_parameters=resample_parameters,
+                         read_data_kwargs=read_data_kwargs)
         
-    def read_data(self,dir_path,img_suffix=".jpg;;.bmp;;.png;;.jpeg"):
-        _files = get_files(dir_path,img_suffix=img_suffix)
-        if self.filter_empty_files and self.label_text2id:
-            _files = self.apply_filter_empty_files(_files)
-        if self.resample_parameters is not None and self.label_text2id:
-            _files = self.resample(_files)
-        
-        self.files = _files
-
-        print(f"Total find {len(self.files)} in {dir_path}")
-        if self.shuffle:
-            random.shuffle(self.files)
-        print("Files")
-        wmlu.show_list(self.files[:100])
-        if len(self.files)>100:
-            print("...")
-
-    def apply_filter_empty_files(self,files):
-        new_files = []
-        for fs in files:
-            img_file,json_file = fs
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
-            labels = [self.label_text2id(x) for x in labels_names]
-            is_none = [x is None for x in labels]
-            if not all(is_none):
-                new_files.append(fs)
-            else:
-                print(f"File {json_file} is empty, remove from dataset, labels names {labels_names}, labels {labels}")
-
-        return new_files
-
-    def resample(self,files):
-        all_labels = []
-        for fs in files:
-            img_file,json_file = fs
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
-            labels = [self.label_text2id(x) for x in labels_names]
-            all_labels.append(labels)
-
-        return resample(files,all_labels,self.resample_parameters)
-
-    def __len__(self):
-        return len(self.files)
-
-    def get_ann_info(self,idx):
-        img_file,json_file = self.files[idx]
-        with open(json_file,"r",encoding="gb18030") as f:
-            data_str = f.read()
-            image = {}
-            try:
-                json_data = json.loads(data_str)
-                img_width = int(json_data["imageWidth"])
-                img_height = int(json_data["imageHeight"])
-                image["height"] = int(img_height)
-                image["width"] = int(img_width)
-                image["file_name"] = wmlu.base_name(json_file)
-            except:
-                pass
-        
-        return image
-    
-    def get_items(self):
-        '''
-        :return: 
-        full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
-        '''
-        for i in range(len(self.files)):
-            sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
-            sys.stdout.flush()
-            yield self.__getitem__(i)
-
     def __getitem__(self,idx):
         '''
         :return: 
@@ -128,7 +44,8 @@ class FastLabelMeData(object):
         bboxes:[N,4] (ymin,xmin,ymax,xmax)
         '''
         img_file, json_file = self.files[idx]
-        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,use_polygon_mask=True)
+        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,use_polygon_mask=True,
+                                                    **self.read_data_kwargs)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         masks = [ann["segmentation"] for ann in annotations_list]
         difficult = np.array([v['difficult'] for v in annotations_list],dtype=np.bool)
@@ -151,18 +68,6 @@ class FastLabelMeData(object):
             
         return DetData(img_file, [image['height'],image['width']],labels, labels_names, bboxes, masks, None, difficult,None)
     
-    def get_boxes_items(self):
-        '''
-        :return: 
-        full_path,img_size,category_ids,boxes,is_crowd
-        '''
-        for i,(img_file, json_file) in enumerate(self.files):
-            sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
-            sys.stdout.flush()
-            image, annotations_list = read_labelme_data(json_file, None,mask_on=False)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
-            labels = [self.label_text2id(x) for x in labels_names]
-            yield DetBboxesData(img_file,[image['height'],image['width']],labels, bboxes,  None)
             
 if __name__ == "__main__":
     #data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
