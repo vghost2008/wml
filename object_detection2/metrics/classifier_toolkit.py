@@ -310,6 +310,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
         self.accuracy = Accuracy(topk=1)
         self.name = name
         self.use_gt_and_pred_select = use_gt_and_pred_select
+        self.total_eval_samples = 0
 
     def select_labels(self,labels,target,classes):
         if self.use_gt_and_pred_select:
@@ -351,6 +352,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
         idx = np.argsort(output,axis=-1)
         labels = np.reshape(idx[...,-1:],[-1])
         target = np.reshape(target,[-1])
+        self.total_eval_samples += target.size
 
         if self.label_trans is not None:
             labels = self.label_trans(labels)
@@ -379,12 +381,13 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
                 pass
 
     def evaluate(self):
+        print(f"Total eval samples {self.total_eval_samples}")
         for d in self.data:
             d.evaluate()
         self.accuracy.evaluate()
 
     def to_string(self):
-        res = ";".join([str(idx)+": "+d.to_string() for idx,d in enumerate(self.data)])
+        res = ";".join([str(self.classes[idx])+": "+d.to_string() for idx,d in enumerate(self.data)])
         res += ";; "+self.accuracy.to_string()
         if self.name is not None:
             res = f"{self.name}: "+res
@@ -399,7 +402,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
         str2 += f"{str(self.accuracy.to_string())}|"
 
         for i in range(len(self.data)):
-            str0 += f"C{self.classes[i]}|"
+            str0 += f"{self.classes[i]}|"
             str1 += "---|"
             str2 += f"{str(self.data[i].to_string())}|"
         print(str0)

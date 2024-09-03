@@ -94,6 +94,7 @@ class LabelMeBase(object):
                 img_file,json_file = fs
                 image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
                                                             use_polygon_mask=self.use_polygon_mask,
+                                                            do_raise=True,
                                                             **self.read_data_kwargs)
                 labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
                 if self.label_text2id:
@@ -108,13 +109,16 @@ class LabelMeBase(object):
     def resample(self,files):
         all_labels = []
         for fs in files:
-            img_file,json_file = fs
-            image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
-                                                        use_polygon_mask=self.use_polygon_mask,
-                                                        **self.read_data_kwargs)
-            labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
-            labels = [self.label_text2id(x) for x in labels_names]
-            all_labels.append(labels)
+            try:
+                img_file,json_file = fs
+                image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
+                                                            use_polygon_mask=self.use_polygon_mask,
+                                                            **self.read_data_kwargs)
+                labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
+                labels = [self.label_text2id(x) for x in labels_names]
+                all_labels.append(labels)
+            except Exception as e:
+                print(f"Labelme resample error: {e}")
 
         return resample(files,all_labels,self.resample_parameters)
 
