@@ -38,13 +38,13 @@
 
         },
         {
-            "name": "Python: tf2pb",
+            "name": "Python: split train val",
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "object_detection_tools/tf2pb.py",
+            "program": "datasets_tools/split_train_val.py",
             "console": "integratedTerminal",
-            "args":["--gpus" "1"  "--config-file" "gds1v2" "--save_pb_path" "model.pb"]
+            "args":["~/ai/mldata1/B5EP/raw_datasets/0902_jpg/" "~/ai/mldata1/B5EP/tmp/split_0902" "--max-nr" "32"]
         },
         {
             "name": "Python: cmp kps datasets",

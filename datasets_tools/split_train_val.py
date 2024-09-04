@@ -189,6 +189,10 @@ if __name__ == "__main__":
     wmlu.show_list(all_files[:100])
     if len(all_files)>100:
         print("...")
+
+    if args.suffix == "none":
+        args.allow_empty = True
+
     if not args.allow_empty:
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
     wmlu.create_empty_dir_remove_if(args.out_dir)
