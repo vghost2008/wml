@@ -396,7 +396,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
     def mark_down(self,name=""):
         str0 = "|配置|"
         str1 = "|---|"
-        str2 = f"|{name}|"
+        str2 = f"|CFG: {name}|"
         str0 += f"ALL|"
         str1 += "---|"
         str2 += f"{str(self.accuracy.to_string())}|"
