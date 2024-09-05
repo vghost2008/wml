@@ -634,6 +634,14 @@ def embedding_version2scores(scores,version,exponent=2):
     scores = (scores+version)/scale
     return scores
 
+def embedding_version2coord(coord,version,exponent=0):
+    assert version>=0 and version<100,f"ERROR: version need in range [0,100)"
+    scale = math.pow(10,exponent)
+    coord = (coord*scale).to(torch.int32).to(torch.float32)
+    version = version/100
+    coord = (coord+version)/scale
+    return coord
+
 
 def add_version2onnx(onnx_path,save_path,version):
     model_proto = onnx.load(onnx_path)
