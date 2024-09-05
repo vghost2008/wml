@@ -14,7 +14,7 @@ from .basic_visualization import *
 
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
 
-def draw_text_on_image(img,text,font_scale=1.2,color=(0.,255.,0.),pos=None):
+def draw_text_on_image(img,text,font_scale=1.2,color=(0.,255.,0.),pos=None,thickness=1):
     if isinstance(text,bytes):
         text = str(text,encoding="utf-8")
     if not isinstance(text,str):
@@ -23,6 +23,15 @@ def draw_text_on_image(img,text,font_scale=1.2,color=(0.,255.,0.),pos=None):
     size = cv2.getTextSize(text,fontFace=cv2.FONT_HERSHEY_COMPLEX,fontScale=font_scale,thickness=thickness)
     if pos is None:
         pos = (0,(img.shape[0]+size[0][1])//2)
+    elif pos.lower() == "tl":
+        text_size,_ = cv2.getTextSize(text,cv2.FONT_HERSHEY_DUPLEX,fontScale=font_scale,thickness=thickness)
+        tw,th = text_size
+        pos = (0,th+5)
+    elif pos.lower() == "bl":
+        text_size,_ = cv2.getTextSize(text,cv2.FONT_HERSHEY_DUPLEX,fontScale=font_scale,thickness=thickness)
+        tw,th = text_size
+        pos = (0,img.shape[0]-th-5)
+        
     cv2.putText(img, text, pos, cv2.FONT_HERSHEY_COMPLEX, fontScale=font_scale, color=color, thickness=thickness)
     return img
 

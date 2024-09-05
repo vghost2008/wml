@@ -37,7 +37,7 @@ def get_all_imgs(img_dir,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
 def copy_imgfiles(ann_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
     if ann_type == "auto":
         ann_type = "."+get_auto_dataset_suffix(ann_dir)
-    xml_files = glob.glob(osp.join(ann_dir,"*"+ann_type))
+    xml_files = wmlu.get_files(ann_dir,suffix=ann_type)
     all_img_files = get_all_imgs(img_dir)
     copy_nr = 0
     error_nr = 0
@@ -47,8 +47,9 @@ def copy_imgfiles(ann_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
         if base_name in all_img_files:
             files = all_img_files[base_name]
             if not isinstance(files,list):
-                print(f"{files} --> {ann_dir}")
-                shutil.copy(files,ann_dir)
+                cur_dir = osp.dirname(xf)
+                print(f"{files} --> {cur_dir}")
+                shutil.copy(files,cur_dir)
                 copy_nr += 1
             else:
                 print(f"ERROR: Find multi img files for {xf}, img files {files}")

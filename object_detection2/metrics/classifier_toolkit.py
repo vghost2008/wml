@@ -388,7 +388,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
 
     def to_string(self):
         res = ";".join([str(self.classes[idx])+": "+d.to_string() for idx,d in enumerate(self.data)])
-        res += ";; "+self.accuracy.to_string()
+        res += ";; ALL "+self.accuracy.to_string()
         if self.name is not None:
             res = f"{self.name}: "+res
         return res
@@ -396,7 +396,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
     def mark_down(self,name=""):
         str0 = "|配置|"
         str1 = "|---|"
-        str2 = f"|CFG: {name}|"
+        str2 = f"|CFG:{name}|"
         str0 += f"ALL|"
         str1 += "---|"
         str2 += f"{str(self.accuracy.to_string())}|"

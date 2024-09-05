@@ -16,7 +16,7 @@ class ImageFolder:
         if self._classes is None:
             self._classes = copy.deepcopy(sub_dirs)
         for dir in sub_dirs:
-            label = dir
+            label = dir.lower()
             if self.label_text2id is not None:
                 label = self.label_text2id(label)
             files = wmlu.get_files(osp.join(data_dir,dir),suffix=wmli.BASE_IMG_SUFFIX)
