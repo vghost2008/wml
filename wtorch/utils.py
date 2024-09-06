@@ -660,4 +660,10 @@ def add_version2onnx(onnx_path,save_path,version):
         save_path = onnx_path
     onnx.save(model_proto,save_path)
     
+def add_metadta2onnx(model_onnx,metadata):
+    #model_onnx = onnx.load(f)  # load onnx model
+    for k, v in metadata.items():
+        meta = model_onnx.metadata_props.add()
+        meta.key, meta.value = k, str(v)
     
+    return model_onnx
