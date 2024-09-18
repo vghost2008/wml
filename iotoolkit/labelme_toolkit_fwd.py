@@ -17,6 +17,7 @@ from semantic.structures import *
 import glob
 import math
 from walgorithm import points_on_circle
+import copy
 
 
 
@@ -195,14 +196,18 @@ def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=
         #shape["line_color"]=None
         #shape["fill_color"]=None
         shape["shape_type"]="polygon"
-        contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
-        for cont in contours:
+        contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        hierarchy = np.reshape(hierarchy,[-1,4]) 
+        for he,cont in zip(hierarchy,contours):
+            if he[-1]>=0 and cv.contourArea(cont) < cv.contourArea(contours[[he[-1]]]):
+                continue
             points = cont
             if len(cont.shape)==3 and cont.shape[1]==1:
                 points = np.squeeze(points,axis=1)
             points = points.tolist()
             shape["points"] = points
-            shapes.append(shape)
+            shapes.append(copy.deepcopy(shape))
+
     data["shapes"] = shapes
     data["imagePath"] = os.path.basename(image_path)
     data["imageWidth"] = image["width"]
@@ -237,9 +242,11 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
         scale = np.reshape(np.array([(x1-x0)/mask.shape[1],(y1-y0)/mask.shape[0]],dtype=np.float32),[1,2])
         offset = np.reshape(np.array([x0,y0],dtype=np.float32),[1,2])
 
-        contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
-        
-        for cont in contours:
+        contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        hierarchy = np.reshape(hierarchy,[-1,4]) 
+        for he,cont in zip(hierarchy,contours):
+            if he[-1]>=0 and cv.contourArea(cont) < cv.contourArea(contours[[he[-1]]]):
+                continue
             points = cont
             if len(cont.shape)==3 and cont.shape[1]==1:
                 points = np.squeeze(points,axis=1)
@@ -248,7 +255,7 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
             if len(points)<=2:
                 continue
             shape["points"] = points
-            shapes.append(shape)
+            shapes.append(copy.deepcopy(shape))
 
     data["shapes"] = shapes
     data["imagePath"] = os.path.basename(image_path)
@@ -300,7 +307,7 @@ def save_labelme_datav4(file_path,image_path,image,annotations_list,label_to_tex
             if isinstance(mask,np.ndarray):
                 mask = mask.tolist()
             shape["points"] = mask
-            shapes.append(shape)
+            shapes.append(copy.deepcopy(shape))
 
     data["shapes"] = shapes
     data["imagePath"] = os.path.basename(image_path)

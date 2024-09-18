@@ -10,11 +10,12 @@ import object_detection2.visualization as odv
 import img_utils as wmli
 from iotoolkit.pascal_voc_toolkit import PascalVOCData,read_voc_xml
 from iotoolkit.coco_toolkit import COCOData
-from iotoolkit.labelme_toolkit import LabelMeData
+from iotoolkit import FastLabelMeData
 import object_detection2.bboxes as odb 
 import pandas as pd
 import wml_utils as wmlu
 from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
+from iotoolkit import get_auto_dataset_suffix
 from sklearn.cluster import KMeans
 from functools import partial
 from argparse import ArgumentParser
@@ -26,10 +27,12 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('data_dir', type=str, help='source video directory')
     parser.add_argument('save_dir', type=str, help='save dir')
-    parser.add_argument('--type', type=str, default="xml",help='dataset type')
+    parser.add_argument('--type', type=str, default="auto",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     parser.add_argument('--min-size', type=int, default=0,help='min bbox size')
     parser.add_argument('--add-classes-name', action='store_true', help='min bbox size')
+    parser.add_argument('-np','--name-prefix', type=str, help='dataset type')
+    parser.add_argument('--no-draw',action='store_true', help="don't draw bbox on img.")
     args = parser.parse_args()
     return args
 
@@ -91,7 +94,7 @@ def coco2014_val_dataset():
     return data.get_items()
 
 def labelme_dataset(data_dir,labels):
-    data = LabelMeData(label_text2id=None,absolute_coord=True)
+    data = FastLabelMeData(label_text2id=None,absolute_coord=True)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
     data.read_data(data_dir,img_suffix="bmp;;jpg;;jpeg")
     #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
@@ -126,33 +129,39 @@ def mapillary_vistas_dataset():
     data.read_data(wmlu.home_dir("ai/mldata/mapillary_vistas/mapillary-vistas-dataset_public_v2.0"))
     return data.get_boxes_items()
 
-def cut_and_save_imgs_in_bboxes(dataset,save_dir,min_size=0,add_classes_name=False):
+def cut_and_save_imgs_in_bboxes(dataset,save_dir,min_size=0,add_classes_name=False,args=None):
     counter = wmlu.Counter()
     for idx,data in enumerate(dataset):
-        img_file, shape,labels, labels_names, bboxes,*_ = data
-        if len(labels_names)==0:
-            continue
-        print(f"Process {idx}/{len(dataset)}")
-        org_bboxes = bboxes.copy()
-        bboxes = odb.npscale_bboxes(bboxes,1.1)
-        if min_size>1:
-            bboxes = odb.clamp_bboxes(bboxes,min_size=min_size)
-        bboxes = bboxes.astype(np.int32)
-        img = wmli.imread(img_file)
-        base_name = wmlu.base_name(img_file)
-        for i,name in enumerate(labels_names):
-            v = counter.add(name)
-            if add_classes_name:
-                t_save_path = osp.join(save_dir,f"{name}_{base_name}.jpg")
-            else:
-                t_save_path = osp.join(save_dir,name,f"{base_name}.jpg")
-            #t_save_path = wmlu.get_unused_path_with_suffix(t_save_path,v)
-            bbox = bboxes[i]
-            simg = wmli.crop_img_absolute(img,bbox)
+        try:
+            img_file, shape,labels, labels_names, bboxes,*_ = data
+            if len(labels_names)==0:
+                continue
+            sys.stdout.write(f"Process {idx}/{len(dataset)}\r")
+            org_bboxes = bboxes.copy()
+            bboxes = odb.npscale_bboxes(bboxes,1.1)
             if min_size>1:
-                offset = np.array([bbox[0],bbox[1],bbox[0],bbox[1]])
-                simg = odv.draw_bbox(simg,org_bboxes[i]-offset,thickness=1,xy_order=False)
-            wmli.imwrite(t_save_path,simg)
+                bboxes = odb.clamp_bboxes(bboxes,min_size=min_size)
+            bboxes = bboxes.astype(np.int32)
+            img = wmli.imread(img_file)
+            base_name = wmlu.base_name(img_file)
+            for i,name in enumerate(labels_names):
+                if args.name_prefix is not None:
+                    name = args.name_prefix+name
+                v = counter.add(name)
+                if add_classes_name:
+                    t_save_path = osp.join(save_dir,f"{name}_{base_name}.jpg")
+                else:
+                    t_save_path = osp.join(save_dir,name,f"{base_name}.jpg")
+                t_save_path = wmlu.get_unused_path_with_suffix(t_save_path,v)
+                bbox = bboxes[i]
+                simg = wmli.crop_img_absolute(img,bbox)
+                if min_size>1:
+                    offset = np.array([bbox[0],bbox[1],bbox[0],bbox[1]])
+                    if not args.no_draw:
+                        simg = odv.draw_bbox(simg,org_bboxes[i]-offset,thickness=1,xy_order=False)
+                wmli.imwrite(t_save_path,simg)
+        except Exception as e:
+            print(f"ERROR: {e}")
 
 if __name__ == "__main__":
     nr = 100
@@ -172,6 +181,8 @@ if __name__ == "__main__":
     args = parse_args()
     data_dir = args.data_dir
     dataset_type = args.type
+    if dataset_type == "auto":
+        dataset_type = get_auto_dataset_suffix(data_dir)
     if dataset_type == "xml":
         dataset = pascal_voc_dataset(data_dir=data_dir,
                                      labels=args.labels,
@@ -181,5 +192,5 @@ if __name__ == "__main__":
                                   labels=args.labels
                                   )
     
-    cut_and_save_imgs_in_bboxes(dataset,args.save_dir,min_size=args.min_size,add_classes_name=args.add_classes_name)
+    cut_and_save_imgs_in_bboxes(dataset,args.save_dir,min_size=args.min_size,add_classes_name=args.add_classes_name,args=args)
     

@@ -25,7 +25,7 @@ class FastLabelMeData(LabelMeBase):
     def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,
                  filter_empty_files=False,
                  resample_parameters=None,
-                 read_data_kwargs={'circle_points_nr':20}):
+                 read_data_kwargs={'circle_points_nr':20},**kwargs):
         '''
         label_text2id: func(name)->int
         '''
@@ -34,7 +34,7 @@ class FastLabelMeData(LabelMeBase):
                          absolute_coord=absolute_coord,
                          filter_empty_files=filter_empty_files,
                          resample_parameters=resample_parameters,
-                         read_data_kwargs=read_data_kwargs)
+                         read_data_kwargs=read_data_kwargs,**kwargs)
         
     def __getitem__(self,idx):
         '''

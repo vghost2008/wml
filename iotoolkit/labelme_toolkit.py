@@ -22,7 +22,7 @@ class LabelMeData(LabelMeBase):
                  filter_empty_files=False,
                  resample_parameters=None,
                  use_polygon_mask=False,
-                 read_data_kwargs={'circle_points_nr':20}):
+                 read_data_kwargs={'circle_points_nr':20},**kwargs):
         '''
         label_text2id: func(name)->int
         '''
@@ -31,7 +31,7 @@ class LabelMeData(LabelMeBase):
                          absolute_coord=absolute_coord,
                          filter_empty_files=filter_empty_files,
                          resample_parameters=resample_parameters,
-                         read_data_kwargs=read_data_kwargs)
+                         read_data_kwargs=read_data_kwargs,**kwargs)
         self.use_polygon_mask = use_polygon_mask
 
     def __getitem__(self,idx):

@@ -26,21 +26,25 @@ from object_detection2.data_process_toolkit import remove_class
 from collections import OrderedDict
 from iotoolkit.image_folder import *
 from iotoolkit.classification_data_statistics import labels_statistics
+from thirdparty.registry import Registry
 
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('src_dir', type=str, help='source video directory')
-    parser.add_argument('--type', type=str, default="auto",help='dataset type')
+    parser.add_argument('--type', type=str, default="ImageFolder2",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     parser.add_argument('--sizes', nargs="+",type=int,default=[],help='statistics by size')
     args = parser.parse_args()
     return args
 
 if __name__ == "__main__":
+    CLASSIFICATION_REGISTER = Registry("CR")
+    CLASSIFICATION_REGISTER.register(ImageFolder)
+    CLASSIFICATION_REGISTER.register(ImageFolder2)
     args = parse_args()
     data_dir = args.src_dir
     #dataset_type = args.type
-    dataset_type = ImageFolder
+    dataset_type = CLASSIFICATION_REGISTER.get(args.type)
     dataset = dataset_type()
     dataset.read_data(args.src_dir)
     labels_statistics(dataset)

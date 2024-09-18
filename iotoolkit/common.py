@@ -83,6 +83,7 @@ def get_auto_dataset_suffix(data_dir,suffix="auto"):
 
     for f in wmlu.find_files(data_dir,suffix=".json"):
         return "json"
+
     for f in wmlu.find_files(data_dir,suffix=".xml"):
         return "xml"
 

@@ -19,6 +19,7 @@ import glob
 class LabelMeBase(object):
     def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,
                  filter_empty_files=False,
+                 filter_error=False,
                  resample_parameters=None,
                  use_polygon_mask=False,
                  read_data_kwargs={'circle_points_nr':20}):
@@ -34,6 +35,7 @@ class LabelMeBase(object):
         self.shuffle = shuffle
         self.absolute_coord = absolute_coord
         self.filter_empty_files = filter_empty_files
+        self.filter_error = filter_error
         self.read_data_kwargs = read_data_kwargs
         self.use_polygon_mask = use_polygon_mask
         if resample_parameters is not None:
@@ -51,7 +53,7 @@ class LabelMeBase(object):
         _files = get_files(dir_path,img_suffix=img_suffix)
         if self.filter_empty_files and self.label_text2id:
             _files = self.apply_filter_empty_files(_files)
-        else:
+        elif self.filter_error:
             _files = self.apply_filter_error_files(_files)
         if self.resample_parameters is not None and self.label_text2id:
             _files = self.resample(_files)
