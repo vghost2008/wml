@@ -140,7 +140,7 @@
             "request": "launch",
             "program": "datasets_tools/statistics_tools.py",
             "console": "integratedTerminal",
-            "args":["/home/wj/ai/mldata1/B10CFOD/workdir/cascade_cspnext_gfs2/tmp/auto_annotation"]
+            "args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
         },
     ]
     

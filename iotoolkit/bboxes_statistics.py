@@ -406,7 +406,7 @@ def pascal_voc_dataset(data_dir,labels=None):
         label_text2id = None
     
     #data = PascalVOCData(label_text2id=label_text2id,resample_parameters={6:8,5:2,7:2})
-    data = PascalVOCData(label_text2id=label_text2id,absolute_coord=True)
+    data = PascalVOCData(label_text2id=label_text2id,absolute_coord=True,silent=True)
 
     '''data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/train"
     data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/wt_06"
@@ -425,7 +425,7 @@ def pascal_voc_dataset(data_dir,labels=None):
     xmls = wmlu.get_files(data_dir,suffix=".xml")
     imgs = [wmlu.change_suffix(x,"jpg") for x in xmls]
     files = list(zip(imgs,xmls))
-    data.read_data(files,silent=True)
+    data.read_data(files)
     '''data.read_data(data_dir,
                    silent=True,
                    img_suffix=".bmp;;.jpg")'''

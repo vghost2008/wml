@@ -16,13 +16,17 @@ import copy
 from .common import *
 import object_detection2.bboxes as odb
 from .pascal_voc_toolkit_fwd import *
+from .base_dataset import BaseDataset
 
 
-class PascalVOCData(object):
+class PascalVOCData(BaseDataset):
     def __init__(self, label_text2id=None, shuffle=False,image_sub_dir=None,xml_sub_dir=None,
                  has_probs=False,
                  absolute_coord=False,
+                 filter_error=False,
+                 silent=False,
                  filter_empty_files=False,
+                 keep_no_ann_imgs=False,
                  resample_parameters=None,
                  ignore_case=True):
         '''
@@ -33,35 +37,17 @@ class PascalVOCData(object):
         :param xml_sub_dir:
         '''
         self.files = None
-        self.shuffle = shuffle
+        super().__init__(label_text2id=label_text2id,
+                          filter_empty_files=filter_empty_files,
+                          filter_error=filter_error,
+                          resample_parameters=resample_parameters,
+                          shuffle=shuffle,
+                          silent=silent,
+                          absolute_coord=absolute_coord,
+                          keep_no_ann_imgs=keep_no_ann_imgs)
         self.xml_sub_dir = xml_sub_dir
         self.image_sub_dir = image_sub_dir
         self.has_probs = has_probs
-        self.absolute_coord = absolute_coord
-        self.filter_empty_files = filter_empty_files
-        if isinstance(label_text2id,dict):
-            if ignore_case:
-                self.label_text2id = partial(ignore_case_dict_label_text2id,
-                    dict_data=wmlu.trans_dict_key2lower(label_text2id))
-            else:
-                self.label_text2id = partial(dict_label_text2id,dict_data=label_text2id)
-        else:
-            self.label_text2id = label_text2id
-
-        if resample_parameters is not None:
-            self.resample_parameters = {}
-            for k,v in resample_parameters.items():
-                if isinstance(k,(str,bytes)):
-                    k = self.label_text2id(k)
-                self.resample_parameters[k] = v
-            print("resample parameters")
-            wmlu.show_dict(self.resample_parameters)
-        else:
-            self.resample_parameters = None
-
-
-    def __len__(self):
-        return len(self.files)
 
     def __getitem__(self,idx):
         try:
@@ -69,7 +55,6 @@ class PascalVOCData(object):
         except Exception as e:
             print(f"ERROR: {e} {self.files[idx]}")
             print(self.files)
-        #print(xml_file)
         if not os.path.exists(xml_file):
             return img_file,None,np.zeros([0],dtype=np.int32),[],np.zeros([0,4],dtype=np.float32),None,None,None,None
         try:
@@ -99,82 +84,29 @@ class PascalVOCData(object):
         #使用difficult表示is_crowd
         return DetData(img_file, shape[:2],labels, labels_names, bboxes, None, None, difficult, probs)
 
-    def read_data(self,dir_path,silent=False,img_suffix=".jpg",check_xml_file=True):
-        if isinstance(dir_path,str):
-            print(f"Read {dir_path}")
-            if not os.path.exists(dir_path):
-                print(f"Data path {dir_path} not exists.")
-                return False
-            self.files = getVOCFiles(dir_path,image_sub_dir=self.image_sub_dir,
-                                 xml_sub_dir=self.xml_sub_dir,
-                                 img_suffix=img_suffix,
-                                 silent=silent,
-                                 check_xml_file=check_xml_file)
-        elif isinstance(dir_path,(list,tuple)) and isinstance(dir_path[0],(str,bytes)) and os.path.isdir(dir_path[0]):
-            self.files = self.get_files_from_dirs(dir_path,
-                              silent=silent,img_suffix=img_suffix,check_xml_file=check_xml_file)
-        else:
-            self.files = dir_path
-        if self.filter_empty_files and self.label_text2id:
-            self.files = self.apply_filter_empty_files(self.files)
-        if self.resample_parameters is not None and self.label_text2id:
-            self.files = self.resample(self.files)
-        
-        if len(self.files) == 0:
+    def find_files_in_dir(self,dir_path,img_suffix=".jpg"):
+        if not os.path.exists(dir_path):
+            print(f"Data path {dir_path} not exists.")
             return False
+        files = getVOCFiles(dir_path,image_sub_dir=self.image_sub_dir,
+                             xml_sub_dir=self.xml_sub_dir,
+                             img_suffix=img_suffix,
+                             silent=self.silent,
+                             check_xml_file=not self.keep_no_ann_imgs)
+        
+        return files
 
-        if self.shuffle:
-            random.shuffle(self.files)
-
-        return True
-
-    def get_files_from_dirs(self,dirs,silent=False,img_suffix=".jpg",check_xml_file=True):
-        all_files = []
-        for dir_path in dirs:
-            files = getVOCFiles(dir_path,image_sub_dir=self.image_sub_dir,
-                                 xml_sub_dir=self.xml_sub_dir,
-                                 img_suffix=img_suffix,
-                                 silent=silent,
-                                 check_xml_file=check_xml_file)
-            all_files.extend(files)
-
-        return all_files
+    def get_labels(self,fs):
+        img_file,xml_file = fs
+        data = read_voc_xml(xml_file,
+                            adjust=None,
+                            aspect_range=None,
+                            has_probs=self.has_probs,
+                            absolute_coord=self.absolute_coord)
+        shape, bboxes, labels_names, difficult, truncated,probs = data
+        labels = [self.label_text2id(x) for x in labels_names]
+        return labels,labels_names
     
-    def apply_filter_empty_files(self,files):
-        new_files = []
-        for fs in files:
-            img_file,xml_file = fs
-            data = read_voc_xml(xml_file,
-                                adjust=None,
-                                aspect_range=None,
-                                has_probs=self.has_probs,
-                                absolute_coord=self.absolute_coord)
-            shape, bboxes, labels_names, difficult, truncated,probs = data
-            labels = [self.label_text2id(x) for x in labels_names]
-            is_none = [x is None for x in labels]
-            if not all(is_none):
-                new_files.append(fs)
-            else:
-                print(f"File {xml_file} is empty, labels names {labels_names}, labels {labels}")
-
-        return new_files
-    
-    def resample(self,files):
-        all_labels = []
-        for fs in files:
-            img_file,xml_file = fs
-            data = read_voc_xml(xml_file,
-                                adjust=None,
-                                aspect_range=None,
-                                has_probs=self.has_probs,
-                                absolute_coord=self.absolute_coord)
-            shape, bboxes, labels_names, difficult, truncated,probs = data
-            labels = [self.label_text2id(x) for x in labels_names]
-            all_labels.append(labels)
-
-        return resample(files,all_labels,self.resample_parameters)
-
-
     def get_items(self):
         '''
         :return: 

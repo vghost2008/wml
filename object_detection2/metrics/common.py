@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractclassmethod
+from abc import ABCMeta, abstractmethod
 
 class BaseMetrics(metaclass=ABCMeta):
     def __init__(self,cfg_name="",**kwargs) -> None:
@@ -12,7 +12,7 @@ class BaseMetrics(metaclass=ABCMeta):
     def __repr__(self):
         return self.to_string()
 
-    @abstractclassmethod
+    @abstractmethod
     def show(self):
         pass
 
