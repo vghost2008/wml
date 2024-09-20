@@ -92,7 +92,7 @@ class BaseDataset(metaclass=ABCMeta):
 
             print(f"Find {files_nr} in {dir_path}, repeat to {len(files)} files")
             raw_nr += files_nr
-            all_files.extend(files)
+            all_files.extend(list(files))
 
         print(f"Total find {raw_nr} files, repeat to {len(all_files)} files.")
         return all_files
@@ -112,8 +112,10 @@ class BaseDataset(metaclass=ABCMeta):
             print(f"Total find {len(self.files)} in {dir_path}")
         else:
             print(f"Total find {len(self.files)}")
+
         if self.shuffle:
             random.shuffle(self.files)
+
         print("Files")
         wmlu.show_list(self.files[:100])
         if len(self.files)>100:
@@ -159,7 +161,7 @@ class BaseDataset(metaclass=ABCMeta):
                 labels,_ = self.get_labels(fs)
                 all_labels.append(labels)
             except Exception as e:
-                print(f"Labelme resample error: {e}")
+                print(f"Basedataset resample error: {e}")
 
         return resample(files,all_labels,self.resample_parameters)
 

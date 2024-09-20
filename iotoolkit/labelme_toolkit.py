@@ -18,7 +18,7 @@ import glob
 from .labelme_base import LabelMeBase
 
 class LabelMeData(LabelMeBase):
-    def __init__(self,label_text2id=None,shuffle=False,absolute_coord=True,
+    def __init__(self,label_text2id=None,shuffle=True,absolute_coord=True,
                  filter_empty_files=False,
                  resample_parameters=None,
                  use_polygon_mask=False,
