@@ -171,7 +171,7 @@ def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,us
         annotations_list = []
         pass
 
-    if use_semantic and not use_polygon_mask:
+    if use_semantic and not use_polygon_mask and mask_on:
         '''
         Each pixel only belong to one classes, and the latter annotation will overwrite the previous
         '''
@@ -210,8 +210,14 @@ def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=
 
     data["shapes"] = shapes
     data["imagePath"] = os.path.basename(image_path)
-    data["imageWidth"] = image["width"]
-    data["imageHeight"] = image["height"]
+    if image is not None:
+        data["imageWidth"] = image["width"]
+        data["imageHeight"] = image["height"]
+    else:
+        height,width = wmli.get_img_size(image_path)
+        data["imageWidth"] = width
+        data["imageHeight"] = height
+
     data["imageData"] = None
     with open(file_path,"w") as f:
         json.dump(data,f)

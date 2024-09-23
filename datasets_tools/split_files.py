@@ -65,6 +65,10 @@ if __name__ == "__main__":
     args = parse_args()
     nr_per_dir = args.nr
     img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
+
+    random.seed(int(time.time()))
+    random.shuffle(img_files)
+
     ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
     basenames = [wmlu.base_name(x) for x in img_files]
     if len(basenames) == len(set(basenames)):
@@ -77,7 +81,6 @@ if __name__ == "__main__":
         all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
     save_dir = wmlu.get_unused_path(args.out_dir)
     os.makedirs(save_dir)
-    random.seed(int(time.time()))
     print(f"Find {len(all_files)} files")
 
     all_files = wmlu.list_to_2dlist(all_files,args.nr)

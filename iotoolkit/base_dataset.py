@@ -9,7 +9,7 @@ from functools import partial
 
 class BaseDataset(metaclass=ABCMeta):
     def __init__(self,label_text2id=None,
-                      filter_empty_files=False,filter_error=False,resample_parameters=None,shuffle=True,silent=False,keep_no_ann_imgs=False,absolute_coord=True,):
+                      filter_empty_files=False,filter_error=False,resample_parameters=None,shuffle=True,silent=False,keep_no_ann_imgs=False,absolute_coord=True,mask_on=False):
         '''
         label_text2id: func(name)->int
         '''
@@ -37,6 +37,7 @@ class BaseDataset(metaclass=ABCMeta):
         self.silent = silent
         self.keep_no_ann_imgs = keep_no_ann_imgs
         self.absolute_coord = absolute_coord
+        self.mask_on = mask_on
         pass
 
     def find_files(self,dir_path,img_suffix):

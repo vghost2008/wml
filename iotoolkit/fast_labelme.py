@@ -44,14 +44,15 @@ class FastLabelMeData(LabelMeBase):
         bboxes:[N,4] (ymin,xmin,ymax,xmax)
         '''
         img_file, json_file = self.files[idx]
-        image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,use_polygon_mask=True,
+        image, annotations_list = read_labelme_data(json_file, None,mask_on=self.mask_on,use_semantic=True,use_polygon_mask=True,
                                                     **self.read_data_kwargs)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
-        masks = [ann["segmentation"] for ann in annotations_list]
+        masks = [ann["segmentation"] for ann in annotations_list] if self.mask_on else None
         difficult = np.array([v['difficult'] for v in annotations_list],dtype=np.bool)
         img_height = image['height']
         img_width = image['width']
-        masks = WPolygonMasks(masks,width=img_width,height=img_height)
+        if masks is not None:
+            masks = WPolygonMasks(masks,width=img_width,height=img_height)
         
         if self.label_text2id is not None:
             labels = [self.label_text2id(x) for x in labels_names]
@@ -60,7 +61,8 @@ class FastLabelMeData(LabelMeBase):
             labels = np.array(labels,dtype=np.int32)
             labels = labels[keep]
             bboxes = bboxes[keep]
-            masks = masks[keep]
+            if masks is not None:
+                masks = masks[keep]
             difficult = difficult[keep]
             labels_names = np.array(labels_names)[keep]
         else:

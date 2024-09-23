@@ -16,7 +16,10 @@ def parse_args():
     return args
 
 def remove_files(f):
-    os.remove(f)
+    try:
+        os.remove(f)
+    except Exception as e:
+        print(f"ERROR: {e}")
 
 def process_dir(data_dir,prefix,suffix):
     files = glob.glob(osp.join(data_dir,prefix+"*"+suffix))

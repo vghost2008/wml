@@ -25,6 +25,7 @@ class LabelMeBase(BaseDataset):
                  use_polygon_mask=False,
                  silent=False,
                  keep_no_ann_imgs=False,
+                 mask_on=True,
                  read_data_kwargs={'circle_points_nr':20}):
         '''
         label_text2id: func(name)->int
@@ -37,7 +38,8 @@ class LabelMeBase(BaseDataset):
                           shuffle=shuffle,
                           silent=silent,
                           absolute_coord=absolute_coord,
-                          keep_no_ann_imgs=keep_no_ann_imgs)
+                          keep_no_ann_imgs=keep_no_ann_imgs,
+                          mask_on=mask_on)
         self.read_data_kwargs = read_data_kwargs
         self.use_polygon_mask = use_polygon_mask
 
@@ -94,7 +96,7 @@ class LabelMeBase(BaseDataset):
         for i,(img_file, json_file) in enumerate(self.files):
             sys.stdout.write('\r>> read data %d/%d' % (i + 1, len(self.files)))
             sys.stdout.flush()
-            image, annotations_list = read_labelme_data(json_file, None,**self.read_data_kwargs)
+            image, annotations_list = read_labelme_data(json_file, None,mask_on=False,**self.read_data_kwargs)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
             labels = [self.label_text2id(x) for x in labels_names]
             yield DetBboxesData(img_file,[image['height'],image['width']],labels, bboxes,  None)
