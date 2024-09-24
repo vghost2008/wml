@@ -207,6 +207,8 @@ if __name__ == "__main__":
             labels = get_labels(ann_f,args.suffix)
             for l in set(labels):
                 label2files[l].append((img_f,ann_f))
+            if len(labels)==0:
+                label2files['NONE'].append((img_f,ann_f))
         copyed_files = set()
         for k,v in label2files.items():
             copyed_files = split_one_set(v,args.src_dir,save_dir,args.splits,args,copyed_files=copyed_files)

@@ -48,10 +48,13 @@ ratio: h/w
 def statistics_boxes(boxes,nr=100,name=""):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]
-    print(f"Min area size (sqrt(w*h)) {min(sizes):.2f}, max area size {max(sizes):.2f} (pixel), mean {np.mean(sizes):.2f}, std {np.std(sizes):.2f}.")
-    print(f"Min ratio {min(ratios):.2f}, max ratios {max(ratios):.2f}, mean: {np.mean(ratios):.2f}.")
-    rratios = [x if x>=1 else 1.0/max(x,1e-3) for x in ratios]
-    print(f"Real Ratio:Min {min(rratios):.2f}, max {max(rratios):.2f}, mean: {np.mean(rratios):.2f}, std: {np.std(rratios):.2f}.")
+    try:
+        print(f"Min area size (sqrt(w*h)) {min(sizes):.2f}, max area size {max(sizes):.2f} (pixel), mean {np.mean(sizes):.2f}, std {np.std(sizes):.2f}.")
+        print(f"Min ratio {min(ratios):.2f}, max ratios {max(ratios):.2f}, mean: {np.mean(ratios):.2f}.")
+        rratios = [x if x>=1 else 1.0/max(x,1e-3) for x in ratios]
+        print(f"Real Ratio:Min {min(rratios):.2f}, max {max(rratios):.2f}, mean: {np.mean(rratios):.2f}, std: {np.std(rratios):.2f}.")
+    except:
+        pass
     '''plt.figure(2,figsize=(10,10))
     n, bins, patches = plt.hist(sizes, nr, normed=None, facecolor='blue', alpha=0.5)
     plt.grid(axis='y', alpha=0.75)
@@ -85,7 +88,10 @@ def statistics_boxes(boxes,nr=100,name=""):
     plt.grid(axis='x', alpha=0.75)
     plt.title(name+" ratio")
     plt.show()
-    print(max(ratios))
+    try:
+        print(max(ratios))
+    except:
+        pass
     return _statistics_value(sizes,nr),_statistics_value(ratios,nr)
 
 def statistics_classes_per_img(data,nr=100):
@@ -292,7 +298,10 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         else:
             org_labels_counter[_l] = 1
     example_nrs = np.array(example_nrs)
-    print(f"Max element size {np.max(example_nrs)}, element min {np.min(example_nrs)}, element mean {np.mean(example_nrs)}, element var {np.var(example_nrs)}.")
+    try:
+        print(f"Max element size {np.max(example_nrs)}, element min {np.min(example_nrs)}, element mean {np.mean(example_nrs)}, element var {np.var(example_nrs)}.")
+    except:
+        pass
     labels_counter = list(labels_counter.items())
     labels_counter.sort(key=lambda x:x[1],reverse=True)
 
@@ -305,7 +314,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         total_nr += v
 
     print(f"Total files contain crowd bboxes: {total_crowd_files}/{total_crowd_files*100/total_file_nr:.2f}%")
-    print(f"Total crowd bboxes: {total_crowd_bboxes}/{total_crowd_bboxes*100/total_nr:.2f}%")
+    print(f"Total crowd bboxes: {total_crowd_bboxes}/{total_crowd_bboxes*100/max(total_nr,1):.2f}%")
 
     print(f"Total bboxes count {total_nr}")
     print("\n--->BBoxes count:")
@@ -332,7 +341,10 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
 
     #show classes per img info
     classes_nr_per_img = np.array(classes_nr_per_img)
-    print(f"Classes per img, min={np.min(classes_nr_per_img)}, max={np.max(classes_nr_per_img)}, mean={np.mean(classes_nr_per_img)}, std={np.std(classes_nr_per_img)}")
+    try:
+        print(f"Classes per img, min={np.min(classes_nr_per_img)}, max={np.max(classes_nr_per_img)}, mean={np.mean(classes_nr_per_img)}, std={np.std(classes_nr_per_img)}")
+    except:
+        pass
 
     return [all_boxes,classeswise_boxes,labels_to_file,classes_nr_per_img]
 

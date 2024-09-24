@@ -15,7 +15,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('src_dir', type=str, default="/home/wj/ai/mldata1/B7mura/datas/try_s0",help='source video directory')
     parser.add_argument('save_dir', type=str, help='save dir')
-    parser.add_argument("--sample-nr",type=int,help="sample nr")
+    parser.add_argument("-nr","--sample-nr",type=int,help="sample nr")
     parser.add_argument("--suffix",type=str,default="auto", help="annotation suffix")
     parser.add_argument('--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
     args = parser.parse_args()

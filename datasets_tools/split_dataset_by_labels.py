@@ -67,11 +67,15 @@ def copy_files(imgf,annf,save_dir,add_nr,silent=False):
 
 def get_labels(ann_file,suffix):
     if suffix == "xml":
-        return read_voc_xml(ann_file)[2]
+        labels = read_voc_xml(ann_file)[2]
     elif suffix == "json":
         image,annotation_list = read_labelme_data(ann_file,label_text_to_id=None,mask_on=False)
         labels = [x['category_id'] for x in annotation_list]
-        return labels
+    
+    if len(labels)==0:
+        labels = ['NONE']
+
+    return labels
 
 
 
