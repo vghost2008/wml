@@ -444,6 +444,36 @@ def to_fraction(v):
             break
     return v,denominator
 
+def is_divide_exactly(lhv,rhv):
+    return (lhv//rhv)*rhv==lhv
+
+def lowest_common_multiple(a,b):
+    '''
+    最小公倍数
+    '''
+    if a==b:
+        return a
+
+    max_v = max(a,b)
+    min_v = min(a,b)
+
+    if is_divide_exactly(max_v,min_v):
+        return max_v
+
+    res = max_v*min_v
+
+    while True:
+        for i in range(1,min_v):
+            if is_divide_exactly(res,i):
+                tmp_v = res//i
+                if is_divide_exactly(tmp_v,max_v) and is_divide_exactly(tmp_v,min_v):
+                    res = tmp_v
+                    break
+        if i>=min_v-1:
+            break
+    
+    return res
+
 def dump2file(obj,file):
     if isinstance(file,(str,bytes)):
         with open(file,"wb") as f:
