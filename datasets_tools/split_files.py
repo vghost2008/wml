@@ -2,9 +2,10 @@ import argparse
 import wml_utils as wmlu
 import os.path as osp
 import os
-import math
+import shutil
 import random
 import time
+from iotoolkit.common import get_auto_dataset_suffix
 
 '''
 将文件拷贝到多个子目录，每个子目录nr个文件
@@ -18,7 +19,7 @@ def parse_args():
     parser.add_argument(
         '--suffix',
         type=str,
-        default='xml',
+        default='auto',
         choices=['json', 'xml', 'txt'],
         help='annotation suffix')
     parser.add_argument(
@@ -35,6 +36,10 @@ def parse_args():
         '--allow-empty',
         action='store_true',
         help='include img files without annotation')
+    parser.add_argument(
+        '--shuffle',
+        action='store_true',
+        help='shuffle imgage files')
     parser.add_argument(
         '--name',
         type=str,
@@ -54,9 +59,12 @@ def copy_files(files,save_dir,add_nr):
         suffix = osp.splitext(imgf)[1]
         print(imgf,"--->",osp.join(save_dir,basename+suffix))
         wmlu.try_link(imgf,osp.join(save_dir,basename+suffix))
+
+        if not osp.exists(annf):
+            continue
         suffix = osp.splitext(annf)[1]
         print(annf,"--->",osp.join(save_dir,basename+suffix))
-        wmlu.try_link(annf,osp.join(save_dir,basename+suffix))
+        shutil.copy(annf,osp.join(save_dir,basename+suffix))
 
 
 
@@ -66,8 +74,14 @@ if __name__ == "__main__":
     nr_per_dir = args.nr
     img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
 
+    if args.suffix == "auto":
+        args.suffix = get_auto_dataset_suffix(args.src_dir)
+
     random.seed(int(time.time()))
-    random.shuffle(img_files)
+    if args.shuffle:
+        random.shuffle(img_files)
+    else:
+        img_files.sort()
 
     ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
     basenames = [wmlu.base_name(x) for x in img_files]
