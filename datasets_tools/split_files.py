@@ -33,6 +33,11 @@ def parse_args():
         default=10000,
         help='files number per dir')
     parser.add_argument(
+        '--dir-nr',
+        type=int,
+        default=-1,
+        help='dir number')
+    parser.add_argument(
         '--allow-empty',
         action='store_true',
         help='include img files without annotation')
@@ -97,7 +102,10 @@ if __name__ == "__main__":
     os.makedirs(save_dir)
     print(f"Find {len(all_files)} files")
 
-    all_files = wmlu.list_to_2dlist(all_files,args.nr)
+    if args.dir_nr <= 1:
+        all_files = wmlu.list_to_2dlist(all_files,args.nr)
+    else:
+        all_files = wmlu.list_to_2dlistv2(all_files,args.dir_nr)
 
     for i,v in enumerate(all_files):
         t_save_dir = osp.join(save_dir,args.name+str(i))
