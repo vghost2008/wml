@@ -16,7 +16,7 @@ import object_detection2.bboxes as odb
 import pandas as pd
 import wml_utils as wmlu
 from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
-from iotoolkit import get_auto_dataset_suffix
+from iotoolkit import get_auto_dataset_suffix,check_dataset_dir
 from sklearn.cluster import KMeans
 from functools import partial
 from argparse import ArgumentParser
@@ -51,7 +51,7 @@ if __name__ == "__main__":
             k = min_size/ img_size[1]
         return [k*img_size[0],k*img_size[1]]'''
     args = parse_args()
-    data_dir = args.src_dir
+    data_dir = check_dataset_dir(args.src_dir)
     dataset_type = args.type
     if dataset_type == "auto":
         dataset_type = get_auto_dataset_suffix(data_dir)

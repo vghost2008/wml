@@ -78,6 +78,8 @@ def find_imgs_for_ann_file(ann_path):
 
 
 def get_auto_dataset_suffix(data_dir,suffix="auto"):
+    if isinstance(data_dir,(list,tuple)):
+        data_dir = data_dir[0]
     if suffix.lower() != "auto":
         return suffix
 
@@ -89,3 +91,9 @@ def get_auto_dataset_suffix(data_dir,suffix="auto"):
 
     return "none"
 
+def check_dataset_dir(dir_path):
+    if "," in dir_path:
+        dir_path = dir_path.split(",")
+        return [osp.abspath(osp.expanduser(p)) for p in dir_path]
+    else:
+        return osp.abspath(osp.expanduser(dir_path))

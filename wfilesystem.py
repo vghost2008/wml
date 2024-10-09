@@ -129,6 +129,10 @@ def recurse_get_filepath_in_dir(dir_path,suffix=None,prefix=None,followlinks=Fal
     '''
     suffix: example ".jpg;;.jpeg" , ignore case
     '''
+
+    if isinstance(dir_path,(list,tuple)):
+        return recurse_get_filepath_in_dirs(dir_path,suffix=suffix,prefix=prefix,followlinks=followlinks)
+
     dir_path = os.path.expanduser(dir_path)
 
     if os.path.isfile(dir_path):
@@ -221,10 +225,10 @@ def sibling_file_path(file_path,sibling_name):
     dir_path = dir_path_of_file(file_path)
     return osp.join(dir_path,sibling_name)
 
-def recurse_get_filepath_in_dirs(dirs_path,suffix=None,prefix=None):
+def recurse_get_filepath_in_dirs(dirs_path,suffix=None,prefix=None,followlinks=False):
     files = []
     for dir in dirs_path:
-        files.extend(recurse_get_filepath_in_dir(dir,suffix=suffix,prefix=prefix))
+        files.extend(recurse_get_filepath_in_dir(dir,suffix=suffix,prefix=prefix,followlinks=followlinks))
     files.sort()
     return files
 
@@ -323,9 +327,18 @@ def get_relative_path(path,ref_path):
         return path
 
     path = osp.abspath(path)
-    ref_path = osp.abspath(ref_path)
-    if not path.startswith(ref_path):
-        return path
+    if isinstance(ref_path,(list,tuple)):
+        ref_path = [osp.abspath(osp.expanduser(rp)) for rp in ref_path]
+        for rp in ref_path:
+            if path.startswith(rp):
+                ref_path = rp
+                break
+        if isinstance(ref_path,(list,tuple)):
+            return path
+    else:
+        ref_path = osp.abspath(ref_path)
+        if not path.startswith(ref_path):
+            return path
     res = path[len(ref_path):]
     if res[0] == osp.sep:
         return res[1:]

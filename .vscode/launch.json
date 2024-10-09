@@ -44,7 +44,8 @@
             "request": "launch",
             "program": "datasets_tools/split_train_val.py",
             "console": "integratedTerminal",
-            "args":["~/ai/mldata1/B5EP/raw_datasets/0902_jpg/" "~/ai/mldata1/B5EP/tmp/split_0902" "--max-nr" "32"]
+            //"args":["~/ai/mldata1/B5EP/raw_datasets/0902_jpg/" "~/ai/mldata1/B5EP/tmp/split_0902" "--max-nr" "32"]
+            "args":["~/ai/mldata1/B10AOIOLD/rawdatasets/to_label0930-All,~/ai/mldata1/B10AOIOLD/rawdatasets/tolabel_1002-All/" "~/ai/mldata1/B10AOIOLD/tmp/s1002" "--max-nr" "15" "--by-labels"],
         },
         {
             "name": "Python: cmp kps datasets",

@@ -7,7 +7,7 @@ import time
 import argparse
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
 from iotoolkit.labelme_toolkit import read_labelme_data
-from iotoolkit import get_auto_dataset_suffix
+from iotoolkit import get_auto_dataset_suffix,check_dataset_dir
 from iotoolkit import ImageFolder
 import shutil
 import copy
@@ -173,12 +173,13 @@ def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None):
 
 if __name__ == "__main__":
     args = parse_args()
-    args.suffix = get_auto_dataset_suffix(args.src_dir,args.suffix)
+    src_dir = check_dataset_dir(args.src_dir)
+    args.suffix = get_auto_dataset_suffix(src_dir,args.suffix)
     if not args.no_imgs:
-        img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
+        img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
         ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
     else:
-        ann_files = wmlu.get_files(args.src_dir,suffix=args.suffix)
+        ann_files = wmlu.get_files(src_dir,suffix=args.suffix)
         img_files = [wmlu.change_suffix(x,"jpg") for x in ann_files]
     basenames = [wmlu.base_name(x) for x in img_files]
     if len(basenames) == len(set(basenames)):
@@ -211,8 +212,8 @@ if __name__ == "__main__":
                 label2files['NONE'].append((img_f,ann_f))
         copyed_files = set()
         for k,v in label2files.items():
-            copyed_files = split_one_set(v,args.src_dir,save_dir,args.splits,args,copyed_files=copyed_files)
+            copyed_files = split_one_set(v,src_dir,save_dir,args.splits,args,copyed_files=copyed_files)
     else:
-        split_one_set(all_files,args.src_dir,save_dir,args.splits,args)
+        split_one_set(all_files,src_dir,save_dir,args.splits,args)
 
 
