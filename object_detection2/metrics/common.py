@@ -52,6 +52,7 @@ class ComposeMetrics(BaseMetrics):
 
 class BaseClassifierMetrics(metaclass=ABCMeta):
     def __init__(self,*args,**kwargs):
+        self._current_info = ""
         pass
 
     def value(self):
@@ -65,3 +66,6 @@ class BaseClassifierMetrics(metaclass=ABCMeta):
 
     def mark_down(self,name=""):
         print(name,self.to_string())
+
+    def current_info(self):
+        return self._current_info

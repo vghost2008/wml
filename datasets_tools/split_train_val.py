@@ -73,6 +73,7 @@ def copy_files(files,save_dir,add_nr,src_dir):
     for i,(imgf,annf) in enumerate(files):
         #basename = wmlu.base_name(imgf)
         basename = wmlu.get_relative_path(imgf,src_dir)
+
         basename = osp.splitext(basename)[0]
         if add_nr:
             basename = basename+f"_{i}"

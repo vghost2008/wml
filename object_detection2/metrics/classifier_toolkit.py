@@ -345,12 +345,15 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
 
     def __call__(self,output,target):
         '''
-        output: [N0,...,Nn,num_classes]
+        output: [N0,...,Nn,num_classes] or [N0,...,Nn]
         target: [N0,...,Nn]
         '''
         self.accuracy(output,target)
-        idx = np.argsort(output,axis=-1)
-        labels = np.reshape(idx[...,-1:],[-1])
+        if len(output.shape) > len(target.shape):
+            idx = np.argsort(output,axis=-1)
+            labels = np.reshape(idx[...,-1:],[-1])
+        else:
+            labels = output
         target = np.reshape(target,[-1])
         self.total_eval_samples += target.size
 

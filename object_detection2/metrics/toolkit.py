@@ -812,7 +812,7 @@ class ImgLevelPrecisionAndRecall(BaseMetrics):
             return "N.A."
 
     def __repr__(self):
-        res = f"total test nr {self.total_test_nr}, image level precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
+        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
         return res
 
 @METRICS_REGISTRY.register()
