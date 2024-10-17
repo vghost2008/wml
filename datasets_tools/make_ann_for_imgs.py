@@ -26,13 +26,21 @@ def make_xml_for_imgs(img_dir,ann_type="xml"):
     bboxes = np.zeros([0,4])
     labels_text = []
     for file in all_img_files:
-        xml_path = wmlu.change_suffix(file,"xml")
-        write_voc_xml(xml_path,file,[0,0], bboxes, labels_text)
+        save_path = wmlu.change_suffix(file,"xml")
+        if osp.exists(save_path):
+            print(f"Skip {save_path}")
+            continue
+        print(f"Save {save_path}")
+        write_voc_xml(save_path,file,[0,0], bboxes, labels_text)
 
 def make_json_for_imgs(img_dir,ann_type="json"):
     all_img_files = get_all_imgs(img_dir)
     for file in all_img_files:
         save_path = wmlu.change_suffix(file,"json")
+        if osp.exists(save_path):
+            print(f"Skip {save_path}")
+            continue
+        print(f"Save {save_path}")
         save_labelme_data(save_path,file,None,[])
 
 if __name__ == "__main__":
