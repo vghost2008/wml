@@ -19,7 +19,7 @@ import copy
 
 def parse_args():
     parser = argparse.ArgumentParser(description='split dataset')
-    parser.add_argument('src_dir', type=str, help='source video directory')
+    parser.add_argument('src_dir', type=str, nargs="+",help='source video directory')
     parser.add_argument('out_dir', type=str, help='output rawframe directory')
     parser.add_argument(
         '--splits',
@@ -60,6 +60,11 @@ def parse_args():
         '--silent',
         action='store_true',
         help='silent')
+    parser.add_argument(
+        '-bn',
+        '--basename',
+        action='store_true',
+        help='use basename, instead of releative path.')
     args = parser.parse_args()
 
     args = parser.parse_args()
@@ -67,12 +72,14 @@ def parse_args():
     return args
 
 
-def copy_files(files,save_dir,add_nr,src_dir):
+def copy_files(files,save_dir,add_nr,src_dir,use_basename=False):
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
     for i,(imgf,annf) in enumerate(files):
-        #basename = wmlu.base_name(imgf)
-        basename = wmlu.get_relative_path(imgf,src_dir)
+        if use_basename:
+            basename = wmlu.base_name(imgf)
+        else:
+            basename = wmlu.get_relative_path(imgf,src_dir)
 
         basename = osp.splitext(basename)[0]
         if add_nr:
@@ -103,7 +110,7 @@ def get_labels(ann_file,suffix):
         return [ImageFolder.get_label(ann_file)]
 
 
-def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None):
+def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None,use_basename=False):
     
     splits = copy.deepcopy(splits)
     max_nr = args.max_nr
@@ -168,13 +175,18 @@ def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None):
                     tmp_files.append((img_file,ann_file))
                     copyed_files.add(img_file)
 
-        copy_files(tmp_files,t_save_dir,add_nr,src_dir=src_dir)
+        copy_files(tmp_files,t_save_dir,add_nr,src_dir=src_dir,use_basename=use_basename)
 
     return copyed_files
 
 if __name__ == "__main__":
     args = parse_args()
+
+    if isinstance(args.src_dir,(list,tuple)) and len(args.src_dir)==1:
+        args.src_dir = args.src_dir[0]
+
     src_dir = check_dataset_dir(args.src_dir)
+    print(f"src dir: {src_dir}")
     args.suffix = get_auto_dataset_suffix(src_dir,args.suffix)
     if not args.no_imgs:
         img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
@@ -213,8 +225,8 @@ if __name__ == "__main__":
                 label2files['NONE'].append((img_f,ann_f))
         copyed_files = set()
         for k,v in label2files.items():
-            copyed_files = split_one_set(v,src_dir,save_dir,args.splits,args,copyed_files=copyed_files)
+            copyed_files = split_one_set(v,src_dir,save_dir,args.splits,args,copyed_files=copyed_files,use_basename=args.basename)
     else:
-        split_one_set(all_files,src_dir,save_dir,args.splits,args)
+        split_one_set(all_files,src_dir,save_dir,args.splits,args,use_basename=args.basename)
 
 

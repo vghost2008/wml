@@ -360,8 +360,8 @@ def change_name(path,suffix=None,prefix=None,basename=None):
         basename = prefix+basename
     if suffix is not None:
         basename = basename+suffix
-    suffix = os.path.splitext(path)[-1]
-    return os.path.join(dir_path,basename+suffix)
+    fmt_suffix = os.path.splitext(path)[-1]
+    return os.path.join(dir_path,basename+fmt_suffix)
 
 def change_dirname(path,dir):
     basename = os.path.basename(path)

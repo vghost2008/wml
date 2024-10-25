@@ -92,6 +92,8 @@ def get_auto_dataset_suffix(data_dir,suffix="auto"):
     return "none"
 
 def check_dataset_dir(dir_path):
+    if isinstance(dir_path,(list,tuple)):
+        return dir_path
     if "," in dir_path:
         dir_path = dir_path.split(",")
         return [osp.abspath(osp.expanduser(p)) for p in dir_path]

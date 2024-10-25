@@ -13,7 +13,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='arguments')
     parser.add_argument('img_dir', default=None,type=str,help='img_dir')
-    parser.add_argument('--type', default="xml",type=str,help='img_dir')
+    parser.add_argument('--type', default="json",type=str,help='img_dir')
     args = parser.parse_args()
     return args
 
