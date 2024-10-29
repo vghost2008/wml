@@ -1,5 +1,6 @@
 import random
 import os
+import os.path as osp
 import wml_utils as wmlu
 from .common import resample,ignore_case_dict_label_text2id
 from abc import ABCMeta, abstractmethod
@@ -40,14 +41,28 @@ class BaseDataset(metaclass=ABCMeta):
         self.mask_on = mask_on
         pass
 
+    def get_files_from_data_list_file(self,file_path):
+        res = []
+        with open(file_path,"r") as f:
+            lines = f.readlines()
+            for line in lines:
+                line = line.strip()
+                if "," in line:
+                    line = line.split(",")
+                res.append(line)
+        return res
+
     def find_files(self,dir_path,img_suffix):
+        if isinstance(dir_path,(list,tuple)) and len(dir_path)==1 and isinstance(dir_path[0],(str,bytes)):
+            dir_path = dir_path[0]
+
         if isinstance(dir_path,str):
             #从单一目录读取数据
             print(f"Read {dir_path}")
             if not os.path.exists(dir_path):
                 print(f"Data path {dir_path} not exists.")
                 return False
-            files = self.find_files_in_dir(dir_path)
+            files = self.find_files_in_dir_or_dl(dir_path,img_suffix=img_suffix)
         elif isinstance(dir_path,(list,tuple)):
             if isinstance(dir_path[0],(str,bytes)) and os.path.isdir(dir_path[0]):
                 '''
@@ -69,6 +84,14 @@ class BaseDataset(metaclass=ABCMeta):
         
         return files
 
+    def find_files_in_dir_or_dl(self,dir_path,img_suffix):
+        if osp.isfile(dir_path) and osp.splitext(dir_path)[-1].lower() == ".dl":
+            files = self.get_files_from_data_list_file(dir_path)
+        else:
+            files = self.find_files_in_dir(dir_path,img_suffix=img_suffix)
+
+        return files
+
     @abstractmethod
     def find_files_in_dir(self,dir_path,img_suffix):
         pass
@@ -76,7 +99,7 @@ class BaseDataset(metaclass=ABCMeta):
     def find_files_in_dirs(self,dirs,img_suffix=".jpg"):
         all_files = []
         for dir_path in dirs:
-            files = self.find_files_in_dir(dir_path,img_suffix)
+            files = self.find_files_in_dir_or_dl(dir_path,img_suffix)
             print(f"Find {len(files)} in {dir_path}")
             all_files.extend(files)
 
@@ -86,7 +109,7 @@ class BaseDataset(metaclass=ABCMeta):
         all_files = []
         raw_nr = 0
         for dir_path,repeat_nr in dirs:
-            files = self.find_files_in_dir(dir_path,img_suffix)
+            files = self.find_files_in_dir_or_dl(dir_path,img_suffix)
             files_nr = len(files)
             if repeat_nr>1:
                 files = list(files)*int(repeat_nr)

@@ -65,6 +65,11 @@ def parse_args():
         '--basename',
         action='store_true',
         help='use basename, instead of releative path.')
+    parser.add_argument(
+        '-txt',
+        '--txt',
+        action='store_true',
+        help='save txt files, instead copy files.')
     args = parser.parse_args()
 
     args = parser.parse_args()
@@ -98,6 +103,14 @@ def copy_files(files,save_dir,add_nr,src_dir,use_basename=False):
         suffix = osp.splitext(annf)[1]
         print(annf,"--->",osp.join(save_dir,basename+suffix))
         shutil.copy(annf,osp.join(save_dir,basename+suffix))
+
+def write_txt(files,save_dir,name):
+    if not osp.exists(save_dir):
+        os.makedirs(save_dir)
+    save_path = osp.join(save_dir,name+".dl")
+    with open(save_path,"a") as f:
+        for i,(imgf,annf) in enumerate(files):
+            f.write(imgf+","+annf+"\n")
 
 def get_labels(ann_file,suffix):
     if suffix == "xml":
@@ -141,7 +154,7 @@ def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None,use_b
     old_splits = copy.deepcopy(splits)
     for i,v in enumerate(splits):
         if v<0:
-            splits[i] = len(all_files)-total_nr
+            splits[i] = max(len(all_files)-total_nr,0)
             print(f"Update splits from {old_splits} to {splits}")
             break
     
@@ -149,9 +162,10 @@ def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None,use_b
 
     for i,v in enumerate(splits):
         if i<=1:
-            t_save_dir = osp.join(save_dir,names[i])
+            cur_name = names[i]
         else:
-            t_save_dir = osp.join(save_dir,"data_"+str(v))
+            cur_name = "data_"+str(v)
+        t_save_dir = osp.join(save_dir,cur_name)
         if i<len(splits)-1:
             if use_percent:
                 t_nr = int(v*len(all_files)+0.5)
@@ -175,7 +189,10 @@ def split_one_set(src_files,src_dir,save_dir,splits,args,copyed_files=None,use_b
                     tmp_files.append((img_file,ann_file))
                     copyed_files.add(img_file)
 
-        copy_files(tmp_files,t_save_dir,add_nr,src_dir=src_dir,use_basename=use_basename)
+        if args.txt:
+            write_txt(tmp_files,save_dir,cur_name)
+        else:
+            copy_files(tmp_files,t_save_dir,add_nr,src_dir=src_dir,use_basename=use_basename)
 
     return copyed_files
 

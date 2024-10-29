@@ -45,7 +45,8 @@
             "program": "datasets_tools/split_train_val.py",
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/B5EP/raw_datasets/0902_jpg/" "~/ai/mldata1/B5EP/tmp/split_0902" "--max-nr" "32"]
-            "args":["~/ai/mldata1/B10AOIOLD/rawdatasets/to_label0930-All,~/ai/mldata1/B10AOIOLD/rawdatasets/tolabel_1002-All/" "~/ai/mldata1/B10AOIOLD/tmp/s1002" "--max-nr" "15" "--by-labels"],
+            //"args":["~/ai/mldata1/B10AOIOLD/rawdatasets/to_label0930-All,~/ai/mldata1/B10AOIOLD/rawdatasets/tolabel_1002-All/" "~/ai/mldata1/B10AOIOLD/tmp/s1002" "--max-nr" "15" "--by-labels"],
+            "args":["~/ai/mldata1/B10CFOD/datasets/datasetv3.3/train/" "~/ai/mldata1/B10CFOD/tmp/sps" "--by-labels" "--max-nr" "1200" "--splits" "1200" "-1"  "-txt"],
         },
         {
             "name": "Python: cmp kps datasets",
@@ -141,7 +142,8 @@
             "request": "launch",
             "program": "datasets_tools/statistics_tools.py",
             "console": "integratedTerminal",
-            "args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
+            //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
+            "args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
         },
     ]
     

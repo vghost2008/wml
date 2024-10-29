@@ -78,10 +78,17 @@ def find_imgs_for_ann_file(ann_path):
 
 
 def get_auto_dataset_suffix(data_dir,suffix="auto"):
+
     if isinstance(data_dir,(list,tuple)):
         data_dir = data_dir[0]
     if suffix.lower() != "auto":
         return suffix
+
+    if isinstance(data_dir,str) and osp.isfile(data_dir):
+        with open(data_dir,"r") as f:
+            data_dir = f.readline().strip()
+        data_dir = data_dir.split(",")[0]
+        data_dir = osp.dirname(data_dir)
 
     for f in wmlu.find_files(data_dir,suffix=".json"):
         return "json"
