@@ -53,6 +53,7 @@ class BaseDataset(metaclass=ABCMeta):
         return res
 
     def find_files(self,dir_path,img_suffix):
+        dir_path = self.process_path(dir_path)
         if isinstance(dir_path,(list,tuple)) and len(dir_path)==1 and isinstance(dir_path[0],(str,bytes)):
             dir_path = dir_path[0]
 
@@ -191,6 +192,16 @@ class BaseDataset(metaclass=ABCMeta):
 
     def __len__(self):
         return len(self.files)
+
+    @staticmethod
+    def process_path(path):
+        if isinstance(path,(list,tuple)):
+            return [BaseDataset.process_path(x) for x in path]
+        if isinstance(path,(int,float)):
+            return path
+        if isinstance(path,(str,bytes)):
+            return osp.abspath(osp.expanduser(path))
+        return path
 
     
     
