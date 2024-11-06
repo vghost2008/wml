@@ -5,10 +5,12 @@ import wml_utils as wmlu
 import shutil
 from argparse import ArgumentParser
 from iotoolkit import get_auto_dataset_suffix
+from split_train_val import get_labels
 
 '''
 从指定目录下采样sample-nr个文件，或者(sub-dir==True)从指定目标的每一个子目录中采样sample-nr个文件，并把采样的文件分子目录存在
 save_dir中
+如果指定--by-labels那么从每个类采样nr个数据
 '''
 
 def parse_args():
@@ -18,6 +20,16 @@ def parse_args():
     parser.add_argument("-nr","--sample-nr",type=int,help="sample nr")
     parser.add_argument("--suffix",type=str,default="auto", help="annotation suffix")
     parser.add_argument('--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
+    parser.add_argument(
+        '-bl',
+        '--by-labels',
+        action='store_true',
+        help='split by labels xmls')
+    parser.add_argument(
+        '-kk',
+        '--keep-key',
+        action='store_true',
+        help='keep key in save dir')
     args = parser.parse_args()
     return args
 
@@ -63,10 +75,12 @@ def sample_in_dir(dir_path,nr,split_nr=None,sample_in_sub_dirs=True):
 
     return res
 
-def save_data(data,save_dir,suffix=None):
+def save_data(data,save_dir,suffix=None,keep_key=False):
     for k,v in data.items():
-        tsd = osp.join(save_dir,str(k))  #保存目录中包含key(子目录中采样就为子目录的名字)
-        #tsd = save_dir #保存目录不包含key
+        if keep_key:
+            tsd = osp.join(save_dir,str(k))  #保存目录中包含key(子目录中采样就为子目录的名字)
+        else:
+            tsd = save_dir #保存目录不包含key
         wmlu.create_empty_dir(tsd,False)
         for f in v:
             '''dir_name = wmlu.base_name(osp.dirname(f))
@@ -74,19 +88,63 @@ def save_data(data,save_dir,suffix=None):
                 print(f"Get dir name faild {f}.")
             name = dir_name+"_"+osp.join(osp.basename(f))
             os.link(f,osp.join(tsd,name))'''
-            wmlu.try_link(f,tsd)
+            save_path = osp.join(tsd,osp.basename(f))
+            shutil.copy(f,save_path)
             ann_path = wmlu.change_suffix(f,suffix)
             if osp.exists(ann_path):
-                shutil.copy(ann_path,tsd)
-            #shutil.copy(f,osp.join(tsd,name))
+                save_path = wmlu.change_suffix(save_path,suffix)
+                shutil.copy(ann_path,save_path)
+
+def sample_by_labels(args):
+    src_dir = args.src_dir
+    if not args.no_imgs:
+        img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
+        ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
+    else:
+        ann_files = wmlu.get_files(src_dir,suffix=args.suffix)
+        img_files = [wmlu.change_suffix(x,"jpg") for x in ann_files]
+
+    all_files = list(zip(img_files,ann_files))
+    wmlu.show_list(all_files[:100])
+    if len(all_files)>100:
+        print("...")
+
+    allow_empty = False
+    if args.suffix == "none":
+        allow_empty = True
+
+    if not allow_empty:
+        all_files = list(filter(lambda x:osp.exists(x[1]),all_files))
+
+    label2files = wmlu.MDict(dtype=list)
+    for i,(img_f,ann_f) in enumerate(all_files):
+        labels = get_labels(ann_f,args.suffix)
+        for l in set(labels):
+            label2files[l].append(img_f)
+        if len(labels)==0:
+            label2files['NONE'].append(img_f)
+    res = {}
+    for k,v in label2files:
+        if len(v)>args.sample_nr:
+            v = v[:args.sample_nr]
+        res[k] =  v
+    
+    return res
+
 
 if __name__ == "__main__":
     args = parse_args()
     data_dir = args.src_dir
     save_dir = args.save_dir
+    wmlu.create_empty_dir(save_dir,False)
+
     if args.suffix == "auto":
         args.suffix = get_auto_dataset_suffix(data_dir)
-    wmlu.create_empty_dir(save_dir,False)
-    data = sample_in_dir(data_dir,args.sample_nr,sample_in_sub_dirs=args.sub_dir)
+    if args.by_labels:
+        data = sample_by_labels(args)
+    else:
+        data = sample_in_dir(data_dir,args.sample_nr,sample_in_sub_dirs=args.sub_dir)
+
+    save_data(data,save_dir,suffix=args.suffix,keep_key=args.keep_key)
+
     print(f"Save_path {save_dir}")
-    save_data(data,save_dir,suffix=args.suffix)
