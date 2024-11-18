@@ -5,6 +5,7 @@ import sys
 import socket
 from functools import partial
 from basic_img_utils import BASE_IMG_SUFFIX
+from walgorithm import remove_non_ascii
 
 def get_filenames_in_dir(dir_path,suffix=None,prefix=None):
     if suffix is not None:
@@ -295,6 +296,17 @@ def base_name(v,process_suffix=True):
         return base_name
     else:
         return base_name[:index]
+
+def simple_base_name(v,process_suffix=True):
+    name = base_name(v,process_suffix=process_suffix)
+    name = remove_non_ascii(name)
+    name = name.replace("\\","")
+    return name
+
+def simple_path(path):
+    path = remove_non_ascii(path)
+    path = path.replace("\\","")
+    return path
 
 def remove_path_spliter(v):
     if v[-1] == "/" or v[-1] == "\\":

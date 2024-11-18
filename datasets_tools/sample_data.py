@@ -97,12 +97,8 @@ def save_data(data,save_dir,suffix=None,keep_key=False):
 
 def sample_by_labels(args):
     src_dir = args.src_dir
-    if not args.no_imgs:
-        img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
-        ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
-    else:
-        ann_files = wmlu.get_files(src_dir,suffix=args.suffix)
-        img_files = [wmlu.change_suffix(x,"jpg") for x in ann_files]
+    img_files = wmlu.get_img_files(src_dir)
+    ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
 
     all_files = list(zip(img_files,ann_files))
     wmlu.show_list(all_files[:100])
@@ -124,8 +120,9 @@ def sample_by_labels(args):
         if len(labels)==0:
             label2files['NONE'].append(img_f)
     res = {}
-    for k,v in label2files:
+    for k,v in label2files.items():
         if len(v)>args.sample_nr:
+            random.shuffle(v)
             v = v[:args.sample_nr]
         res[k] =  v
     

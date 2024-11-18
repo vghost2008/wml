@@ -22,6 +22,8 @@ def get_all_imgs(img_dir,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
     res = {}
     for f in files:
         basename = wmlu.base_name(f)
+        basename = basename.replace("\\","")
+        basename = wmlu.remove_non_ascii(basename)
         if basename in res:
             d = res[basename]
             if isinstance(d,str):
@@ -44,12 +46,15 @@ def copy_imgfiles(ann_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
     not_found_nr = 0
     for xf in xml_files:
         base_name = wmlu.base_name(xf)
+        base_name = wmlu.remove_non_ascii(base_name)
+        print(base_name)
         if base_name in all_img_files:
             files = all_img_files[base_name]
             if not isinstance(files,list):
                 cur_dir = osp.dirname(xf)
                 print(f"{files} --> {cur_dir}")
-                shutil.copy(files,cur_dir)
+                save_path = osp.join(cur_dir,wmlu.base_name(xf)+osp.splitext(files)[-1])
+                shutil.copy(files,save_path)
                 copy_nr += 1
             else:
                 print(f"ERROR: Find multi img files for {xf}, img files {files}")

@@ -939,6 +939,7 @@ class GeneralCOCOEvaluation(BaseMetrics):
                  num_classes=None,mask_on=False,label_trans=None,
                  classes_begin_value=1,
                  min_bbox_size=0,
+                 one_classes=False,
                  **kwargs):
         super().__init__(**kwargs)
         if categories_list is None:
@@ -958,6 +959,7 @@ class GeneralCOCOEvaluation(BaseMetrics):
         self.label_trans = label_trans
         self.image_id = 0
         self.cached_values = {}
+        self.one_classes = one_classes
     '''
     gtboxes:[N,4]
     gtlabels:[N]
@@ -993,6 +995,11 @@ class GeneralCOCOEvaluation(BaseMetrics):
         if self.label_trans is not None:
             gtlabels = self.label_trans(gtlabels)
             labels = self.label_trans(labels)
+        
+        if self.one_classes:
+            gtlabels = np.zeros_like(gtlabels)
+            labels = np.zeros_like(labels)
+
         if probability is not None and not isinstance(probability,np.ndarray):
             probability = np.array(probability)
         if gtlabels.shape[0]>0:
@@ -1129,6 +1136,57 @@ class COCOEvaluation(BaseMetrics):
                                                      num_classes=num_classes,
                                                      label_trans=label_trans,
                                                      classes_begin_value=classes_begin_value,
+                                                     **kwargs)
+    def __call__(self, *args, **kwargs):
+        self.box_evaluator(*args,**kwargs)
+        self._current_info = self.box_evaluator.current_info()
+        if self.mask_evaluator is not None:
+            self.mask_evaluator(*args,**kwargs)
+            self._current_info += ", mask" + self.mask_evaluator.current_info()
+
+    def num_examples(self):
+        return self.box_evaluator.num_examples()
+
+    def evaluate(self):
+        res = self.box_evaluator.evaluate()
+        if self.mask_evaluator is not None:
+            res1 = self.mask_evaluator.evaluate()
+            return res,res1
+        return res
+
+    def show(self,name=""):
+        self.box_evaluator.show(name=name)
+        if self.mask_evaluator is not None:
+            self.mask_evaluator.show(name=name)
+
+    def to_string(self):
+        if self.mask_evaluator is not None:
+            return self.box_evaluator.to_string()+";"+self.mask_evaluator.to_string()
+        else:
+            return self.box_evaluator.to_string()
+
+
+@METRICS_REGISTRY.register()
+class OneClassesCOCOEvaluation(BaseMetrics):
+    '''
+    num_classes: 不包含背景 
+    '''
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,**kwargs):
+        print(f"Init OneClassesCOCOEvaluation")
+        super().__init__(**kwargs)
+        self.box_evaluator = COCOBoxEvaluation(categories_list=categories_list,
+                                               num_classes=num_classes,
+                                               label_trans=label_trans,
+                                               classes_begin_value=classes_begin_value,
+                                               one_classes=True,
+                                               **kwargs)
+        self.mask_evaluator = None
+        if mask_on:
+            self.mask_evaluator = COCOMaskEvaluation(categories_list=categories_list,
+                                                     num_classes=num_classes,
+                                                     label_trans=label_trans,
+                                                     classes_begin_value=classes_begin_value,
+                                                     one_classes=True,
                                                      **kwargs)
     def __call__(self, *args, **kwargs):
         self.box_evaluator(*args,**kwargs)
@@ -1780,7 +1838,7 @@ class WMAP(BaseMetrics):
 
 @METRICS_REGISTRY.register()
 class DetConfusionMatrix(BaseMetrics):
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.1,threshold=0.1):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.1,threshold=0.5):
         super().__init__()
         if categories_list is None:
             print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
