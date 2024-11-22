@@ -1838,7 +1838,7 @@ class WMAP(BaseMetrics):
 
 @METRICS_REGISTRY.register()
 class DetConfusionMatrix(BaseMetrics):
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.1,threshold=0.5):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.5,threshold=0.3):
         super().__init__()
         if categories_list is None:
             print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
@@ -1926,6 +1926,9 @@ class DetConfusionMatrix(BaseMetrics):
 
     def show(self,name=""):
         #显示的最后一行，列为背景
+        '''
+        i行，j列: 表示gt类别i被分为类别j的数量
+        '''
         sys.stdout.flush()
         print(f"Test size {self.num_examples()}")
         self.evaluate()
