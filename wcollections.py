@@ -147,6 +147,9 @@ class Counter(dict):
         else:
             self[key] = nr
         return self[key]
+    
+    def total_size(self):
+        return np.sum(list(self.values()))
 
 class EDict(dict):
     '''
