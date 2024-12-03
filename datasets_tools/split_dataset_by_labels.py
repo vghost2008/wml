@@ -8,6 +8,7 @@ import time
 from iotoolkit.pascal_voc_toolkit import read_voc_xml
 from iotoolkit.labelme_toolkit import read_labelme_data
 from iotoolkit import get_auto_dataset_suffix
+from iotoolkit.image_folder import ImageFolder
 import shutil
 
 '''
@@ -48,7 +49,7 @@ def parse_args():
 
     return args
 
-def copy_files(imgf,annf,save_dir,add_nr,silent=False):
+def copy_files(imgf,annf,save_dir,add_nr,silent=False,allow_empty=False):
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -60,6 +61,10 @@ def copy_files(imgf,annf,save_dir,add_nr,silent=False):
         if not silent:
             print(imgf,"--->",osp.join(save_dir,basename+suffix))
         shutil.copy(imgf,osp.join(save_dir,basename+suffix))
+
+    if allow_empty and not osp.exists(annf):
+        return
+
     suffix = osp.splitext(annf)[1]
     if not silent:
         print(annf,"--->",osp.join(save_dir,basename+suffix))
@@ -71,7 +76,8 @@ def get_labels(ann_file,suffix):
     elif suffix == "json":
         image,annotation_list = read_labelme_data(ann_file,label_text_to_id=None,mask_on=False)
         labels = [x['category_id'] for x in annotation_list]
-    
+    elif suffix == "none":
+        labels = [ImageFolder.get_label(ann_file)]
     if len(labels)==0:
         labels = ['NONE']
 
@@ -83,6 +89,10 @@ if __name__ == "__main__":
     args = parse_args()
     if args.suffix == "auto":
         args.suffix = get_auto_dataset_suffix(args.src_dir)
+    
+    if args.suffix == "none":
+        args.no_imgs = False
+        args.allow_empty = True
 
     if not args.no_imgs:
         img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
@@ -112,6 +122,6 @@ if __name__ == "__main__":
         for l in set(labels):
             t_save_dir = osp.join(save_dir,l)
             os.makedirs(t_save_dir,exist_ok=True)
-            copy_files(img_f,ann_f,t_save_dir,add_nr,silent=args.silent)
+            copy_files(img_f,ann_f,t_save_dir,add_nr,silent=args.silent,allow_empty=args.allow_empty)
 
 

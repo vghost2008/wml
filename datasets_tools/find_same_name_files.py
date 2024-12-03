@@ -58,6 +58,8 @@ def print_info(name,files):
     if len(sizes)<len(files):
         for i,file in enumerate(files):
             print(f" ->{file} {os.path.getsize(file)} {wmlu.file_md5(file)}")
+            #print(f"remove {file}")
+            #os.remove(file)
     else:
         for i,file in enumerate(files):
             print(f" ->{file} {os.path.getsize(file)}")

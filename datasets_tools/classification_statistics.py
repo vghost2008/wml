@@ -30,7 +30,7 @@ from thirdparty.registry import Registry
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('src_dir', type=str, help='source video directory')
+    parser.add_argument('src_dir', type=str, nargs="+",help='source video directory')
     parser.add_argument('--type', type=str, default="ImageFolder2",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     parser.add_argument('--sizes', nargs="+",type=int,default=[],help='statistics by size')
