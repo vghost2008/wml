@@ -226,12 +226,16 @@ class MTimer():
         self.times = OrderedDict()
         self.sub_name = None
         self.last = 0
+        self.enter_size = 0
 
     def __enter__(self,name):
+        self.enter_size = len(self._begin_time)
         self.begin_time(name)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end_time()
+        while len(self._begin_time)>self.enter_size:
+            self.end_time()
 
     
     def begin_time(self,name):

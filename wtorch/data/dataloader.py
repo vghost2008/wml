@@ -266,11 +266,13 @@ class DataLoader(Generic[T_co]):
                                  'drop_last')
             batch_size = None
             drop_last = False
+            print(f"Use batch sampler")
         elif batch_size is None:
             # no auto_collation
             if drop_last:
                 raise ValueError('batch_size=None option disables auto-batching '
                                  'and is mutually exclusive with drop_last')
+            print(f"batch_size={batch_size}")
 
         if sampler is None:  # give default samplers
             if self._dataset_kind == _DatasetKind.Iterable:
