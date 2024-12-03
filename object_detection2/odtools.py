@@ -4,6 +4,7 @@ import object_detection2.bboxes as odb
 import img_utils as wmli
 import copy
 from .mask import get_bboxes_by_mask
+from itertools import count
 
 
 '''
@@ -218,3 +219,25 @@ class WCrop:
 
     def __call__(self, results,crop_bbox):
         return self.apply(results,crop_bbox)
+
+
+def make_text2label(classes=None,label_text2id={}):
+    res = {}
+    if classes is not None:
+        tmp_d = dict(zip(classes,count()))
+        res.update(tmp_d)
+    
+    if label_text2id is not None:
+        for k,v in label_text2id.items():
+            if isinstance(v,(str,bytes)) and v in res:
+                res[k] = res[v]
+            else:
+                res[k] = v
+    
+    for k,v in list(res.items()):
+        if isinstance(v,(str,bytes)) and v in res:
+            res[k] = res[v]
+    
+    return res
+
+

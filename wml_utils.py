@@ -11,6 +11,8 @@ import datetime
 import hashlib
 import math
 import pickle
+from collections import OrderedDict
+import torch
 
 
 def _to_chinese_num(i,numbers,unites):
@@ -214,6 +216,71 @@ class AvgTimeThis():
 
     def __str__(self):
         return "AVG: "+str(self.get_time())+ f", test_nr = {self.step}"
+
+class MTimer():
+    def __init__(self,name="TimeThis",auto_show=True):
+        self._begin_time = []
+        self.name = name
+        self.auto_show = auto_show
+        self.idx = 0
+        self.times = OrderedDict()
+        self.sub_name = None
+        self.last = 0
+        self.enter_size = 0
+
+    def __enter__(self,name):
+        self.enter_size = len(self._begin_time)
+        self.begin_time(name)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end_time()
+        while len(self._begin_time)>self.enter_size:
+            self.end_time()
+
+    
+    def begin_time(self,name):
+        torch.cuda.synchronize()
+        if len(self._begin_time) > 0:
+            name = self._begin_time[-1][0]+"."+name
+        self.sub_name = name
+        self._begin_time.append((name,time.time()))
+
+    def end_time(self,*,new_time=None):
+        if len(self._begin_time)==0:
+            print(f"Haven't begin time.")
+            return
+        torch.cuda.synchronize()
+        end_time = time.time()
+        name,begin_time = self._begin_time[-1]
+        if self.name is not None and len(self.name)>0:
+            name = self.name+": "+name
+        self.last = end_time-begin_time
+        self.times[name] = self.last
+        if self.auto_show:
+            te = (end_time-begin_time)*1000
+            fps = 1000/(te+1e-8)
+            print(f"{name}: total time {te:.3f}ms, FPS={fps:.3f}.")
+        self._begin_time = self._begin_time[:-1]
+
+        if new_time is not None:
+            self.begin_time(new_time)
+
+    def end_all(self):
+        while len(self._begin_time)>0:
+            self.end_time()
+
+    def reset(self,new_time=None):
+        self.end_all()
+        if new_time is not None:
+            self.begin_time(new_time)
+
+    def __repr__(self):
+        res = "{\n"
+        for k,v in self.times.items():
+            res += f"{k}: {v}\n"
+        res += "}"
+        return res
+
 
 class MovingAvg(object):
     def __init__(self,init_val = 0.0,momentum=0.99):

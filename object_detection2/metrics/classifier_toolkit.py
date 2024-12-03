@@ -51,6 +51,7 @@ class Accuracy(BaseClassifierMetrics):
         if all_correct.size == 0:
             return self.accuracy
         
+        print(f"Total {all_correct.size} samples")
         correct = float(np.sum(all_correct))
 
         self.accuracy = _safe_persent(correct,all_correct.size)

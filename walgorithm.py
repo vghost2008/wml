@@ -222,3 +222,7 @@ def lower_bound(datas, target):
         else:
             right = mid - 1  # [left, mid - 1]
     return left
+
+
+def remove_non_ascii(s):
+    return ''.join(filter(str.isascii, s))

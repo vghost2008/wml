@@ -522,6 +522,24 @@ def resize_imgv2(img,size,interpolation=cv2.INTER_LINEAR,return_scale=False,alig
     else:
         return img
 
+def resize_imgv3(img,size,interpolation=cv2.INTER_LINEAR,return_scale=False,align=None,keep_aspect_ratio=True):
+    '''
+    size: (w,h)
+    '''
+    old_shape = img.shape
+    img = resize_img(img,size,keep_aspect_ratio=keep_aspect_ratio,interpolation=interpolation)
+
+    if return_scale:
+        r = (img.shape[1]/max(old_shape[1],1),img.shape[0]/max(old_shape[0],1)) #(w,h) scale
+
+    if align is not None:
+        img = align_pad(img,align=align)
+
+    if return_scale:
+        return img,r
+    else:
+        return img
+
 def resize_height(img,h,interpolation=cv2.INTER_LINEAR):
     shape = img.shape
     new_h = h
