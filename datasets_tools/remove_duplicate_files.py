@@ -3,6 +3,7 @@ import wml_utils as wmlu
 import argparse
 import glob
 from iotoolkit import get_auto_dataset_suffix
+import img_utils as wmli
 
 #如果在exclude_dir和src_dir文件夹中同时出现，则从src_dir中删除
 
@@ -10,7 +11,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")
     parser.add_argument("exc_dir",type=str,help="src dir")
-    parser.add_argument("--ext",type=str,default="auto",help="annotation ext or img files")
+    parser.add_argument("--ext",type=str,default="img",help="annotation ext or img files")
     parser.add_argument('--basename', action='store_true',help='whether to compare by basename.')
     args = parser.parse_args()
     return args
@@ -46,7 +47,9 @@ if __name__ == "__main__":
     src_dir = args.src_dir
     #如果在exclude_dir和src_dir文件夹中同时出现，则从src_dir中删除
     exclude_dir = args.exc_dir
-    if args.ext == "auto":
+    if args.ext == "img":
+        suffix = wmli.BASE_IMG_SUFFIX
+    elif args.ext == "auto":
         suffix = "."+get_auto_dataset_suffix(args.src_dir)
     else:
         suffix = args.ext

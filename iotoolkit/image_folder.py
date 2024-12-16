@@ -10,11 +10,14 @@ class ImageFolder:
         self._data = []
         pass
 
-    def read_data(self,data_dir):
+    def read_one_dir(self,data_dir):
         sub_dirs = wmlu.get_subdir_in_dir(data_dir)
-        self._data = []
         if self._classes is None:
             self._classes = copy.deepcopy(sub_dirs)
+        else:
+            for sd in sub_dirs:
+                if sd not in self._classes:
+                    self._classes.append(sd)
         for dir in sub_dirs:
             label = dir.lower()
             if self.label_text2id is not None:
@@ -22,6 +25,16 @@ class ImageFolder:
             files = wmlu.get_files(osp.join(data_dir,dir),suffix=wmli.BASE_IMG_SUFFIX)
             for f in files:
                 self._data.append((label,f))
+
+    def read_data(self,data_dir):
+        self._data = []
+        if isinstance(data_dir,(str,bytes)):
+            self.read_one_dir(data_dir)
+        elif isinstance(data_dir,(list,tuple)):
+            for dir in data_dir:
+                self.read_one_dir(dir)
+        else:
+            print(f"ERROR: error data dir type {type(data_dir)},  {data_dir}")
 
     @property
     def classes(self):
@@ -37,7 +50,13 @@ class ImageFolder:
     @staticmethod
     def get_label(file_path):
         dirname = osp.dirname(osp.abspath(file_path))
-        return osp.basename(dirname).lower()
+        label = osp.basename(dirname).lower()
+        if "(" in label and ")" in label: 
+            idx0 = label.index("(")
+            idx1 = label.index(")")
+            if idx0<idx1:
+                label = label[:idx0]+label[idx1+1:]
+        return label
 
 class ImageFolder2:
     '''

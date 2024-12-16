@@ -81,12 +81,15 @@ def copy_files(files,save_dir,add_nr,src_dir,use_basename=False):
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
     for i,(imgf,annf) in enumerate(files):
-        if use_basename:
+        if osp.splitext(annf)[-1] == ".none":
+            label = ImageFolder.get_label(imgf)
+            basename = osp.join(label,wmlu.base_name(imgf))
+        elif use_basename:
             basename = wmlu.base_name(imgf)
         else:
             basename = wmlu.get_relative_path(imgf,src_dir)
+            basename = osp.splitext(basename)[0]
 
-        basename = osp.splitext(basename)[0]
         if add_nr:
             basename = basename+f"_{i}"
         suffix = osp.splitext(imgf)[1]
