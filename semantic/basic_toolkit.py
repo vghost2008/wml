@@ -37,17 +37,22 @@ def get_bboxes_by_contours(contours):
 
     return np.array([x0,y0,x1,y1],dtype=np.float32)
 
-def findContours(mask,mode=cv2.RETR_LIST,method=cv2.CHAIN_APPROX_SIMPLE):
+def findContours(mask,mode=cv2.RETR_TREE,method=cv2.CHAIN_APPROX_SIMPLE):
     '''
-    mask: [H,W] value is 0 or 1
+    mask: [H,W] value is 0 or 1, np.uint8
     return:
     contours: list[[N,2]] 
     '''
-    _contours,hierarchy = cv2.findContours(mask,mode=mode,method=method)
+
+    _contours, hierarchy = cv2.findContours(mask, mode,method)
+    hierarchy = np.reshape(hierarchy,[-1,4]) 
     contours = []
-    for cnt in _contours:
-        if len(cnt.shape) == 3 and cnt.shape[1] == 1:
-            contours.append(np.squeeze(cnt,axis=1))
-    
+    for he,cont in zip(hierarchy,_contours):
+        if he[-1]>=0 and cv2.contourArea(cont) < cv2.contourArea(contours[[he[-1]]]):
+            continue
+        if len(cont.shape) == 3 and cont.shape[1] == 1:
+            contours.append(np.squeeze(cont,axis=1))
+        elif len(cont.shape)==2 and cont.shape[0]>2:
+            contours.append(cont)
     return contours,hierarchy
 

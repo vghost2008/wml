@@ -14,6 +14,7 @@ import object_detection2.bboxes as odb
 from functools import partial
 from .common import resample
 from semantic.structures import *
+from semantic.basic_toolkit import findContours
 import glob
 import math
 from walgorithm import points_on_circle
@@ -226,7 +227,7 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
     '''
     mask 仅包含bboxes中的部分
     annotations_list[i]['bbox'] (x0,y0,x1,y1) 绝对坐标
-    annotations_list[i]["segmentation"] (H,W)
+    annotations_list[i]["segmentation"] (H,W), 仅包含bbox内部分
     '''
     data={}
     shapes = []
@@ -336,6 +337,40 @@ def save_labelme_datav5(file_path,image_path,image,labels,bboxes,masks,label_to_
         'bbox':bboxes[i]}
         annotatios_list.append(annotatios)
     save_labelme_datav4(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)
+
+def save_labelme_datav6(file_path,image_path,masks,labels,image=None):
+    '''
+    masks: [N,H,W],整图mask
+    '''
+    data={}
+    shapes = []
+    data["version"] = "3.10.1"
+    data["flags"] = {}
+    if image is None:
+        size = wmli.get_img_size(image_path)
+        image = dict(width=size[1],height=size[0])
+    for label,mask in zip(labels,masks):
+        shape = {}
+        shape["label"] = label
+        #shape["line_color"]=None
+        #shape["fill_color"]=None
+        shape["shape_type"]="polygon"
+
+        apoints,_ = findContours(mask.astype(np.uint8))
+        for points in apoints:
+            points = points.astype(np.int32).tolist()
+            if len(points)<=2:
+                continue
+            shape["points"] = points
+            shapes.append(copy.deepcopy(shape))
+
+    data["shapes"] = shapes
+    data["imagePath"] = os.path.basename(image_path)
+    data["imageWidth"] = image["width"]
+    data["imageHeight"] = image["height"]
+    data["imageData"] = None
+    with open(file_path,"w") as f:
+        json.dump(data,f)
 
 def save_labelme_points_data(file_path,image_path,image,points,labels):
     '''
