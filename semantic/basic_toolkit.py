@@ -48,7 +48,7 @@ def findContours(mask,mode=cv2.RETR_TREE,method=cv2.CHAIN_APPROX_SIMPLE):
     hierarchy = np.reshape(hierarchy,[-1,4]) 
     contours = []
     for he,cont in zip(hierarchy,_contours):
-        if he[-1]>=0 and cv2.contourArea(cont) < cv2.contourArea(contours[[he[-1]]]):
+        if he[-1]>=0 and cv2.contourArea(cont) < cv2.contourArea(_contours[he[-1]]):
             continue
         if len(cont.shape) == 3 and cont.shape[1] == 1:
             contours.append(np.squeeze(cont,axis=1))

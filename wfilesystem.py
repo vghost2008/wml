@@ -282,6 +282,12 @@ def safe_copy(src_file,dst_file):
 
     shutil.copy(src_file,r_dst_file)
 
+def copy_file(src_file,dst_file):
+    if os.path.exists(dst_file) and os.path.isdir(dst_file):
+        dst_file = os.path.join(dst_file,os.path.basename(src_file))
+        shutil.copy(src_file,dst_file)
+        return
+    shutil.copy(src_file,dst_file)
 
 def base_name(v,process_suffix=True):
     if v[-1] == "/" or v[-1] == "\\":
