@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import basic_img_utils as bwmli
+import sys
 
 def find_contours_in_bbox(mask,bbox):
     bbox = np.array(bbox).astype(np.int32)
@@ -45,7 +46,13 @@ def findContours(mask,mode=cv2.RETR_TREE,method=cv2.CHAIN_APPROX_SIMPLE):
     '''
 
     _contours, hierarchy = cv2.findContours(mask, mode,method)
-    hierarchy = np.reshape(hierarchy,[-1,4]) 
+    try:
+        hierarchy = np.reshape(hierarchy,[-1,4]) 
+    except Exception as e:
+        if len(_contours) != 0:
+            print(f"ERROR: {e}, {_contours} {hierarchy}")
+        hierarchy = np.zeros([0,4])
+        sys.stdout.flush()
     contours = []
     for he,cont in zip(hierarchy,_contours):
         if he[-1]>=0 and cv2.contourArea(cont) < cv2.contourArea(_contours[he[-1]]):

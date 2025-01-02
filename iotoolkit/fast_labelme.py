@@ -55,7 +55,10 @@ class FastLabelMeData(LabelMeBase):
             masks = WPolygonMasks(masks,width=img_width,height=img_height)
         
         if self.label_text2id is not None:
-            labels = [self.label_text2id(x) for x in labels_names]
+            try:
+                labels = [self.label_text2id(x) for x in labels_names]
+            except:
+                labels = []
             keep = [x is not None for x in labels]
             labels = [x if x is not None else -1 for x in labels]
             labels = np.array(labels,dtype=np.int32)
