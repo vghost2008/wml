@@ -16,6 +16,8 @@ from itertools import repeat
 import collections.abc
 import math
 import onnx
+import pickle
+import types
 
 try:
     from mmcv.parallel import DataContainer as DC
@@ -667,3 +669,51 @@ def add_metadta2onnx(model_onnx,metadata):
         meta.key, meta.value = k, str(v)
     
     return model_onnx
+
+
+class SafeClass:
+    """A placeholder class to replace unknown classes during unpickling."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize SafeClass instance, ignoring all arguments."""
+        pass
+
+    def __call__(self, *args, **kwargs):
+        """Run SafeClass instance, ignoring all arguments."""
+        pass
+
+
+class SafeUnpickler(pickle.Unpickler):
+    """Custom Unpickler that replaces unknown classes with SafeClass."""
+
+    def find_class(self, module, name):
+        """Attempt to find a class, returning SafeClass if not among safe modules."""
+        safe_modules = (
+            "torch",
+            "collections",
+            "collections.abc",
+            "builtins",
+            "math",
+            "numpy",
+            # Add other modules considered safe
+        )
+        if module in safe_modules:
+            return super().find_class(module, name)
+        else:
+            return SafeClass
+
+def safe_load(file,*args,**kwargs):
+    # Load via custom pickle module
+    safe_pickle = types.ModuleType("safe_pickle")
+    safe_pickle.Unpickler = SafeUnpickler
+    safe_pickle.load = lambda file_obj: SafeUnpickler(file_obj).load()
+    with open(file, "rb") as f:
+        ckpt = torch.load(f, pickle_module=safe_pickle,*args,**kwargs)
+    return ckpt
+
+def load(file,*args,**kwargs):
+    try:
+        return torch.load(file,*args,**kwargs)
+    except Exception as e:
+        print(f"WARNING: load ckpt {file} faild, info: {e}, try safe load...")
+        return safe_load(file)

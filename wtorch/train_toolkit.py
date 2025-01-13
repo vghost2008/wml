@@ -11,6 +11,7 @@ from collections import OrderedDict
 from .nn import LayerNorm,LayerNorm2d,EvoNormS0,EvoNormS01D,FrozenBatchNorm2d
 import traceback
 from typing import Union, Iterable
+import re
 
 
 _NORMS = (
@@ -204,6 +205,11 @@ def __set_bn_momentum(m,momentum=0.1):
     if classname.find('BatchNorm') != -1:
         m.momentum = momentum
 
+def __set_bn_eps(m,eps=1e-3):
+    classname = m.__class__.__name__
+    if classname.find('BatchNorm') != -1:
+        m.eps = eps 
+
 def __fix_bn(m):
     classname = m.__class__.__name__
     if classname.find('BatchNorm') != -1:
@@ -282,6 +288,10 @@ def freeze_bn2(model,names2freeze=None):
 
 def set_bn_momentum(model,momentum):
     fn = partial(__set_bn_momentum,momentum=momentum)
+    model.apply(fn)
+
+def set_bn_eps(model,eps):
+    fn = partial(__set_bn_eps,eps=eps)
     model.apply(fn)
 
 def get_gpus_str(gpus):
@@ -555,15 +565,25 @@ def finetune_model_train(model,names2train=None):
             _nr += 1
 
 def finetune_model_nottrain(model:torch.nn.Module,names_not2train):
+
+    if not isinstance(names_not2train,(list,tuple)):
+        names_not2train = [names_not2train]
+
+    patterns = [re.compile(x) for x in names_not2train]
+
     def is_name_of(name, names):
         for x in names:
             if name.startswith(x) or name.startswith("module."+x):
+                return True
+        for x in patterns:
+            if x.match(name) is not None:
                 return True
         return False
 
     for name, param in model.named_parameters():
         if is_name_of(name, names_not2train):
             param.requires_grad = False
+    
 
     param_to_update = []
     for name, param in model.named_parameters():

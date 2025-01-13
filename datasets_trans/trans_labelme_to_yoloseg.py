@@ -29,6 +29,11 @@ def write_labels(save_dir,labels):
     save_path = osp.join(save_dir,"classes.txt")
     with open(save_path,"w") as f:
         for i,l in enumerate(labels):
+            f.write(f"{l}\n")
+    save_path = osp.join(save_dir,"classes.yaml")
+    with open(save_path,"w") as f:
+        f.write("names:\n")
+        for i,l in enumerate(labels):
             f.write(f"    {i}: {l}\n")
 
 def trans_data(data_dir,save_dir,labels,sub_set,args):
@@ -71,7 +76,7 @@ def trans_data(data_dir,save_dir,labels,sub_set,args):
 if __name__ == "__main__":
     '''
     Example: 
-    python datasets_trans/trans_labelme_to_yolo.py ~/ai/mldata1/B10AOIOLD/datasets/datasetv4.0/val/ ~/ai/mldata1/B10AOIOLD/datasets/yolo_datasetv4.0/ --labels 'LD' 'AD' 'QP' 'LM' 'Gap' 'DM' --labels-dict "{ 'LD' : 0 , 'AD' : 1 , 'QP' : 2 , 'LM' : 3 , 'Gap' : 4 , 'DM' : 5 , 'XYBX_LM' : 3 , 'XB_LM' : 3 , 'HVBX_LM' : 3 , 'ETC_LM' : 3 , 'PG_G' : 4 , 'BG_G' : 4 , 'BD_G' : 4 , 'HD_DM' : 1 , 'HM_DM' : 5 , 'HG_DM' : 5 , 'CM_DM' : 5 , }" --sub-set val
+    python datasets_trans/trans_labelme_to_yoloseg.py ~/ai/mldata1/B10CFOD/b_datasets/datasetv1.0/train/  ~/ai/mldata1/B10CFOD/b_datasets/yolo_datasetv1.0/ --labels 'BW' 'HQ' 'RGBBQ' 'BMDBQ' 'BMGBQ' 'SC' 'FBQ'  --sub-set train
     '''
     args = parse_args()
     data_dir = args.src_dir

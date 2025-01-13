@@ -728,7 +728,7 @@ class EasyPrecisionAndRecall(BaseMetrics):
         return res
 
 @METRICS_REGISTRY.register()
-class ImgLevelPrecisionAndRecall(BaseMetrics):
+class ClsPrecisionAndRecall(BaseMetrics):
     def __init__(self,threshold=0.5,num_classes=90,label_trans=None,classes_begin_value=1,*args,**kwargs):
         self.threshold = threshold
         self.precision = None
@@ -1342,7 +1342,10 @@ class ClassesWiseModelPerformace(BaseMetrics):
         model_args['classes_begin_value'] = classes_begin_value
 
         if isinstance(model_type,(str,bytes)):
+            print(model_type)
             model_type = METRICS_REGISTRY.get(model_type)
+            print(model_type)
+        print(model_type)
         
         if classes is None:
             classes = [f"C{i+1}" for i in range(num_classes)]

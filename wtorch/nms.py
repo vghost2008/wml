@@ -2,6 +2,8 @@ import time
 import numpy as np
 import torch
 import torchvision
+from typing import Tuple
+from torch import Tensor
 
 
 def __soft_nms(dets, box_scores, thresh=0.001, sigma=0.5):
@@ -88,3 +90,20 @@ def group_nms(bboxes,scores,ids,nms_threshold:float=0.7,max_value:float=20000.0)
     tmp_bboxes = bboxes+ids[:,None].to(bboxes.dtype)*max_value
     idxs = torchvision.ops.nms(tmp_bboxes,scores,nms_threshold)
     return idxs
+
+def nms(bboxes:Tensor,scores:Tensor,labels:Tensor,nms_threshold:float=0.5,max_num:int=1000)->Tuple[Tensor,Tensor,Tensor]:
+    """
+    boxes (Tensor[N, 4])): boxes to perform NMS on. They
+    are expected to be in ``(x1, y1, x2, y2)`` format with ``0 <= x1 < x2`` and
+    ``0 <= y1 < y2``.
+    """
+    #if bboxes.numel() == 0:
+        #return bboxes.new_zeros([0,5]), labels,labels.new_zeros([0]).to(torch.int64)
+
+    keep = torchvision.ops.nms(bboxes,scores,iou_threshold=nms_threshold)
+    if max_num>0:
+        keep = keep[:max_num]
+
+    dets = torch.cat([bboxes[keep],scores[keep].unsqueeze(-1)],dim=-1)
+    
+    return dets,labels[keep],keep.to(torch.int64)
