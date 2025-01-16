@@ -6,7 +6,7 @@ from torch import Tensor
 from torch import nn
 
 from ..misc import Conv2dNormActivation
-from object_detection2.wmath import make_divisible as _make_divisible
+from wml.object_detection2.wmath import make_divisible as _make_divisible
 
 
 __all__ = ["MobileNetV2", "mobilenet_v2"]

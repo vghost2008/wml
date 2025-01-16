@@ -1,12 +1,12 @@
 import sys
 import argparse
-from iotoolkit.coco_toolkit import COCOData
+from wml.iotoolkit.coco_toolkit import COCOData
 import numpy as np
-import object_detection2.mask as odm
-from iotoolkit.pascal_voc_toolkit import write_voc_xml
-import wml_utils as wmlu
+import wml.object_detection2.mask as odm
+from wml.iotoolkit.pascal_voc_toolkit import write_voc_xml
+import wml.wml_utils as wmlu
 import copy
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 import json
 import cv2
 import os

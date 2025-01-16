@@ -1,7 +1,7 @@
 import random
 import os
 import os.path as osp
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 from .common import resample,ignore_case_dict_label_text2id
 from abc import ABCMeta, abstractmethod
 from functools import partial

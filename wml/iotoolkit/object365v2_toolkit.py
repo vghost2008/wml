@@ -1,4 +1,4 @@
-from iotoolkit.coco_toolkit import *
+from wml.iotoolkit.coco_toolkit import *
 import os.path as osp
 from .o365_to_coco import *
 from .coco_data_fwd import ID_TO_TEXT

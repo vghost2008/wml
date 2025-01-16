@@ -1,10 +1,10 @@
 import numpy as np
 import copy
 import cv2
-from semantic.mask_utils import get_bboxes_by_contours,npresize_mask
-import object_detection2.bboxes as odb
-import basic_img_utils as bwmli
-import object_detection2.bboxes as odb
+from wml.semantic.mask_utils import get_bboxes_by_contours,npresize_mask
+import wml.object_detection2.bboxes as odb
+import wml.basic_img_utils as bwmli
+import wml.object_detection2.bboxes as odb
 from .common import WBaseMaskLike
 
 

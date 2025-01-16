@@ -6,20 +6,20 @@ from xml.dom.minidom import Document
 import random
 import os
 import math
-import wml_utils
+import wml.wml_utils
 import logging
 import shutil
 from functools import partial
-import wml_utils as wmlu
-import img_utils as wmli
+import wml.wml_utils as wmlu
+import wml.img_utils as wmli
 import copy
 from easydict import EasyDict
-from object_detection2.standard_names import *
+from wml.object_detection2.standard_names import *
 import pickle
 from .common import *
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 from .pascal_voc_toolkit_fwd import *
-from wstructures import WMCKeypoints
+from wml.wstructures import WMCKeypoints
 from .labelme_toolkit_fwd import get_files,read_labelme_mckp_data
 
 

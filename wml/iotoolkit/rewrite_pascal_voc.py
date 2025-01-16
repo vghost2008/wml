@@ -1,7 +1,7 @@
 #coding=utf-8
 import os
-import object_detection.utils as odu
-import wml_utils as wmlu
+import wml.object_detection2.utils as odu
+import wml.wml_utils as wmlu
 import shutil
 
 def rewrite(input_dir,output_dir,image_sub_dir="JPEGImages",xml_sub_dir="Annotations",img_suffix=".jpg",begin_index=1):

@@ -1,20 +1,20 @@
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os
 import json
 import numpy as np
 import cv2 as cv
 import copy
-import img_utils as wmli
+import wml.img_utils as wmli
 import random
 import matplotlib.pyplot as plt
 import sys
 import cv2
-from object_detection2.standard_names import *
-import object_detection2.bboxes as odb
+from wml.object_detection2.standard_names import *
+import wml.object_detection2.bboxes as odb
 from functools import partial
 from .common import *
 from .labelme_toolkit_fwd import *
-from semantic.structures import *
+from wml.semantic.structures import *
 from .labelme_base import LabelMeBase
 import glob
 
@@ -76,8 +76,8 @@ class FastLabelMeData(LabelMeBase):
             
 if __name__ == "__main__":
     #data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
-    import img_utils as wmli
-    import object_detection2.visualization as odv
+    import wml.img_utils as wmli
+    import wml.object_detection2.visualization as odv
     import matplotlib.pyplot as plt
     ID_TO_TEXT = {1:{"id":1,"name":"a"},2:{"id":2,"name":"b"},3:{"id":3,"name":"c"}}
     NAME_TO_ID = {}

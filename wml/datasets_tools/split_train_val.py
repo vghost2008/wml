@@ -1,14 +1,14 @@
 import os.path as osp
 import os
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import math
 import random
 import time
 import argparse
-from iotoolkit.pascal_voc_toolkit import read_voc_xml
-from iotoolkit.labelme_toolkit import read_labelme_data
-from iotoolkit import get_auto_dataset_suffix,check_dataset_dir
-from iotoolkit import ImageFolder
+from wml.iotoolkit.pascal_voc_toolkit import read_voc_xml
+from wml.iotoolkit.labelme_toolkit import read_labelme_data
+from wml.iotoolkit import get_auto_dataset_suffix,check_dataset_dir
+from wml.iotoolkit import ImageFolder
 import shutil
 import copy
 

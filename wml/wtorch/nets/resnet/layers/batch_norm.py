@@ -5,8 +5,8 @@ import torch.distributed as dist
 from fvcore.nn.distributed import differentiable_all_reduce
 from torch import nn
 from torch.nn import functional as F
-from wtorch.dist import get_world_size
-from wtorch.utils import TORCH_VERSION
+from wml.wtorch.dist import get_world_size
+from wml.wtorch.utils import TORCH_VERSION
 
 from .wrappers import BatchNorm2d
 

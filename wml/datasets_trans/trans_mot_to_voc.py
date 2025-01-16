@@ -1,5 +1,5 @@
-from iotoolkit.sports_mot_datasets import SportsMOTDatasets
-from iotoolkit.pascal_voc_toolkit import *
+from wml.iotoolkit.sports_mot_datasets import SportsMOTDatasets
+from wml.iotoolkit.pascal_voc_toolkit import *
 
 def trans_data(data_dir,use_det=False):
     dataset = SportsMOTDatasets(data_dir, absolute_coord=True,use_det=use_det)

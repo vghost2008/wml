@@ -1,6 +1,6 @@
-from iotoolkit.coco_toolkit import *
-import img_utils as wmli
-import object_detection2.visualization as odv
+from wml.iotoolkit.coco_toolkit import *
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
 import os.path as osp
 import random
 import time

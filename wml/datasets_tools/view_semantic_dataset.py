@@ -1,8 +1,8 @@
 import json
-from iotoolkit.semantic_data import SemanticData
-import wml_utils as wmlu
-from object_detection2.visualization import *
-import img_utils as wmli
+from wml.iotoolkit.semantic_data import SemanticData
+import wml.wml_utils as wmlu
+from wml.object_detection2.visualization import *
+import wml.img_utils as wmli
 import os
 
 ID_TO_NAME = {

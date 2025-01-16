@@ -1,5 +1,5 @@
 #coding=utf-8
-from object_detection_tools.statistics_tools import *
+from wml.object_detection_tools.statistics_tools import *
 import sys
 import pickle
 from functools import partial

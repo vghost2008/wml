@@ -2,7 +2,7 @@ from typing import Any, Callable, Iterable, TypeVar, Generic, Sequence, List, Op
 import torch
 import time
 from . import _utils
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 from . import _BaseDataLoaderIter,_DatasetKind
 
 class _SingleProcessDataLoaderIter(_BaseDataLoaderIter):

@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
 import pickle
 import numpy as np
-from wfilesystem import recurse_get_subdir_in_dir
-import wml_utils as wmlu
+from wml.wfilesystem import recurse_get_subdir_in_dir
+import wml.wml_utils as wmlu
 import glob
 import os.path as osp
 import os

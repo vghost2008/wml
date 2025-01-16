@@ -1,18 +1,18 @@
-import img_utils as wmli
-import object_detection2.visualization as odv
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
 import matplotlib.pyplot as plt
-from iotoolkit.pascal_voc_toolkit import PascalVOCData
-from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
-from iotoolkit.coco_toolkit import COCOData
-from iotoolkit.labelme_toolkit import LabelMeData
+from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData
+from wml.iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
+from wml.iotoolkit.coco_toolkit import COCOData
+from wml.iotoolkit.labelme_toolkit import LabelMeData
 import argparse
 import os.path as osp
-import wml_utils as wmlu
-import wtorch.utils as wtu
-from object_detection2.metrics.toolkit import *
-from object_detection2.metrics.build import METRICS_REGISTRY
+import wml.wml_utils as wmlu
+import wml.wtorch.utils as wtu
+from wml.object_detection2.metrics.toolkit import *
+from wml.object_detection2.metrics.build import METRICS_REGISTRY
 from itertools import count
-from iotoolkit import get_auto_dataset_type
+from wml.iotoolkit import get_auto_dataset_type
 import os
 
 def parse_args():

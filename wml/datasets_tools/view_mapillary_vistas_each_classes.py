@@ -1,8 +1,8 @@
-from iotoolkit.mapillary_vistas_toolkit import *
-import img_utils as wmli
-import object_detection2.visualization as odv
+from wml.iotoolkit.mapillary_vistas_toolkit import *
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
 import matplotlib.pyplot as plt
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 lid = 0
 

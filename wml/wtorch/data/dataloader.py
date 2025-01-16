@@ -33,11 +33,11 @@ import multiprocessing as python_multiprocessing
 import torch
 import torch.multiprocessing as multiprocessing
 from torch._utils import ExceptionWrapper
-import wtorch.utils as wtu
+import wml.wtorch.utils as wtu
 import time
 from . import IterableDataset, Sampler,InfiniteSequentialSampler, SequentialSampler, RandomSampler, BatchSampler, Dataset
 from . import _utils
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 from . import _MultiProcessingDataLoaderIter, _SingleProcessDataLoaderIter, _DatasetKind
 
 string_classes = (str, bytes)

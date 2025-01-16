@@ -1,9 +1,9 @@
 from argparse import ArgumentParser
 import pickle
 import numpy as np
-from object_detection2.metrics.build import *
-from object_detection2.metrics.toolkit import *
-from object_detection2.standard_names import *
+from wml.object_detection2.metrics.build import *
+from wml.object_detection2.metrics.toolkit import *
+from wml.object_detection2.standard_names import *
 
 def parse_args():
     parser = ArgumentParser()

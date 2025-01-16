@@ -1,17 +1,17 @@
 import sys
 
-from iotoolkit.coco_toolkit import *
+from wml.iotoolkit.coco_toolkit import *
 import shutil
-import img_utils as wmli
+import wml.img_utils as wmli
 import object_detection_tools.visualization as odv
 import matplotlib.pyplot as plt
 import numpy as np
-import object_detection2.mask as odm
-import wml_utils as wmlu
+import wml.object_detection2.mask as odm
+import wml.wml_utils as wmlu
 import copy
 import json
 import cv2
-from iotoolkit.coco_toolkit import ID_TO_COMPRESSED_ID
+from wml.iotoolkit.coco_toolkit import ID_TO_COMPRESSED_ID
 
 #resize_size = (2560,1440)
 resize_size = None

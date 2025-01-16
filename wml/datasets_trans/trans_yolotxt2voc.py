@@ -1,12 +1,12 @@
 import sys
 import os
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import cv2
 import os.path as osp
 import numpy as np
-from iotoolkit.pascal_voc_toolkit import write_voc_xml
+from wml.iotoolkit.pascal_voc_toolkit import write_voc_xml
 import argparse
-import img_utils as wmli
+import wml.img_utils as wmli
 
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")

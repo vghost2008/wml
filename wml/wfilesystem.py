@@ -4,8 +4,8 @@ import shutil
 import sys
 import socket
 from functools import partial
-from basic_img_utils import BASE_IMG_SUFFIX
-from walgorithm import remove_non_ascii
+from wml.basic_img_utils import BASE_IMG_SUFFIX
+from wml.walgorithm import remove_non_ascii
 
 def get_filenames_in_dir(dir_path,suffix=None,prefix=None):
     if suffix is not None:

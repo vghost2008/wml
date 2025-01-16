@@ -1,11 +1,11 @@
 import json
 import os.path as osp
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 import numpy as np
-import object_detection2.visualization as odv
-import wml_utils as wmlu
+import wml.object_detection2.visualization as odv
+import wml.wml_utils as wmlu
 import PIL.Image as Image
-import img_utils as wmli
+import wml.img_utils as wmli
 from .common import *
 
 
@@ -120,7 +120,7 @@ class TorchObject365(Object365):
         return img,res
 
 if __name__ == "__main__":
-    import img_utils as wmli
+    import wml.img_utils as wmli
     import random
     import matplotlib.pyplot as plt
     import time

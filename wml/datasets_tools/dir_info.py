@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 import os
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 '''
 统计文件夹中文件的信息（包含子目录)

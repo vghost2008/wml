@@ -1,7 +1,7 @@
 import shutil
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os
-from iotoolkit.pascal_voc_toolkit import PascalVOCData
+from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData
 
 def copy_to_dir(files,save_dir):
     wmlu.create_empty_dir(save_dir,remove_if_exists=False)

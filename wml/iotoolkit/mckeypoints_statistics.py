@@ -1,5 +1,5 @@
-import wml_utils as wmlu
-from object_detection2.standard_names import *
+import wml.wml_utils as wmlu
+from wml.object_detection2.standard_names import *
 import numpy as np
 
 def statistics_mckeypoints(dataset):

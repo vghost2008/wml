@@ -2,14 +2,14 @@
 import cv2
 import random
 import numpy as np
-import semantic.visualization_utils as smv
+import wml.semantic.visualization_utils as smv
 from PIL import Image
-from basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large, PSEUDOCOLOR
-from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
-import object_detection2.bboxes as odb
-from wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem
+from wml.basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large, PSEUDOCOLOR
+from wml.basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
+import wml.object_detection2.bboxes as odb
+from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem
 import math
-import basic_img_utils as bwmli
+import wml.basic_img_utils as bwmli
 from .basic_visualization import *
 
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP

@@ -1,5 +1,5 @@
 import os.path as osp
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import copy
 import random
 from typing import Type

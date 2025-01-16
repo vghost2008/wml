@@ -2,7 +2,7 @@ import numpy as np
 from .common import *
 import sys
 from .build import METRICS_REGISTRY
-from object_detection2.keypoints import mckps_distance_matrix
+from wml.object_detection2.keypoints import mckps_distance_matrix
 import math
 import copy
 '''

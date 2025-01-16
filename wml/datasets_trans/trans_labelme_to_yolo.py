@@ -1,13 +1,13 @@
 import sys
-from iotoolkit.labelme_toolkit import *
-import img_utils as wmli
-import object_detection2.visualization as odv
-from iotoolkit.baidu_mask_toolkit import *
+from wml.iotoolkit.labelme_toolkit import *
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
+from wml.iotoolkit.baidu_mask_toolkit import *
 import matplotlib.pyplot as plt
 import numpy as np
-from iotoolkit.yolo_toolkit import write_yolo_txt
-import object_detection2.mask as odm
-import wml_utils as wmlu
+from wml.iotoolkit.yolo_toolkit import write_yolo_txt
+import wml.object_detection2.mask as odm
+import wml.wml_utils as wmlu
 import copy
 import json
 import cv2

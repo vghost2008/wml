@@ -1,16 +1,16 @@
 import tensorflow as tf
 import object_detection_tools.predictmodel as predm
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import glob
-import img_utils as wmli
+import wml.img_utils as wmli
 import numpy as np
 import os
 import shutil
 import iotoolkit.pascal_voc_toolkit as pvt
 import iotoolkit.labelme_toolkit as lmt
 import iotoolkit.coco_toolkit as cocot
-from object_detection2.engine.defaults import default_argument_parser
-from object_detection2.standard_names import *
+from wml.object_detection2.engine.defaults import default_argument_parser
+from wml.object_detection2.standard_names import *
 
 
 def main(_):

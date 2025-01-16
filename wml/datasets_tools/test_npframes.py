@@ -1,8 +1,8 @@
 import numpy as np
 import pickle
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import random
-import img_utils as wmli
+import wml.img_utils as wmli
 import os.path as osp
 
 def dump_files(file,save_dir):

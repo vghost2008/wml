@@ -1,7 +1,7 @@
 from PIL import Image
 import os
-from semantic.visualization_utils import RGB_STANDARD_COLORS
-import wml_utils as wmlu
+from wml.semantic.visualization_utils import RGB_STANDARD_COLORS
+import wml.wml_utils as wmlu
 import numpy as np
 
 class SemanticData(object):

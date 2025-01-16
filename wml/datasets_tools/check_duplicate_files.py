@@ -1,5 +1,5 @@
 import sys
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import argparse
 import os.path as osp
 

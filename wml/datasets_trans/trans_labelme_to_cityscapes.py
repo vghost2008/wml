@@ -1,13 +1,13 @@
 import sys
 
-from iotoolkit.labelme_toolkit import *
+from wml.iotoolkit.labelme_toolkit import *
 from multiprocess import Pool
-import img_utils as wmli
+import wml.img_utils as wmli
 import object_detection_tools.visualization as odv
 import matplotlib.pyplot as plt
 import numpy as np
-import object_detection2.mask as odm
-import wml_utils as wmlu
+import wml.object_detection2.mask as odm
+import wml.wml_utils as wmlu
 import copy
 import json
 import cv2

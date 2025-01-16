@@ -1,11 +1,11 @@
 import json
 import numpy as np
-import object_detection2.visualization as odv
-import object_detection2.bboxes as odb
+import wml.object_detection2.visualization as odv
+import wml.object_detection2.bboxes as odb
 import os.path as osp
-import wml_utils as wmlu
-import img_utils as wmli
-import object_detection2.keypoints as odk
+import wml.wml_utils as wmlu
+import wml.img_utils as wmli
+import wml.object_detection2.keypoints as odk
 import math
 
 '''

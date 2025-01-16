@@ -9,7 +9,7 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "object_detection_tools/metrics_tools.py",
+            "program": "wml/object_detection_tools/metrics_tools.py",
             "console": "integratedTerminal",
             //"args":["/home/wj/ai/mldata1/B8AOI/work_dir/hrnet_fl/tmp/eval_on_datasetnpv11/results.pk" "--metrics" "MCKpsPrecisionAndRecall"]
             "args":["/home/wj/ai/mldata1/B8AOI/work_dir/hrnet_fl1/tmp/eval_on_val1/results.pk" "--metrics" "MCKpsPrecisionAndRecall" "--beg-score-thr" "0.85"]
@@ -27,7 +27,7 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "object_detection_tools/metrics_tools.py",
+            "program": "wml/object_detection_tools/metrics_tools.py",
             "console": "integratedTerminal",
             //"args":["/home/wj/ai/mldata1/B10CF/work_dir/cascade_csp/tmp/eval_on_val1/results.pk" "--metrics" "DetConfusionMatrix"],
             //"args":["/home/wj/ai/mldata1/B10CF/work_dir/cascade_csp/tmp/eval_on_val1/results.pk"],
@@ -42,7 +42,7 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "datasets_tools/split_train_val.py",
+            "program": "wml/datasets_tools/split_train_val.py",
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/B5EP/raw_datasets/0902_jpg/" "~/ai/mldata1/B5EP/tmp/split_0902" "--max-nr" "32"]
             //"args":["~/ai/mldata1/B10AOIOLD/rawdatasets/to_label0930-All,~/ai/mldata1/B10AOIOLD/rawdatasets/tolabel_1002-All/" "~/ai/mldata1/B10AOIOLD/tmp/s1002" "--max-nr" "15" "--by-labels"],
@@ -64,7 +64,7 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "datasets_tools/cmp_datasets.py",
+            "program": "wml/datasets_tools/cmp_datasets.py",
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101" "~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101"],
             //"args":["~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125" "~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125b" "--sigma" "100"],
@@ -75,7 +75,7 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "datasets_tools/check_split_dataset.py",
+            "program": "wml/datasets_tools/check_split_dataset.py",
             "console": "integratedTerminal",
             "args":["/home/wj/ai/mldata1/B7mura/datas/new_anno/230506", "/home/wj/ai/mldata1/B7mura/datas/train_s0",  "/home/wj/ai/mldata1/B7mura/tmp/data"]
         },
@@ -140,7 +140,7 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "datasets_tools/statistics_tools.py",
+            "program": "wml/datasets_tools/statistics_tools.py",
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
             "args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]

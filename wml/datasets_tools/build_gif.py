@@ -5,8 +5,8 @@ import glob
 import os
 import sys
 import os.path as osp
-import img_utils as wmli
-import wml_utils as wmlu
+import wml.img_utils as wmli
+import wml.wml_utils as wmlu
 import argparse
 
 

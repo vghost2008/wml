@@ -1,12 +1,12 @@
 import sys
 import argparse
-from iotoolkit.mapillary_vistas_toolkit import *
+from wml.iotoolkit.mapillary_vistas_toolkit import *
 import numpy as np
-import object_detection2.mask as odm
-from iotoolkit.labelme_toolkit import save_labelme_datav3
-import wml_utils as wmlu
+import wml.object_detection2.mask as odm
+from wml.iotoolkit.labelme_toolkit import save_labelme_datav3
+import wml.wml_utils as wmlu
 import copy
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 import json
 import cv2
 import os.path as osp

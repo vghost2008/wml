@@ -1,5 +1,5 @@
-import object_detection2.bboxes as odb
-import img_utils as wmli
+import wml.object_detection2.bboxes as odb
+import wml.img_utils as wmli
 
 def write_yolo_txt(save_path,img_path,labels,bboxes):
     '''

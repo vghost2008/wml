@@ -4,8 +4,8 @@ import fvcore.nn.weight_init as weight_init
 import torch
 import torch.nn.functional as F
 from torch import nn
-from wtorch.nn import Conv2d
-from wtorch.nn import get_norm
+from wml.wtorch.nn import Conv2d
+from wml.wtorch.nn import get_norm
 
 
 class SimpleFPN(torch.nn.Module):

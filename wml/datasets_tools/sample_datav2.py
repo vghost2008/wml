@@ -1,8 +1,8 @@
 #coding=utf-8
 from collections import Counter
 from collections import Iterable
-import wml_utils as wmlu
-from iotoolkit.pascal_voc_toolkit import PascalVOCData
+import wml.wml_utils as wmlu
+from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData
 import random
 import copy
 

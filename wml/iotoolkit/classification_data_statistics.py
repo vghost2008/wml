@@ -1,4 +1,4 @@
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 def labels_statistics(labels,name="",classes_names=None):
     counter = wmlu.Counter()

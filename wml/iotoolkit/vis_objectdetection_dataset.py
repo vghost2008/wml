@@ -1,10 +1,10 @@
-import img_utils as wmli
+import wml.img_utils as wmli
 import random
 import matplotlib.pyplot as plt
 import time
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os.path as osp
-import object_detection2.visualization as odv
+import wml.object_detection2.visualization as odv
 import numpy as np
 
 def trans_name(name:str):

@@ -5,15 +5,15 @@ import json
 import os
 import numpy as np
 from pycocotools import mask
-import wml_utils as wmlu
-import img_utils as wmli
-import object_detection2.bboxes as odb
+import wml.wml_utils as wmlu
+import wml.img_utils as wmli
+import wml.object_detection2.bboxes as odb
 import sys
 from PIL import Image
-from iotoolkit.coco_data_fwd import *
+from wml.iotoolkit.coco_data_fwd import *
 import copy
 import os.path as osp
-from iotoolkit.pascal_voc_toolkit import read_voc_xml
+from wml.iotoolkit.pascal_voc_toolkit import read_voc_xml
 from collections import defaultdict
 from .common import *
 from functools import partial
@@ -378,8 +378,8 @@ def load_coco_results(json_path):
     return r_res
 
 if __name__ == "__main__":
-    import img_utils as wmli
-    import object_detection2.visualization as odv
+    import wml.img_utils as wmli
+    import wml.object_detection2.visualization as odv
     import matplotlib.pyplot as plt
     data = COCOData()
     data.read_data("/data/mldata/coco/annotations/instances_train2014.json",image_dir="/data/mldata/coco/train2014")

@@ -1,6 +1,6 @@
-from wtorch.data.dataloader import DataLoader
+from wml.wtorch.data.dataloader import DataLoader
 import numpy as np
-from wtorch.data import SequentialSampler
+from wml.wtorch.data import SequentialSampler
 
 class ExampleDataset(object):
     def __init__(self):

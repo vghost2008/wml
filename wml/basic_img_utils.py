@@ -3,7 +3,7 @@ from collections import OrderedDict, Iterable
 import copy
 import cv2
 import math
-import walgorithm as wa
+import wml.walgorithm as wa
 
 BASE_IMG_SUFFIX=".jpg;;.jpeg;;.bmp;;.png;;.gif;;.tif"
 

@@ -1,11 +1,11 @@
-import img_utils as wmli
-import object_detection2.visualization as odv
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
 import matplotlib.pyplot as plt
-from iotoolkit.pascal_voc_toolkit import PascalVOCData
+from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData
 import argparse
 import os.path as osp
-import wml_utils as wmlu
-import wtorch.utils as wtu
+import wml.wml_utils as wmlu
+import wml.wtorch.utils as wtu
 
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')

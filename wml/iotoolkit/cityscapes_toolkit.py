@@ -1,11 +1,11 @@
 import json
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import numpy as np
 import os
 import cv2 as cv
 import sys
 import random
-from iotoolkit.labelme_toolkit import get_labels_and_bboxes
+from wml.iotoolkit.labelme_toolkit import get_labels_and_bboxes
 from .common import *
 
 def read_json(file_path):
@@ -128,7 +128,7 @@ class CityscapesData(object):
 
 if __name__ == "__main__":
     # data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
-    import img_utils as wmli
+    import wml.img_utils as wmli
     import object_detection_tools.visualization as odv
     import matplotlib.pyplot as plt
 

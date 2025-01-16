@@ -1,6 +1,6 @@
 import json
 import cv2
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import numpy as np
 import os
 import cv2 as cv
@@ -206,8 +206,8 @@ class BaiDuMaskData(object):
 if __name__ == "__main__":
     id = 0
     # data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
-    import img_utils as wmli
-    import object_detection2.visualization as odv
+    import wml.img_utils as wmli
+    import wml.object_detection2.visualization as odv
     import matplotlib.pyplot as plt
 
     ID2NAME = {1:"person",2:"seat_belt"}

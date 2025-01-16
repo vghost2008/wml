@@ -2,7 +2,7 @@ import cv2
 import torch.distributed as dist
 import os
 import functools
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import torch.nn as nn
 import torch
 from collections import OrderedDict

@@ -10,7 +10,7 @@ from ..utils import TrackEvalException
 import os.path as osp
 import glob
 import wfilesystem as wfs
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 
 class MotChallenge2DBox(_BaseDataset):

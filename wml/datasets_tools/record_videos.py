@@ -1,8 +1,8 @@
 import cv2 as cv
 import os.path as osp
 import numpy as np
-import img_utils as wmli
-import wml_utils as wmlu
+import wml.img_utils as wmli
+import wml.wml_utils as wmlu
 import argparse
 
 

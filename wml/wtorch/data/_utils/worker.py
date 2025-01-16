@@ -145,7 +145,7 @@ def _worker_loop(dataset_kind, dataset, index_queue, data_queue, done_event,
         _worker_info = WorkerInfo(id=worker_id, num_workers=num_workers,
                                   seed=seed, dataset=dataset)
 
-        from wtorch.data import _DatasetKind
+        from wml.wtorch.data import _DatasetKind
 
         init_exception = None
 

@@ -1,9 +1,9 @@
 from argparse import ArgumentParser
-import img_utils as wmli
-import wml_utils as wmlu
+import wml.img_utils as wmli
+import wml.wml_utils as wmlu
 import numpy as np
 import os
-from iotoolkit.imgs_reader_mt import ImgsReader,MaxImgLongSize
+from wml.iotoolkit.imgs_reader_mt import ImgsReader,MaxImgLongSize
 import sys
 import random
 

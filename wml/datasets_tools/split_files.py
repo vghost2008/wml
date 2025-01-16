@@ -1,11 +1,11 @@
 import argparse
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os.path as osp
 import os
 import shutil
 import random
 import time
-from iotoolkit.common import get_auto_dataset_suffix
+from wml.iotoolkit.common import get_auto_dataset_suffix
 
 '''
 将文件拷贝到多个子目录，每个子目录nr个文件

@@ -1,12 +1,12 @@
 import warnings
 from functools import partial
 from typing import Any, Callable, List, Optional, Sequence
-from wtorch.utils import normalize
+from wml.wtorch.utils import normalize
 import torch
 from torch import nn, Tensor
 
 from ..misc import Conv2dNormActivation, SqueezeExcitation as SElayer
-from object_detection2.wmath import make_divisible
+from wml.object_detection2.wmath import make_divisible
 
 
 __all__ = ["MobileNetV3", "mobilenet_v3_large", "mobilenet_v3_small","InvertedResidualConfig","_mobilenet_v3"]

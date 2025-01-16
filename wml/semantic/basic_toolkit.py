@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import basic_img_utils as bwmli
+import wml.basic_img_utils as bwmli
 import sys
 
 def find_contours_in_bbox(mask,bbox):

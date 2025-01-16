@@ -1,5 +1,5 @@
 import os
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import argparse
 
 #如果在ref_dir中没有，但在src_dir文件夹中出现，则从src_dir中删除

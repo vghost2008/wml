@@ -1,9 +1,9 @@
 import argparse
 import glob
 import os.path as osp
-import wml_utils as wmlu
-from iotoolkit.pascal_voc_toolkit import write_voc_xml
-from iotoolkit.labelme_toolkit_fwd import save_labelme_data
+import wml.wml_utils as wmlu
+from wml.iotoolkit.pascal_voc_toolkit import write_voc_xml
+from wml.iotoolkit.labelme_toolkit_fwd import save_labelme_data
 import numpy as np
 
 '''

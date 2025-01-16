@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 
-import img_utils as wmli
+import wml.img_utils as wmli
 
 def get_video_info(video_path):
     video_reader = cv2.VideoCapture(video_path)

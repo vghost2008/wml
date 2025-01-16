@@ -1,9 +1,9 @@
 import os
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import argparse
 import glob
-from iotoolkit import get_auto_dataset_suffix
-import img_utils as wmli
+from wml.iotoolkit import get_auto_dataset_suffix
+import wml.img_utils as wmli
 
 #如果在exclude_dir和src_dir文件夹中同时出现，则从src_dir中删除
 

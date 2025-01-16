@@ -1,6 +1,6 @@
 import os
-from object_detection2.bboxes import change_bboxes_nr
-from iotoolkit.pascal_voc_toolkit import PascalVOCData
+from wml.object_detection2.bboxes import change_bboxes_nr
+from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData
 import sys
 
 

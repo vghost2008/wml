@@ -1,7 +1,7 @@
 #coding=utf-8
 import numpy as np
 import logging
-import basic_img_utils as bwmli
+import wml.basic_img_utils as bwmli
 import cv2
 from .basic_toolkit import *
 import torch

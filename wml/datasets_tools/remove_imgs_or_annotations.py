@@ -1,10 +1,10 @@
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import argparse
 import os.path as osp
 import os
 import shutil
-import img_utils as wmli
-from iotoolkit.common import find_imgs_for_ann_file
+import wml.img_utils as wmli
+from wml.iotoolkit.common import find_imgs_for_ann_file
 
 '''
 删除没有标注的图像或者没有图像的标注

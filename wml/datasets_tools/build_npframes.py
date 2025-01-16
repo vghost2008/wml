@@ -5,11 +5,11 @@ import os.path as osp
 import sys
 import warnings
 from multiprocessing import Pool
-import img_utils as wmli
+import wml.img_utils as wmli
 import mmcv
 import numpy as np
 import pickle
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 img_process_fn = None
 '''def img_process_fn(img):

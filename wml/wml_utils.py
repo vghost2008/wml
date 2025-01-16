@@ -1,7 +1,7 @@
 #coding=utf-8
-from wcollections import *
-from wfilesystem import *
-from walgorithm import *
+from wml.wcollections import *
+from wml.wfilesystem import *
+from wml.walgorithm import *
 import numpy as np
 import random
 import time

@@ -1,8 +1,8 @@
-import img_utils as wmli
+import wml.img_utils as wmli
 import argparse
 import os.path as osp
 import os
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')

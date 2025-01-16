@@ -1,9 +1,9 @@
 import argparse
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os.path as osp
 import glob
 import pickle
-import img_utils as wmli
+import wml.img_utils as wmli
 
 data_type = "call"
 def parse_args():

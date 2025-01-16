@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch import nn
 from .r50_config import _C as r50_config
 from collections import OrderedDict
-from wtorch.nets.shape_spec import ShapeSpec
+from wml.wtorch.nets.shape_spec import ShapeSpec
 
 from .layers import (
     CNNBlockBase,

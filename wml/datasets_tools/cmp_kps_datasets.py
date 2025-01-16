@@ -1,15 +1,15 @@
-import img_utils as wmli
-import object_detection2.visualization as odv
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
 import matplotlib.pyplot as plt
-from iotoolkit.labelmemckeypoints_dataset import LabelmeMCKeypointsDataset
+from wml.iotoolkit.labelmemckeypoints_dataset import LabelmeMCKeypointsDataset
 import argparse
 import os.path as osp
-import wml_utils as wmlu
-import wtorch.utils as wtu
-from object_detection2.metrics.toolkit import *
-from object_detection2.standard_names import *
-from wstructures import WMCKeypoints
-from object_detection2.keypoints import mckps_distance_matrix
+import wml.wml_utils as wmlu
+import wml.wtorch.utils as wtu
+from wml.object_detection2.metrics.toolkit import *
+from wml.object_detection2.standard_names import *
+from wml.wstructures import WMCKeypoints
+from wml.object_detection2.keypoints import mckps_distance_matrix
 from functools import partial
 import shutil
 import os

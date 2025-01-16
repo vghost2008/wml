@@ -1,4 +1,4 @@
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os
 import numpy as np
 import os.path as osp

@@ -1,18 +1,18 @@
 #coding=utf-8
 import numpy as np
-import img_utils as wmli
-from iotoolkit.pascal_voc_toolkit import PascalVOCData,write_voc_xml
-from iotoolkit.coco_toolkit import COCOData
-from iotoolkit.labelme_toolkit import LabelMeData,save_labelme_datav3
-import object_detection2.bboxes as odb 
-import wml_utils as wmlu
-from iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
-import object_detection2.data_process_toolkit as odp
+import wml.img_utils as wmli
+from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData,write_voc_xml
+from wml.iotoolkit.coco_toolkit import COCOData
+from wml.iotoolkit.labelme_toolkit import LabelMeData,save_labelme_datav3
+import wml.object_detection2.bboxes as odb 
+import wml.wml_utils as wmlu
+from wml.iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
+import wml.object_detection2.data_process_toolkit as odp
 from argparse import ArgumentParser
 from itertools import count
 import os.path as osp
-import img_utils as wmli
-import semantic.mask_utils as mu 
+import wml.img_utils as wmli
+import wml.semantic.mask_utils as mu 
 
 '''
 对现有数据集进行裁切生成新的数据集，目前有两种裁剪方式

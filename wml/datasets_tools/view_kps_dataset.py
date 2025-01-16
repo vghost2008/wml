@@ -1,10 +1,10 @@
-import img_utils as wmli
-import object_detection2.visualization as odv
-from iotoolkit.labelmemckeypoints_dataset import LabelmeMCKeypointsDataset
-from object_detection2.standard_names import *
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
+from wml.iotoolkit.labelmemckeypoints_dataset import LabelmeMCKeypointsDataset
+from wml.object_detection2.standard_names import *
 import argparse
 import os.path as osp
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')

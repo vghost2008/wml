@@ -1,4 +1,4 @@
-from thirdparty.registry import Registry
+from wml.thirdparty.registry import Registry
 import copy
 
 METRICS_REGISTRY = Registry("Metrics")

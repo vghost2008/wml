@@ -6,15 +6,14 @@ from xml.dom.minidom import Document
 import random
 import os
 import math
-import wml_utils
 import logging
 import shutil
 from functools import partial
-import wml_utils as wmlu
-import img_utils as wmli
+import wml.wml_utils as wmlu
+import wml.img_utils as wmli
 import copy
 from .common import *
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 from .pascal_voc_toolkit_fwd import *
 from .base_dataset import BaseDataset
 
@@ -131,8 +130,8 @@ class PascalVOCData(BaseDataset):
 
 if __name__ == "__main__":
     #data_statistics("/home/vghost/ai/mldata/qualitycontrol/rdatasv3")
-    import object_detection2.visualization as odv
-    import img_utils as wmli
+    import wml.object_detection2.visualization as odv
+    import wml.img_utils as wmli
     import matplotlib.pyplot as plt
 
     text = []

@@ -1,10 +1,10 @@
 import os.path as osp
 import os
 import random
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import shutil
 from argparse import ArgumentParser
-from iotoolkit import get_auto_dataset_suffix
+from wml.iotoolkit import get_auto_dataset_suffix
 from split_train_val import get_labels
 
 '''

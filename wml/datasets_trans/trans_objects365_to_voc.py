@@ -1,12 +1,12 @@
 import sys
 import argparse
-from iotoolkit.object365v2_toolkit import Object365V2
+from wml.iotoolkit.object365v2_toolkit import Object365V2
 import numpy as np
-import object_detection2.mask as odm
-from iotoolkit.pascal_voc_toolkit import write_voc_xml
-import wml_utils as wmlu
+import wml.object_detection2.mask as odm
+from wml.iotoolkit.pascal_voc_toolkit import write_voc_xml
+import wml.wml_utils as wmlu
 import copy
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 import json
 import cv2
 import os

@@ -5,9 +5,9 @@ import json
 import os
 import numpy as np
 from pycocotools import mask
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import sys
-import object_detection2.keypoints as odk
+import wml.object_detection2.keypoints as odk
 
 def get_yxyx_bbox(bbox_data):
     (x, y, width, height) = tuple(bbox_data)
@@ -241,8 +241,8 @@ class COCOWholeBodyData:
                 yield self.trans2bboxes(anno_data)
 
 if __name__ == "__main__":
-    import img_utils as wmli
-    import object_detection2.visualization as odv
+    import wml.img_utils as wmli
+    import wml.object_detection2.visualization as odv
     import matplotlib.pyplot as plt
     data = COCOWholeBodyData()
     data.read_data("/home/wj/ai/mldata/coco/annotations/coco_wholebody_val_v1.0.json",

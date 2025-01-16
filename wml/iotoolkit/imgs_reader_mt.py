@@ -1,7 +1,7 @@
-import img_utils as wmli
-import wml_utils as wmlu
-from wtorch.data.dataloader import DataLoader
-from wtorch.data._utils.collate import null_convert,default_collate
+import wml.img_utils as wmli
+import wml.wml_utils as wmlu
+from wml.wtorch.data.dataloader import DataLoader
+from wml.wtorch.data._utils.collate import null_convert,default_collate
 import numpy as np
 import random
 import sys

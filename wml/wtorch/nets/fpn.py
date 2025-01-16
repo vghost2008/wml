@@ -7,8 +7,8 @@ from torch import nn
 from .resnet.r50_config import _C as r50_config
 
 from .shape_spec import ShapeSpec
-from wtorch.nn import Conv2d
-from wtorch.nn import get_norm
+from wml.wtorch.nn import Conv2d
+from wml.wtorch.nn import get_norm
 from .resnet.resnet import build_resnet_backbone
 
 __all__ = ["build_resnet_fpn_backbone", "build_retinanet_resnet_fpn_backbone", "FPN",'build_resnet_fpn_backbonev2']

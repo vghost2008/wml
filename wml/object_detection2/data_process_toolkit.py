@@ -1,8 +1,8 @@
-import img_utils as wmli
-import object_detection2.bboxes as odb
+import wml.img_utils as wmli
+import wml.object_detection2.bboxes as odb
 import cv2 as cv
 import numpy as np
-from semantic.mask_utils import cut_mask
+from wml.semantic.mask_utils import cut_mask
 
 def motion_blur(image, degree=10, angle=20):
     image = np.array(image)

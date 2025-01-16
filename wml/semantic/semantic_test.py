@@ -1,7 +1,7 @@
-from semantic.structures import *
-from iotoolkit.labelme_toolkit import LabelMeData
-import img_utils as wmli
-import object_detection2.visualization as odv
+from wml.semantic.structures import *
+from wml.iotoolkit.labelme_toolkit import LabelMeData
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
 
 if __name__ == "__main__":
     data = LabelMeData(use_polygon_mask=True)

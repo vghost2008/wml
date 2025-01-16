@@ -1,23 +1,23 @@
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os
 import json
 import numpy as np
 import cv2 as cv
 import copy
-import img_utils as wmli
+import wml.img_utils as wmli
 import random
 import matplotlib.pyplot as plt
 import sys
 import cv2
-from object_detection2.standard_names import *
-import object_detection2.bboxes as odb
+from wml.object_detection2.standard_names import *
+import wml.object_detection2.bboxes as odb
 from functools import partial
 from .common import resample
-from semantic.structures import *
-from semantic.basic_toolkit import findContours
+from wml.semantic.structures import *
+from wml.semantic.basic_toolkit import findContours
 import glob
 import math
-from walgorithm import points_on_circle
+from wml.walgorithm import points_on_circle
 import copy
 
 

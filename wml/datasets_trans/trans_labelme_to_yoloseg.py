@@ -1,13 +1,13 @@
 import sys
-from iotoolkit import FastLabelMeData
-import img_utils as wmli
-import object_detection2.visualization as odv
-from iotoolkit.baidu_mask_toolkit import *
+from wml.iotoolkit import FastLabelMeData
+import wml.img_utils as wmli
+import wml.object_detection2.visualization as odv
+from wml.iotoolkit.baidu_mask_toolkit import *
 import matplotlib.pyplot as plt
 import numpy as np
-from iotoolkit.yolo_toolkit import write_yoloseg_txt
-import object_detection2.mask as odm
-import wml_utils as wmlu
+from wml.iotoolkit.yolo_toolkit import write_yoloseg_txt
+import wml.object_detection2.mask as odm
+import wml.wml_utils as wmlu
 import copy
 import json
 import cv2

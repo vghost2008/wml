@@ -1,7 +1,7 @@
-from iotoolkit.mat_data import MatData
-import object_detection2.keypoints as odk
+from wml.iotoolkit.mat_data import MatData
+import wml.object_detection2.keypoints as odk
 import numpy as np
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 import math
 '''
 id - joint id (0 - r ankle, 1 - r knee, 2 - r hip, 

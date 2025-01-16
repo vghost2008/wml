@@ -1,7 +1,7 @@
-from iotoolkit.mat_data import MatData
-import object_detection2.keypoints as odk
+from wml.iotoolkit.mat_data import MatData
+import wml.object_detection2.keypoints as odk
 import numpy as np
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 '''
 Right ankle
 				Right knee

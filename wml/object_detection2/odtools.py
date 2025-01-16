@@ -1,7 +1,7 @@
 #coding=utf-8
 import numpy as np
-import object_detection2.bboxes as odb
-import img_utils as wmli
+import wml.object_detection2.bboxes as odb
+import wml.img_utils as wmli
 import copy
 from .mask import get_bboxes_by_mask
 from itertools import count

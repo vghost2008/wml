@@ -1,9 +1,9 @@
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import glob
 import os.path as osp
 import numpy as np
 import os
-import object_detection2.visualization as odv
+import wml.object_detection2.visualization as odv
 import cv2
 import shutil
 

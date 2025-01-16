@@ -12,11 +12,11 @@ if torch.__version__ < "1.9.0":
 else:
     import queue
     import collections as container_abcs
-import wtorch.utils as wtu
+import wml.wtorch.utils as wtu
 import time
 from . import IterableDataset, Sampler, SequentialSampler, RandomSampler, BatchSampler, Dataset
 from . import _utils, _BaseDataLoaderIter
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import traceback
 import sys
 import math

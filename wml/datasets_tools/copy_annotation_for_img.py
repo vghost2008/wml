@@ -1,9 +1,9 @@
 import argparse
 import glob
 import os.path as osp
-import wml_utils as wmlu
-from iotoolkit import get_auto_dataset_suffix
-import img_utils as wmli
+import wml.wml_utils as wmlu
+from wml.iotoolkit import get_auto_dataset_suffix
+import wml.img_utils as wmli
 import shutil
 
 '''

@@ -1,8 +1,8 @@
 #coding=utf-8
-from object_detection_tools.statistics_tools import *
+from wml.object_detection_tools.statistics_tools import *
 import numpy as np
 from sklearn.cluster import KMeans
-import object_detection2.bboxes as odb
+import wml.object_detection2.bboxes as odb
 import sys
 import pickle
 import copy

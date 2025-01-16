@@ -1,15 +1,15 @@
 import sys
-from iotoolkit.labelme_toolkit import *
-import img_utils as wmli
-from iotoolkit.baidu_mask_toolkit import *
+from wml.iotoolkit.labelme_toolkit import *
+import wml.img_utils as wmli
+from wml.iotoolkit.baidu_mask_toolkit import *
 import matplotlib.pyplot as plt
 import numpy as np
-from iotoolkit.labelme_toolkit_fwd import get_files as get_labelme_files
-from iotoolkit.labelme_toolkit_fwd import read_labelme_mckp_data
-import wml_utils as wmlu
+from wml.iotoolkit.labelme_toolkit_fwd import get_files as get_labelme_files
+from wml.iotoolkit.labelme_toolkit_fwd import read_labelme_mckp_data
+import wml.wml_utils as wmlu
 import argparse
 import pickle
-from object_detection2.standard_names import *
+from wml.object_detection2.standard_names import *
 
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")

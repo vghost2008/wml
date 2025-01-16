@@ -1,11 +1,11 @@
 import torch
 from collections import Iterable
-import object_detection2.visualization as odv
+import wml.object_detection2.visualization as odv
 import random
 import numpy as np
 import cv2
-import object_detection2.bboxes as odb
-import basic_img_utils as bwmli
+import wml.object_detection2.bboxes as odb
+import wml.basic_img_utils as bwmli
 #from torch.utils.tensorboard import SummaryWriter
 #SummaryWriter.add_image()
 #tb.add_images

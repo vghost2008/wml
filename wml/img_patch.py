@@ -1,7 +1,7 @@
 import numpy as np
 from collections import Iterable
 import math
-import img_utils as wmli
+import wml.img_utils as wmli
 
 class ImagePatch:
     def __init__(self,patch_size,pad=True,pad_value=127,boundary=0) -> None:

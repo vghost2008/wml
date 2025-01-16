@@ -1,6 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 from .batch_norm import FrozenBatchNorm2d, get_norm, NaiveSyncBatchNorm
-from wtorch.nets.shape_spec import ShapeSpec
+from wml.wtorch.nets.shape_spec import ShapeSpec
 from .wrappers import (
     BatchNorm2d,
     Conv2d,

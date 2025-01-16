@@ -1,12 +1,12 @@
 import numpy as np
 import copy
 import cv2
-from semantic import basic_toolkit as bmt
-from semantic.mask_utils import get_bboxes_by_contours,npresize_mask
-import object_detection2.bboxes as odb
-import basic_img_utils as bwmli
-import object_detection2.bboxes as odb
-from semantic.basic_toolkit import findContours
+from wml.semantic import basic_toolkit as bmt
+from wml.semantic.mask_utils import get_bboxes_by_contours,npresize_mask
+import wml.object_detection2.bboxes as odb
+import wml.basic_img_utils as bwmli
+import wml.object_detection2.bboxes as odb
+from wml.semantic.basic_toolkit import findContours
 from .common import WBaseMaskLike
 import traceback
 import sys

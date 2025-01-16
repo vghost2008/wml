@@ -6,12 +6,12 @@ import random
 import sys
 from functools import wraps
 from collections.abc import Mapping, Sequence
-import wml_utils as wmlu
-import img_utils as wmli
+import wml.wml_utils as wmlu
+import wml.img_utils as wmli
 import cv2
-from thirdparty.config import CfgNode 
-from wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints
-from semantic.basic_toolkit import *
+from wml.thirdparty.config import CfgNode 
+from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints
+from wml.semantic.basic_toolkit import *
 from itertools import repeat
 import collections.abc
 import math

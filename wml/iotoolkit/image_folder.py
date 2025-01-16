@@ -1,6 +1,6 @@
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os.path as osp
-import img_utils as wmli
+import wml.img_utils as wmli
 import copy
 
 class ImageFolder:

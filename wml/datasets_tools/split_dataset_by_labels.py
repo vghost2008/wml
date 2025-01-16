@@ -1,14 +1,14 @@
 import argparse
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os.path as osp
 import os
 import math
 import random
 import time
-from iotoolkit.pascal_voc_toolkit import read_voc_xml
-from iotoolkit.labelme_toolkit import read_labelme_data
-from iotoolkit import get_auto_dataset_suffix
-from iotoolkit.image_folder import ImageFolder
+from wml.iotoolkit.pascal_voc_toolkit import read_voc_xml
+from wml.iotoolkit.labelme_toolkit import read_labelme_data
+from wml.iotoolkit import get_auto_dataset_suffix
+from wml.iotoolkit.image_folder import ImageFolder
 import shutil
 
 '''

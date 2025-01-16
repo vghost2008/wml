@@ -1,17 +1,17 @@
 #coding=utf-8
 import numpy as np
 import os
-import object_detection2.npod_toolkit as npod
-import object_detection2.bboxes as odb
+import wml.object_detection2.npod_toolkit as npod
+import wml.object_detection2.bboxes as odb
 import math
 import logging
-from thirdparty.odmetrics import coco_evaluation
-from thirdparty.odmetrics import standard_fields
+from wml.thirdparty.odmetrics import coco_evaluation
+from wml.thirdparty.odmetrics import standard_fields
 import copy
 import sys
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 from .build import METRICS_REGISTRY
 from .classifier_toolkit import ConfusionMatrix
 from .common import *

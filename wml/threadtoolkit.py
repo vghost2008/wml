@@ -5,7 +5,7 @@ from functools import partial
 import traceback
 import time
 import os
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 
 DEFAULT_THREAD_NR=cpu_count() if cpu_count()<4 else cpu_count()-1
 

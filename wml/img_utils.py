@@ -14,11 +14,11 @@ import random
 import glob
 import math
 from collections import OrderedDict, Iterable
-from basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
-from basic_data_def import colors_tableau
-import object_detection2.basic_visualization as bodv
+from wml.basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
+from wml.basic_data_def import colors_tableau
+import wml.object_detection2.basic_visualization as bodv
 import torchvision
-from basic_img_utils import *
+from wml.basic_img_utils import *
 
 try:
     from turbojpeg import TJCS_RGB, TJPF_BGR, TJPF_GRAY, TurboJPEG

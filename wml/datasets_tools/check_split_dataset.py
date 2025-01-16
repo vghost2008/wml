@@ -1,5 +1,5 @@
 import argparse
-import wml_utils as wmlu
+import wml.wml_utils as wmlu
 import os.path as osp
 import os
 import math
