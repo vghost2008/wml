@@ -8,6 +8,8 @@ import basic_img_utils as bwmli
 import object_detection2.bboxes as odb
 from semantic.basic_toolkit import findContours
 from .common import WBaseMaskLike
+import traceback
+import sys
 
 WBaseMask = WBaseMaskLike
 
@@ -732,6 +734,8 @@ class WBitmapMasks(WBaseMask):
         self.height = height if height is not None else masks.shape[1]
 
         if self.width<5 or self.height<5:
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
             print(f"WARNING: {self.__class__.__name__}: unnormal mask size, width={self.width}, height={self.height}, mask shape={masks.shape}")
 
         if len(masks) == 0:
