@@ -8,7 +8,7 @@ setup(
         # 列出你的依赖包，例如：
         # 'requests>=2.20.0',
     ],
-    author='WangJie',
+    author='vghost2008',
     author_email='bluetornado@zju.edu.cn',
     description='Deep Learning toolkit',
     long_description=open('README.md').read(),
