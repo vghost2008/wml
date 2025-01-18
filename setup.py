@@ -1,12 +1,20 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='wml',
-    version='3.0.0',
+    name='python-wml',
+    version='3.0.1',
     packages=find_packages(),
+    include_package_data=True,
+    include_dirs=True,
     install_requires=[
-        # 列出你的依赖包，例如：
-        # 'requests>=2.20.0',
+    'opencv-python>=4.5.3.56',
+    'pycocotools>=2.0.7',
+    'gast>=0.2.2',
+    'yacs>=0.1.8',
+    'scikit-learn>=0.19.1',
+    'pandas>=0.23.0',
+    'PyTurboJPEG',
+    'einops',
     ],
     author='vghost2008',
     author_email='bluetornado@zju.edu.cn',
