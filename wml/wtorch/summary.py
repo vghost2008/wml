@@ -9,6 +9,8 @@ import wml.basic_img_utils as bwmli
 #from torch.utils.tensorboard import SummaryWriter
 #SummaryWriter.add_image()
 #tb.add_images
+#WRITER.add_graph(torch.jit.trace(de_parallel(trainer.model), im, strict=False), [])
+
 
 def _draw_text_on_image(img,text,font_scale=1.2,color=(0.,255.,0.),pos=None):
     if isinstance(text,bytes):

@@ -734,7 +734,8 @@ class WBitmapMasks(WBaseMask):
         self.height = height if height is not None else masks.shape[1]
 
         if self.width<5 or self.height<5:
-            traceback.print_exc(file=sys.stdout)
+            stack_info = traceback.format_stack()
+            print("\n".join(stack_info))
             sys.stdout.flush()
             print(f"WARNING: {self.__class__.__name__}: unnormal mask size, width={self.width}, height={self.height}, mask shape={masks.shape}")
 

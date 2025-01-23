@@ -47,10 +47,12 @@ ratio: h/w
 '''
 def statistics_boxes(boxes,nr=100,name=""):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
+    sizes1 = [math.fabs(x[2]-x[0]) for x in boxes] + [math.fabs(x[3]-x[1]) for x in boxes]
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]
     try:
         print(f"Min area size (sqrt(w*h)) {min(sizes):.2f}, max area size {max(sizes):.2f} (pixel), mean {np.mean(sizes):.2f}, std {np.std(sizes):.2f}.")
         print(f"Min ratio {min(ratios):.2f}, max ratios {max(ratios):.2f}, mean: {np.mean(ratios):.2f}.")
+        print(f"Min side length (w0,h0,w1,h1,...) {min(sizes1):.2f}, max size length {max(sizes1):.2f} (pixel), mean {np.mean(sizes1):.2f}, std {np.std(sizes1):.2f}.")
         rratios = [x if x>=1 else 1.0/max(x,1e-3) for x in ratios]
         print(f"Real Ratio:Min {min(rratios):.2f}, max {max(rratios):.2f}, mean: {np.mean(rratios):.2f}, std: {np.std(rratios):.2f}.")
     except:
@@ -70,6 +72,7 @@ def statistics_boxes(boxes,nr=100,name=""):
     return _statistics_value(sizes,nr),_statistics_value(ratios,nr)'''
     pd_sizes = pd.Series(sizes)
     pd_ratios = pd.Series(ratios)
+    pd_side = pd.Series(sizes1)
     plt.figure(0,figsize=(15,10))
     #pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
     #pd_sizes.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', density=True, label = "hist")
@@ -87,6 +90,15 @@ def statistics_boxes(boxes,nr=100,name=""):
     plt.grid(axis='y', alpha=0.75)
     plt.grid(axis='x', alpha=0.75)
     plt.title(name+" ratio")
+
+    plt.figure(2,figsize=(15,10))
+    #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
+    #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', desnsity= True, label = "hist")
+    pd_side.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black',  label = "hist")
+    #pd_ratios.plot(kind = 'kde', color = 'red', label ="kde")
+    plt.grid(axis='y', alpha=0.75)
+    plt.grid(axis='x', alpha=0.75)
+    plt.title(name+" side length")
     plt.show()
     try:
         print(max(ratios))

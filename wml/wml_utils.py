@@ -12,7 +12,11 @@ import hashlib
 import math
 import pickle
 from collections import OrderedDict
-from importlib import metadata
+try:
+    from importlib import metadata
+except:
+    metadata = None
+    pass
 import re
 import torch
 

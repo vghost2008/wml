@@ -6,7 +6,8 @@ import wml.semantic.visualization_utils as smv
 from PIL import Image
 from wml.basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_large, PSEUDOCOLOR
 from wml.basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
-import wml.object_detection2.bboxes as odb
+#import .bboxes as odb
+from .bboxes import npchangexyorder
 from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem
 import math
 import wml.basic_img_utils as bwmli
@@ -216,7 +217,7 @@ def draw_bboxes_xy(img, classes=None, scores=None, bboxes=None,
                 fill_bboxes=False,
                 is_crowd=None):
     if bboxes is not None:
-        bboxes = odb.npchangexyorder(bboxes)
+        bboxes = npchangexyorder(bboxes)
     return draw_bboxes(img,classes,scores=scores,bboxes=bboxes,color_fn=color_fn,
                        text_fn=text_fn,get_text_pos_fn=get_text_pos_fn,thickness=thickness,
                        show_text=show_text,font_scale=font_scale,text_color=text_color,
@@ -307,7 +308,7 @@ mask only include the area within bbox
 def draw_mask_xy(img,classes,bboxes,masks,
               color_fn=fixed_color_large_fn,
               is_relative_coordinate=False):
-    bboxes = odb.npchangexyorder(bboxes)
+    bboxes = npchangexyorder(bboxes)
     img = draw_mask(img=img,
                     classes=classes,bboxes=bboxes,
                     masks=masks,color_fn=color_fn,
@@ -475,7 +476,7 @@ def draw_maskv2_xy(img,classes,bboxes=None,masks=None,
                            thickness=1,
                            ):
     if bboxes is not None:
-        bboxes = odb.npchangexyorder(bboxes)
+        bboxes = npchangexyorder(bboxes)
     img = draw_maskv2(img=img,
                     classes=classes,bboxes=bboxes,
                     masks=masks,color_fn=color_fn,
