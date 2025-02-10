@@ -832,7 +832,7 @@ def profile(input, ops, n=10, device=None, max_num_obj=0):
     return results
 
 
-def torch_profile(model,inputs):
+def torch_profile(model,inputs,log_path="./log"):
     # 使用 torch.profiler 捕获性能数据
     with torch.profiler.profile(
             activities=[
@@ -843,7 +843,7 @@ def torch_profile(model,inputs):
                 warmup=1,  # 第2步作为热身，不计入结果
                 active=3,  # 采集后面3步的性能数据
                 repeat=2),  # 重复2轮
-            on_trace_ready=torch.profiler.tensorboard_trace_handler('./log'),  # 保存日志以供 TensorBoard 可视化
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(log_path),  # 保存日志以供 TensorBoard 可视化
             record_shapes=True,  # 记录输入张量的形状
             profile_memory=True,  # 分析内存分配
             with_stack=True  # 记录操作的调用堆栈信息
@@ -852,6 +852,8 @@ def torch_profile(model,inputs):
         for step in range(10):
             outputs = model(inputs)
             profiler.step() 
+    
+    print(f"Log path: {log_path}")
 
 def model_parameters_detail(model,level=0,total_nr=-1):
     if total_nr<0:
