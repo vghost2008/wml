@@ -855,12 +855,16 @@ def torch_profile(model,inputs,log_path="./log"):
     
     print(f"Log path: {log_path}")
 
-def model_parameters_detail(model,level=0,total_nr=-1):
+def model_parameters_detail(model,level=0,total_nr=-1,thr=0.001,simple=False):
     if total_nr<0:
         total_nr = sum(x.numel() for x in model.parameters()) if isinstance(model, nn.Module) else 0  # parameters
         cur_total_nr = total_nr
     else:
         cur_total_nr = sum(x.numel() for x in model.parameters()) if isinstance(model, nn.Module) else 0  # parameters
+    
+    if simple and cur_total_nr==0:
+        return ""
+
     def _addindent(s_, numSpaces):
         s = s_.split('\n')
         # don't do anything for single-line stuff
@@ -878,9 +882,11 @@ def model_parameters_detail(model,level=0,total_nr=-1):
     if extra_repr:
         extra_lines = extra_repr.split('\n')
     child_lines = []
-    if cur_total_nr > total_nr*0.001:
+    if cur_total_nr > total_nr*thr:
             for key, module in model._modules.items():
-                mod_str = model_parameters_detail(module,level=level+1,total_nr=total_nr)
+                mod_str = model_parameters_detail(module,level=level+1,total_nr=total_nr,thr=thr,simple=simple)
+                if len(mod_str) == 0:
+                    continue
                 mod_str = _addindent(mod_str, 2)
                 child_lines.append('(' + key + '): ' + mod_str)
     lines = extra_lines + child_lines
