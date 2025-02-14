@@ -29,6 +29,7 @@ BASE_KEY = '_base_'
 DELETE_KEY = '_delete_'
 OVERRIDE_KEY = "_override_"
 DEPRECATION_KEY = '_deprecation_'
+MERGE_KEY = "_merge_"
 RESERVED_KEYS = ['filename', 'text', 'pretty_text']
 
 
@@ -48,7 +49,7 @@ class ConfigDict(Dict):
         else:
             return value
         raise ex
-    
+     
     def merge_from_dict(self, options, allow_list_keys=True):
         """Merge list into cfg_dict.
 
@@ -253,6 +254,9 @@ class Config:
     @staticmethod
     def _substitute_base_vars(cfg, base_var_dict, base_cfg):
         """Substitute variable strings to their actual values."""
+        '''
+        将base文件中的值合并到当前文件中
+        '''
         cfg = copy.deepcopy(cfg)
 
         if isinstance(cfg, dict):
@@ -362,13 +366,18 @@ class Config:
             for i,c in enumerate(cfg_dict_list):
                 duplicate_keys = base_cfg_dict.keys() & c.keys()
                 if len(duplicate_keys) > 0:
+                    '''
+                    引入文件中有重复的关键字，需要合并引入文件中的关键字
+                    '''
                     #raise KeyError('Duplicate key is not allowed among bases. '
                                    #f'Duplicate keys: {duplicate_keys}')
                     for key in duplicate_keys:
                         if c[key] is None:
+                            #如果当前base文件中的值为None,使用其它base文件中的值
                             print(f"WARNING: Find duplicate key {key} in config, value in {base_filename[i]} is None, use old value {base_cfg_dict[key]}")
                             c.pop(key)
                         else:
+                            #有重复且都不为空，使用后引入的base文件的值
                             print(f"WARNING: Find duplicate key {key} in config, use {base_filename[i]} for key {key}")
                         '''elif isinstance(c[key],dict) and isinstance(base_cfg_dict[key],dict):
                             new_value = c[key]
@@ -428,6 +437,10 @@ class Config:
             ...     {'0': dict(a=2)}, [dict(a=1), dict(b=2)], True)
             [{'a': 2}, {'b': 2}]
         """
+
+        if isinstance(b,(int,float,str,bytes)):
+            return a
+
         b = b.copy()
         for k, v in a.items():
             if allow_list_keys and k.isdigit() and isinstance(b, list):
@@ -454,6 +467,27 @@ class Config:
                     b[k] = Config._merge_a_into_b(v, b[k], allow_list_keys,is_overide=n_is_overide)
                 else:
                     b[k] = ConfigDict(v)
+            elif isinstance(v,(list,tuple)) and k in b and isinstance(b[k],(list,tuple)):
+                #合并list, tuple
+                if MERGE_KEY not in v:
+                    b[k] = v
+                else:
+                    v = list(v)
+                    idx = v.index(MERGE_KEY)
+                    del v[idx]
+
+                    b_v = b[k]
+                    merge_size = min(len(v),len(b[k]))
+                    new_v = []
+                    for i in range(merge_size):
+                        if isinstance(v[i],(dict,list,tuple)):
+                            cur_v = Config._merge_a_into_b(v[i],b_v[i])
+                        else:
+                            cur_v = v[i]
+                        new_v.append(cur_v)
+                    new_v.extend(list(v[merge_size:]))
+                    new_v.extend(list(b_v[merge_size:]))
+                    b[k] = new_v
             else:
                 b[k] = v
         return b

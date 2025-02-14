@@ -5,6 +5,7 @@ import wml.wtorch.nn as wnn
 from torch.nn.modules.batchnorm import _BatchNorm
 from torch.nn.modules.instancenorm import _InstanceNorm
 from .nn import get_conv_type
+from .utils import fuse_conv_and_bn, fuse_deconv_and_bn
 
 
 class ConvModule(nn.Module):
@@ -89,8 +90,9 @@ class ConvModule(nn.Module):
         self.inplace = inplace
         self.with_spectral_norm = with_spectral_norm
         self.with_explicit_padding = padding_mode not in official_padding_mode
-        self.order = order
-        assert isinstance(self.order, tuple) and len(self.order) == 3
+        self.order = list(order)
+        self.is_fused = False
+        assert isinstance(self.order, (tuple,list)) and len(self.order) == 3
         assert set(order) == set(['conv', 'norm', 'act'])
 
         self.with_norm = norm_cfg is not None
@@ -167,6 +169,23 @@ class ConvModule(nn.Module):
             return getattr(self, self.norm_name)
         else:
             return None
+
+    def fuse(self):
+        if self.training:
+            print(f"ERROR: fuse training ConvModule, skip operation")
+            return
+        if self.is_fused:
+            return
+        if self.order[0] == "conv" and self.order[1] == "norm":
+            if isinstance(self.conv,nn.Conv2d) and isinstance(self.norm,nn.BatchNorm2d):
+                self.conv = fuse_conv_and_bn(self.conv,self.norm)
+                delattr(self,self.norm_name)
+                del self.order[1]
+            elif isinstance(self.conv,nn.ConvTranspose2d) and isinstance(self.norm,nn.BatchNorm2d):
+                self.conv = fuse_deconv_and_bn(self.conv,self.norm)
+                delattr(self,self.norm_name)
+                del self.order[1]
+        self.is_fused = True
 
     def forward(self, x, activate=True, norm=True):
         for layer in self.order:
