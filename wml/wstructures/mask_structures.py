@@ -137,7 +137,7 @@ class WPolygonMaskItem:
 
                 if 0==bbox[0] and 0==bbox[1] and x1<=bbox[2] and y2<=bbox[3]:
                     f_poly_masks = [ps.copy()]
-                elif odb.equal_bboxes(bbox,e_bbox):
+                elif odb.equal_bboxes(bbox,e_bbox):  #如果剪切框完全包围当前多边形，要么只需要简单的剪切处理
                     sub_cropped_masks = WPolygonMaskItem([ps.copy()],width=self.width,height=self.height)
                     f_cropped_masks = sub_cropped_masks.simple_crop(e_bbox)
                     f_poly_masks = f_cropped_masks.points
@@ -734,8 +734,9 @@ class WBitmapMasks(WBaseMask):
         self.height = height if height is not None else masks.shape[1]
 
         if self.width<5 or self.height<5:
-            stack_info = traceback.format_stack()
-            print("\n".join(stack_info))
+            #处理WPolygonMasks剪切时，很容易出现这种情况
+            #stack_info = traceback.format_stack()
+            #print("\n".join(stack_info))
             sys.stdout.flush()
             print(f"WARNING: {self.__class__.__name__}: unnormal mask size, width={self.width}, height={self.height}, mask shape={masks.shape}")
 
