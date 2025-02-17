@@ -5,7 +5,7 @@ import wml.wtorch.nn as wnn
 from torch.nn.modules.batchnorm import _BatchNorm
 from torch.nn.modules.instancenorm import _InstanceNorm
 from .nn import get_conv_type
-from .utils import fuse_conv_and_bn, fuse_deconv_and_bn
+from .nn_utils import fuse_conv_and_bn, fuse_deconv_and_bn
 
 
 class ConvModule(nn.Module):
