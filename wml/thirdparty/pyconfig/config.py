@@ -259,6 +259,13 @@ class Config:
         """Substitute variable strings to their actual values."""
         '''
         将base文件中的值合并到当前文件中
+        示例:
+
+        dict(
+        type='Expand',
+        mean={{_base_.model.data_preprocessor.mean}},
+        to_rgb={{_base_.model.data_preprocessor.bgr_to_rgb}},
+        ratio_range=(1, 4)),
         '''
         cfg = copy.deepcopy(cfg)
 
