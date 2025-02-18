@@ -13,10 +13,10 @@ import warnings
 from argparse import Action, ArgumentParser
 from collections import abc
 from importlib import import_module
-
+import json
 from addict import Dict
 from yapf.yapflib.yapf_api import FormatCode
-
+import yaml
 from .misc import import_modules_from_strings
 from .path import check_file_exist
 
@@ -213,6 +213,9 @@ class Config:
 
     @staticmethod
     def _substitute_predefined_vars(filename, temp_config_name):
+        '''
+        处理预定义的值，如fileDirname, fileBasename, fileExtname等
+        '''
         file_dirname = osp.dirname(filename)
         file_basename = osp.basename(filename)
         file_basename_no_extension = osp.splitext(file_basename)[0]
@@ -228,7 +231,7 @@ class Config:
         for key, value in support_templates.items():
             regexp = r'\{\{\s*' + str(key) + r'\s*\}\}'
             value = value.replace('\\', '/')
-            config_file = re.sub(regexp, value, config_file)
+            config_file = re.sub(regexp, value, config_file) #将regexp替换为value
         with open(temp_config_name, 'w', encoding='utf-8') as tmp_config_file:
             tmp_config_file.write(config_file)
 
@@ -325,9 +328,13 @@ class Config:
                 }
                 # delete imported module
                 del sys.modules[temp_module_name]
-            elif filename.endswith(('.yml', '.yaml', '.json')):
-                import mmcv
-                cfg_dict = mmcv.load(temp_config_file.name)
+            elif filename.endswith('.json'):
+                with open(temp_config_file.name,"r") as f:
+                    cfg_dict = json.load(f)
+            elif filename.endswith(('.yml', '.yaml')):
+                with open(temp_config_file.name,"r") as f:
+                    cfg_dict = yaml.load(f)
+
             # close temp file
             temp_config_file.close()
 
@@ -401,6 +408,7 @@ class Config:
             # merge cfg_text
             cfg_text_list.append(cfg_text)
             cfg_text = '\n'.join(cfg_text_list)
+
 
         return cfg_dict, cfg_text
 
@@ -500,7 +508,11 @@ class Config:
                                                use_predefined_variables)
         if import_custom_modules and cfg_dict.get('custom_imports', None):
             import_modules_from_strings(**cfg_dict['custom_imports'])
-        return Config(cfg_dict, cfg_text=cfg_text, filename=filename)
+        cfg = Config(cfg_dict, cfg_text=cfg_text, filename=filename)
+        Config.set_sibling_key_vals(cfg)
+        Config.set_key_vals(cfg,cfg)
+
+        return cfg
 
     @staticmethod
     def fromstring(cfg_str, file_format):
@@ -778,6 +790,158 @@ class Config:
             Config._merge_a_into_b(
                 option_cfg_dict, cfg_dict, allow_list_keys=allow_list_keys))
 
+
+    @staticmethod
+    def set_key_vals(root_cfg,cfg,parent_keys=""):
+        '''
+        define variable by: NAME = value
+        use variable by: $$NAME
+    
+        Example:
+        define:
+        CLASSES_NUM = classes_num
+        use:
+        classes_num = $$CLASSES_NUM
+        '''
+        TAG = "$$"
+        W_TAG = "$"
+    
+        variable_dict = root_cfg.get("variable",{})
+        def _get_variable(key):
+            if key in root_cfg:
+                return root_cfg[key]
+            elif key in variable_dict:
+                return variable_dict[key]
+            return None
+    
+        def get_variable(key):
+            if "(" in key and ")" in key:
+                key = TAG+key
+                try:
+                    pattern = re.compile("\$\$\(.*?\)")
+                    res = pattern.finditer(key)
+                    for rg in list(res)[::-1]:
+                        tmp_key = key[rg.start():rg.end()]
+                        tmp_key = tmp_key[3:-1]
+                        key = key[:rg.start()]+str(_get_variable(tmp_key))+key[rg.end():]
+                    return eval(key)
+                except:
+                    print(f"ERROR: get value for key {key} faild.")
+                    return None
+            if key in root_cfg:
+                return root_cfg[key]
+            elif key in variable_dict:
+                return variable_dict[key]
+            return None
+    
+        for k,v in cfg.items():
+            if isinstance(v,dict):
+                all_keys = parent_keys+"."+str(k)
+                Config.set_key_vals(root_cfg,v,all_keys)
+                continue
+            elif isinstance(v,(list,tuple)):
+                for i,cv in enumerate(v):
+                    if not isinstance(cv,(dict)):
+                        continue
+                    all_keys = parent_keys+f".[{i}]"
+                    Config.set_key_vals(root_cfg,cv,all_keys)
+                    continue
+    
+            if not isinstance(v,(str,bytes)):
+                continue
+    
+            if v.startswith(TAG):
+                r_key = v[len(TAG):]
+                n_v = get_variable(r_key)
+                if n_v is None:
+                    msg = f"Find value {v} in cfg faild."
+                    print(msg)
+                    raise RuntimeError(msg)
+                cfg[k] = n_v
+                all_keys = parent_keys+"."+str(k)
+                print(f"Update cfg{all_keys} from {v} to {n_v}")
+            elif v.startswith(W_TAG):
+                all_keys = parent_keys+"."+str(k)
+                print(f"WRANING: ambiguous value {v} for cfg{all_keys}")
+
+    @staticmethod
+    def set_sibling_key_vals(cfg,parent_keys=""):
+        '''
+        用于引用兄弟的值
+        define variable by: NAME = value
+        use variable by: .$$NAME
+    
+        Example:
+        define:
+            {
+                a=1234,
+                {
+                    b=321,   #定义
+                    c=".$$b", #使用
+                }
+            }
+        
+        $$(NAME)+100
+        $$(NAME1)+$$(NAME2)
+        $$(NAME1)*2
+        '''
+        TAG = "$$."
+        W_TAG = "$."
+    
+        def _get_key_value(data,key):
+            '''
+            data: root config
+            '''
+            if "(" in key and ")" in key:
+                #如果()包含了值，使用eval评估
+                key = TAG+key
+                try:
+                    pattern = re.compile("\$\$\(\..*?\)")
+                    res = pattern.finditer(key)
+                    for rg in list(res)[::-1]:
+                        tmp_key = key[rg.start():rg.end()]
+                        tmp_key = tmp_key[4:-1]
+                        key = key[:rg.start()]+str(_get_key_value(data,tmp_key))+key[rg.end():]
+                    return eval(key)
+                except:
+                    print(f"ERROR: get value for key {key} faild.")
+                    return None
+            v = data.get(key,None)  #直接从root config中获取相应的值
+            if isinstance(v,(str,bytes)):  #处理嵌套引用问题
+                if v.startswith(TAG):
+                    r_key = v[len(TAG):]
+                    return _get_key_value(data,r_key)
+            return v
+    
+        for k,v in cfg.items():
+            if isinstance(v,dict):
+                all_keys = parent_keys+"."+str(k)
+                Config.set_sibling_key_vals(v,all_keys)
+                continue
+            elif isinstance(v,(list,tuple)):
+                for i,cv in enumerate(v):
+                    if not isinstance(cv,(dict)):
+                        continue
+                    all_keys = parent_keys+f".[{i}]"
+                    Config.set_sibling_key_vals(cv,all_keys)
+                    continue
+    
+            if not isinstance(v,(str,bytes)):
+                continue
+    
+            if v.startswith(TAG):
+                r_key = v[len(TAG):]
+                n_v = _get_key_value(cfg,r_key)
+                if n_v is None:
+                    msg = f"Find value {v} in cfg faild."
+                    print(msg)
+                    raise RuntimeError(msg)
+                cfg[k] = n_v
+                all_keys = parent_keys+"."+str(k)
+                print(f"Update cfg{all_keys} from {v} to {n_v}")
+            elif v.startswith(W_TAG):
+                all_keys = parent_keys+"."+str(k)
+                print(f"WRANING: ambiguous value {v} for cfg{all_keys}")
 
 class DictAction(Action):
     """

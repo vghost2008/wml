@@ -64,9 +64,9 @@ def fuse_deconv_and_bn(deconv, bn):
     return fuseddconv
 
 def fuse_linear_bn_eval(
-    linear: LinearT,
+    linear,
     bn: torch.nn.modules.batchnorm._BatchNorm,
-) -> LinearT:
+) :
     r"""Fuse a linear module and a BatchNorm module into a single, new linear module.
 
     Args:
