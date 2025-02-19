@@ -201,18 +201,20 @@ class Config:
     """
 
     @staticmethod
-    def _validate_py_syntax(filename):
+    def _validate_py_syntax(filename,ph_values={}):
         with open(filename, 'r', encoding='utf-8') as f:
             # Setting encoding explicitly to resolve coding issue on windows
             content = f.read()
         try:
+            if ph_values is not None and len(ph_values)>0:
+                content = Config._remove_ph_wrap(content,ph_values=ph_values)
             ast.parse(content)
         except SyntaxError as e:
             raise SyntaxError('There are syntax errors in config '
                               f'file {filename}: {e}')
 
     @staticmethod
-    def _substitute_predefined_vars(filename, temp_config_name):
+    def _substitute_predefined_vars(filename, temp_config_name,ph_values={}):
         '''
         处理预定义的值，如fileDirname, fileBasename, fileExtname等
         '''
@@ -232,6 +234,8 @@ class Config:
             regexp = r'\{\{\s*' + str(key) + r'\s*\}\}'
             value = value.replace('\\', '/')
             config_file = re.sub(regexp, value, config_file) #将regexp替换为value
+        if ph_values is not None and len(ph_values)>0:
+            config_file = Config._remove_ph_wrap(config_file,ph_values=ph_values)
         with open(temp_config_name, 'w', encoding='utf-8') as tmp_config_file:
             tmp_config_file.write(config_file)
 
@@ -297,7 +301,7 @@ class Config:
         return cfg
 
     @staticmethod
-    def _file2dict(filename, use_predefined_variables=True):
+    def _file2dict(filename, use_predefined_variables=True,ph_values={}):
         filename = osp.abspath(osp.expanduser(filename))
         check_file_exist(filename)
         fileExtname = osp.splitext(filename)[1]
@@ -313,7 +317,8 @@ class Config:
             # Substitute predefined variables
             if use_predefined_variables:
                 Config._substitute_predefined_vars(filename,
-                                                   temp_config_file.name)
+                                                   temp_config_file.name,
+                                                   ph_values=ph_values)
             else:
                 shutil.copyfile(filename, temp_config_file.name)
             # Substitute base variables from placeholders to strings
@@ -323,7 +328,7 @@ class Config:
             if filename.endswith('.py'):
                 temp_module_name = osp.splitext(temp_config_name)[0]
                 sys.path.insert(0, temp_config_dir)
-                Config._validate_py_syntax(filename)
+                Config._validate_py_syntax(filename,ph_values=ph_values)
                 mod = import_module(temp_module_name)
                 sys.path.pop(0)
                 cfg_dict = {
@@ -372,7 +377,7 @@ class Config:
             cfg_dict_list = list()
             cfg_text_list = list()
             for f in base_filename:
-                _cfg_dict, _cfg_text = Config._file2dict(osp.join(cfg_dir, f))
+                _cfg_dict, _cfg_text = Config._file2dict(osp.join(cfg_dir, f),ph_values=ph_values)
                 cfg_dict_list.append(_cfg_dict)
                 cfg_text_list.append(_cfg_text)
 
@@ -511,10 +516,17 @@ class Config:
     def fromfile(filename,
                  use_predefined_variables=True,
                  import_custom_modules=True):
+        ph_values = Config.get_placeholder_values(filename)
+        if len(ph_values)>0:
+            print(f"Placeholder values:")
+            for k,v in ph_values.items():
+                print(f"{k:<20}: {v}")
         cfg_dict, cfg_text = Config._file2dict(filename,
-                                               use_predefined_variables)
+                                               use_predefined_variables,
+                                               ph_values=ph_values)
         if import_custom_modules and cfg_dict.get('custom_imports', None):
             import_modules_from_strings(**cfg_dict['custom_imports'])
+        cfg_dict = Config.remove_tmp_value(cfg_dict)
         cfg = Config(cfg_dict, cfg_text=cfg_text, filename=filename)
         Config.set_sibling_key_vals(cfg)
         Config.set_key_vals(cfg,cfg)
@@ -949,6 +961,186 @@ class Config:
             elif v.startswith(W_TAG):
                 all_keys = parent_keys+"."+str(k)
                 print(f"WRANING: ambiguous value {v} for cfg{all_keys}")
+    
+    @staticmethod
+    def get_base_file_list(file_path):
+        file_path = osp.abspath(file_path)
+        base_file_list,*_ = Config.simple_get_base_file_list(file_path)
+        for f in base_file_list[::-1]:
+            cur_list,*_ = Config.simple_get_base_file_list(f)
+            base_file_list = cur_list+base_file_list
+        
+        res_base_file_list = []
+        for x in base_file_list[::-1]:
+            if x not in res_base_file_list:
+                res_base_file_list = [x] +res_base_file_list
+        
+        return res_base_file_list
+
+
+    @staticmethod
+    def simple_get_base_file_list(file_path):
+        if not isinstance(file_path,(list,tuple)):
+            with open(file_path,"r") as f:
+                lines = f.readlines()
+        else:
+            lines = file_path
+            file_path = None
+        
+        start_no = -1
+        end_no = -1
+        find_bracket = False
+        find_bias = False
+        for i,l in enumerate(lines):
+            l = l.rstrip()
+            if BASE_KEY in l and start_no<0:
+                start_no = i
+                if "[" in l:
+                    find_bracket = True
+                elif "\\" in l:
+                    find_bias = True
+            if start_no>=0:
+                if find_bracket:
+                    if "]" in l:
+                        end_no = i
+                        break
+                elif find_bias:
+                    if "\\" not in l:
+                        end_no = i
+                        break
+                else:
+                    end_no = i
+                    break
+        
+        if start_no>=0 and end_no>=0:
+            data = "\n".join(lines[start_no:end_no+1])
+            data = Config._simple_str2dict(data)
+            if BASE_KEY in data:
+                data = data[BASE_KEY]
+                if not isinstance(data,(list,tuple)):
+                    data = [data]
+                if file_path is not None:
+                    dir_name = osp.dirname(file_path)
+                    data = [osp.abspath(osp.join(dir_name,x)) for x in data]
+            else:
+                data = []
+            return data,start_no,end_no
+        else:
+            return [],None,None
+
+    
+    @staticmethod
+    def _insert_ph_values2str(data,ph_values):
+        data = data.split("\n")
+        new_data = []
+        import_lines = -1
+        _,start_no,end_no = Config.simple_get_base_file_list(data)
+        if end_no is not None:
+            import_lines = end_no
+        for i,d in enumerate(data):
+            if "import " in d and i>import_lines:
+                import_lines = i
+        ph_lines = [k+" = "+Config.to_placeholder_str(v) for k,v in ph_values.items()]
+        new_data = data[:import_lines+1]+ph_lines+data[import_lines+1:]
+        new_data = "\n".join(new_data)
+        return new_data
+        
+    @staticmethod
+    def _remove_ph_wrap(data,ph_values={}):
+        if ph_values is None:
+            ph_values = {}
+        ph_regexp = r'vars\(?\)?.([\w_]+)'
+        base_vars = set(re.findall(ph_regexp, data))
+        for base_var in base_vars:
+            if base_var in ph_values:
+                value = Config.to_placeholder_str(ph_values[base_var])
+            else:
+                value = base_var
+            regexp = r'vars\(?\)?.'+base_var
+            data = re.sub(regexp, value, data)
+        return data
+
+    @staticmethod
+    def _simple_str2dict(data,tmp_dir=None,ph_values={}):
+
+        if ph_values is not None and len(ph_values)>0:
+            data = Config._insert_ph_values2str(data,ph_values)
+            data = Config._remove_ph_wrap(data)
+
+        temp_config_file = tempfile.NamedTemporaryFile(
+                dir=tmp_dir, suffix=".py")
+
+        temp_config_name = osp.basename(temp_config_file.name)
+        temp_config_dir = osp.dirname(temp_config_file.name)
+
+        sys.path.insert(0, temp_config_dir)
+        temp_module_name = osp.splitext(temp_config_name)[0]
+        sys.path.insert(0, temp_config_dir)
+        with open(temp_config_file.name,"w") as f:
+            f.write(data)
+        mod = import_module(temp_module_name)
+        sys.path.pop(0)
+        cfg_dict = {
+                    name: value
+                    for name, value in mod.__dict__.items()
+                    if not name.startswith('__')
+                    and not isinstance(value, types.ModuleType)
+                    and not isinstance(value, types.FunctionType)
+                }
+                # delete imported module
+        del sys.modules[temp_module_name]
+        temp_config_file.close()
+
+        return cfg_dict
+                
+
+    @staticmethod
+    def get_placeholder_names(filename):
+        with open(filename, 'r', encoding='utf-8') as f:
+            config_file = f.read()
+        ph_regexp = r'vars\(?\)?.([\w_]+)'
+        base_vars = set(re.findall(ph_regexp, config_file))
+        res = []
+        for base_var in base_vars:
+            res.append(base_var)
+        return res
+
+    @staticmethod
+    def get_placeholder_values(filename):
+        '''
+        使用vars.NAME的方式引用其它变量
+        '''
+        ph_names = Config.get_placeholder_names(filename)
+        base_files = Config.get_base_file_list(filename)
+        for bf in base_files:
+            ph_names += Config.get_placeholder_names(bf)
+        ph_names = list(set(ph_names))
+        ph_values = dict(zip(ph_names,[None]*len(ph_names)))
+        all_files = base_files+[filename]
+        for bf in all_files:
+            with open(bf,"r") as f:
+                config_file = f.read()
+            cur_data_dict = Config._simple_str2dict(config_file,ph_values=ph_values)
+            for k,v in cur_data_dict.items():
+                if k in ph_values:
+                    ph_values[k] = v
+        return ph_values
+    
+    @staticmethod
+    def to_placeholder_str(v):
+        if isinstance(v,str):
+            return "\""+v+"\""
+        
+        return str(v)
+
+    @staticmethod
+    def remove_tmp_value(cfg_dict):
+        for k in list(cfg_dict.keys()):
+            if k.endswith("_"):
+                cfg_dict.pop(k)
+
+        return cfg_dict
+
 
 class DictAction(Action):
     """
