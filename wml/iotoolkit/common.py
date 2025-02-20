@@ -53,7 +53,11 @@ def ignore_case_dict_label_text2id(name,dict_data):
     name = name.lower()
     if name not in dict_data:
         print(f"ERROR: trans {name} faild.")
-    return dict_data.get(name,None)
+    v = dict_data.get(name,None)
+    if isinstance(v,(str,bytes)) and v.lower() in dict_data:
+        return ignore_case_dict_label_text2id(v.lower(), dict_data)
+    else:
+        return v
 
 def dict_label_text2id(name,dict_data):
     if name not in dict_data:
