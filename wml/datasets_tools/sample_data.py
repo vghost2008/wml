@@ -24,7 +24,7 @@ def parse_args():
         '-bl',
         '--by-labels',
         action='store_true',
-        help='split by labels xmls')
+        help='split by labels xmls') #每个类别采样nr个文件
     parser.add_argument(
         '-kk',
         '--keep-key',

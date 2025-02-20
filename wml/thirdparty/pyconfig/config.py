@@ -970,7 +970,7 @@ class Config:
         file_path = osp.abspath(file_path)
         base_file_list,*_ = Config.simple_get_base_file_list(file_path)
         for f in base_file_list[::-1]:
-            cur_list,*_ = Config.simple_get_base_file_list(f)
+            cur_list = Config.get_base_file_list(f)
             base_file_list = cur_list+base_file_list
         
         res_base_file_list = []
@@ -1133,7 +1133,7 @@ class Config:
                 config_file = f.read()
             cur_data_dict = Config._simple_str2dict(config_file,ph_values=ph_values)
             for k,v in cur_data_dict.items():
-                if k in ph_values:
+                if k in ph_values and v is not None:
                     ph_values[k] = v
         return ph_values
     
