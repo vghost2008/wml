@@ -218,12 +218,15 @@ class Config:
         '''
         处理预定义的值，如fileDirname, fileBasename, fileExtname等
         '''
+        filename = osp.abspath(osp.expanduser(filename))
         file_dirname = osp.dirname(filename)
+        dir_basename = osp.basename(file_dirname)
         file_basename = osp.basename(filename)
         file_basename_no_extension = osp.splitext(file_basename)[0]
         file_extname = osp.splitext(filename)[1]
         support_templates = dict(
             fileDirname=file_dirname,
+            dirBasename = dir_basename,
             fileBasename=file_basename,
             fileBasenameNoExtension=file_basename_no_extension,
             fileExtname=file_extname)
@@ -1110,12 +1113,20 @@ class Config:
         '''
         使用vars.NAME的方式引用其它变量
         '''
+        filename = osp.abspath(osp.expanduser(filename))
+        basename = osp.basename(osp.splitext(filename)[0])
+        dirname = osp.dirname(filename)
+        dirbasename = osp.basename(dirname)
+        pre_ph_values = dict(filename=filename,basename=basename,dirname=dirname,dirbasename=dirbasename)
+
         ph_names = Config.get_placeholder_names(filename)
         base_files = Config.get_base_file_list(filename)
         for bf in base_files:
             ph_names += Config.get_placeholder_names(bf)
         ph_names = list(set(ph_names))
+
         ph_values = dict(zip(ph_names,[None]*len(ph_names)))
+        ph_values.update(pre_ph_values)
         all_files = base_files+[filename]
         for bf in all_files:
             with open(bf,"r") as f:
