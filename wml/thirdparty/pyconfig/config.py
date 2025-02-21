@@ -17,6 +17,7 @@ import json
 from addict import Dict
 from yapf.yapflib.yapf_api import FormatCode
 import yaml
+import wml.wml_utils as wmlu
 from .misc import import_modules_from_strings
 from .path import check_file_exist
 
@@ -1121,7 +1122,9 @@ class Config:
 
         ph_names = Config.get_placeholder_names(filename)
         base_files = Config.get_base_file_list(filename)
+        print(f"Base file list:")
         for bf in base_files:
+            print(f"base file: {bf}")
             ph_names += Config.get_placeholder_names(bf)
         ph_names = list(set(ph_names))
 
@@ -1146,12 +1149,24 @@ class Config:
 
     @staticmethod
     def remove_tmp_value(cfg_dict):
-        for k in list(cfg_dict.keys()):
-            if k.endswith("_"):
-                cfg_dict.pop(k)
+        if isinstance(cfg_dict,dict):
+            for k in list(cfg_dict.keys()):
+                if k.endswith("_"):
+                    cfg_dict.pop(k)
+            for k,v in cfg_dict.items():
+                Config.remove_tmp_value(v)
+        elif isinstance(cfg_dict,(list,tuple)):
+            cfg_dict = [Config.remove_tmp_value(x) for x in cfg_dict]
 
         return cfg_dict
 
+    @staticmethod
+    @wmlu.no_throw
+    def get_value_in_cfgs(cfgs,attr,default_value=None):
+        for cfg in cfgs:
+            if cfg is not None and hasattr(cfg,attr):
+                return cfg.get(attr,default_value)
+        return default_value
 
 class DictAction(Action):
     """
