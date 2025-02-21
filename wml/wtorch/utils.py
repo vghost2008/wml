@@ -23,6 +23,7 @@ from contextlib import contextmanager
 import gc
 import time
 import torch.nn as nn
+import colorama
 
 
 try:
@@ -125,12 +126,13 @@ def remove_prefix_from_state_dict(state_dict,prefix="module."):
         res[k] = v
     return res
 
-def forgiving_state_restore(net, loaded_dict,verbose=False):
+def forgiving_state_restore(net, loaded_dict,verbose=False,strict=False):
     """
     Handle partial loading when some tensors don't match up in size.
     Because we want to use models that were trained off a different
     number of classes.
     """
+    colorama.init(autoreset=True)
     ignore_key = ['num_batches_tracked']
     def _is_ignore_key(k):
         for v in ignore_key:
@@ -145,7 +147,8 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
     net_state_dict = net.state_dict()
     new_loaded_dict = {}
     used_loaded_dict_key = []
-    unloaded_net_state_key = []
+    unloaded_net_state_key = [] #模型中没有加载的参数
+    unused_ckpt_key = [] #ckpt中没有使用的参数
     for k in net_state_dict:
         new_k = k
         if new_k in loaded_dict and net_state_dict[k].size() == loaded_dict[new_k].size():
@@ -166,9 +169,10 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
     for k in loaded_dict:
         if k not in new_loaded_dict and k not in used_loaded_dict_key and not _is_ignore_key(k):
             if k in net_state_dict:
-                print(f"Skip {k} in loaded dict, shape={loaded_dict[k].shape} vs {net_state_dict[k].shape} in model")
+                print(colorama.Fore.YELLOW+f"Skip {k} in loaded dict, shape={loaded_dict[k].shape} vs {net_state_dict[k].shape} in model")
             else:
-                print(f"Skip {k} in loaded dict, shape={loaded_dict[k].shape}")
+                print(colorama.Fore.BLUE+f"Skip {k} in loaded dict, shape={loaded_dict[k].shape}")
+            unused_ckpt_key.append(k)
     if verbose:
         print(f"---------------------------------------------------")
         for k in new_loaded_dict:
@@ -177,6 +181,9 @@ def forgiving_state_restore(net, loaded_dict,verbose=False):
     net.load_state_dict(net_state_dict)
     sys.stdout.flush()
     print(f"Load checkpoint finish.")
+    if strict and (len(unused_ckpt_key)>0 or len(unloaded_net_state_key)>0):
+        raise RuntimeError(f"Load ckpt faild.")
+    print(colorama.Style.RESET_ALL)
     return net,list(new_loaded_dict.keys()),unloaded_net_state_key
 
 def sequence_mask(lengths,maxlen=None,dtype=torch.bool):
