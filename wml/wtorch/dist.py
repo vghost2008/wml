@@ -13,6 +13,8 @@ from torch.distributed import ProcessGroup
 from torch import distributed as torch_dist
 from collections.abc import Iterable, Mapping
 from torch import Tensor
+from torch.nn.parallel._functions import _get_stream
+
 
 
 
@@ -587,5 +589,23 @@ def get_dist_info(group: Optional[ProcessGroup] = None) -> Tuple[int, int]:
         ``world_size``.
     """
     world_size = get_world_size(group)
-    rank = get_rank(group)
+    rank = get_rank()
     return rank, world_size
+
+def master_only(func: Callable) -> Callable:
+    
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        rank, _ = get_dist_info()
+        if rank == 0:
+            return func(*args, **kwargs)
+
+    return wrapper
+
+def get_stream(device:int):
+    if torch.__version__.startswith("1."):
+        return _get_stream(device)
+    else:
+        if -1 == device:
+            return None
+        return _get_stream(torch.device(f"cuda:{device}"))

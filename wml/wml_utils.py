@@ -11,6 +11,10 @@ import datetime
 import hashlib
 import math
 import pickle
+import os
+import subprocess
+import warnings
+from packaging.version import parse
 from collections import OrderedDict
 try:
     from importlib import metadata
@@ -439,6 +443,23 @@ def is_child_of(obj, cls):
         return is_child_of(obj.__class__, cls)
     return False
 
+def is_method_overridden(method, base_class, derived_class):
+    """Check if a method of base class is overridden in derived class.
+
+    Args:
+        method (str): the method name to check.
+        base_class (type): the class of the base class.
+        derived_class (type | Any): the class or instance of the derived class.
+    """
+    assert isinstance(base_class, type), \
+        "base_class doesn't accept instance, Please pass class instead."
+
+    if not isinstance(derived_class, type):
+        derived_class = derived_class.__class__
+
+    base_method = getattr(base_class, method)
+    derived_method = getattr(derived_class, method)
+    return derived_method != base_method
 
 def add_dict(lhv,rhv):
     res = dict(lhv)
@@ -659,3 +680,47 @@ def check_version(
         if verbose:
             print(warning)
     return result
+
+
+
+
+def digit_version(version_str: str, length: int = 4):
+    """Convert a version string into a tuple of integers.
+
+    This method is usually used for comparing two versions. For pre-release
+    versions: alpha < beta < rc.
+
+    Args:
+        version_str (str): The version string.
+        length (int): The maximum number of version levels. Default: 4.
+
+    Returns:
+        tuple[int]: The version info in digits (integers).
+    """
+    assert 'parrots' not in version_str
+    version = parse(version_str)
+    assert version.release, f'failed to parse version {version_str}'
+    release = list(version.release)
+    release = release[:length]
+    if len(release) < length:
+        release = release + [0] * (length - len(release))
+    if version.is_prerelease:
+        mapping = {'a': -3, 'b': -2, 'rc': -1}
+        val = -4
+        # version.pre can be None
+        if version.pre:
+            if version.pre[0] not in mapping:
+                warnings.warn(f'unknown prerelease version {version.pre[0]}, '
+                              'version checking may go wrong')
+            else:
+                val = mapping[version.pre[0]]
+            release.extend([val, version.pre[-1]])
+        else:
+            release.extend([val, 0])
+
+    elif version.is_postrelease:
+        release.extend([1, version.post])  # type: ignore
+    else:
+        release.extend([0, 0])
+    return tuple(release)
+

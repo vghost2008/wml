@@ -75,6 +75,9 @@ class Registry(object):
                 )
             )
         return ret
+
+    def __contains__(self,v):
+        return v in self._obj_map
     
     def build(self,cfg):
         if isinstance(cfg,(list,tuple)):

@@ -96,7 +96,7 @@ bboxes:[X,4]
 '''
 def bboxes_nms(classes, scores, bboxes, nms_threshold=0.5):
 
-    keep_bboxes = np.ones(scores.shape, dtype=np.bool)
+    keep_bboxes = np.ones(scores.shape, dtype=bool)
     for i in range(scores.size-1):
         if keep_bboxes[i]:
             # Computer overlap with bboxes which are following.
@@ -177,8 +177,8 @@ def remove_boundary_boxes(bboxes,boundary=[0.1,0.1],threshold=0.9):
     boundary_w = boundary[1]
     boundary_h = boundary[0]
     if boxes_nr == 0:
-        return bboxes,np.array([],dtype=np.bool)
-    keep_indicts = np.ones(shape=[boxes_nr],dtype=np.bool)
+        return bboxes,np.array([],dtype=bool)
+    keep_indicts = np.ones(shape=[boxes_nr],dtype=bool)
     boundary_boxes = np.array([[0.0,0.0,1.0,boundary_w],
                                [0.0, 1-boundary_w, 1.0, 1.0],
                               [0.0,0.0,boundary_h,1.0],

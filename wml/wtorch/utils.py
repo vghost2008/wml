@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from collections import Iterable
+from collections.abc import Iterable
 import torch.nn.functional as F
 import random
 import sys
@@ -24,17 +24,13 @@ import gc
 import time
 import torch.nn as nn
 import colorama
+from .parallel import DataContainer as DC
 
 
 try:
     import thop
 except ImportError:
     thop = None
-
-try:
-    from mmcv.parallel import DataContainer as DC
-except:
-    DC = None
 
 def _ntuple(n):
     def parse(x):
@@ -185,6 +181,14 @@ def forgiving_state_restore(net, loaded_dict,verbose=False,strict=False):
         raise RuntimeError(f"Load ckpt faild.")
     print(colorama.Style.RESET_ALL)
     return net,list(new_loaded_dict.keys()),unloaded_net_state_key
+
+def load_checkpoint(
+                module,
+                checkpoint,
+                map_location=None,
+                strict=False):
+    state_dict = torch.load(checkpoint,map_location=map_location)
+    forgiving_state_restore(module,state_dict,strict=strict)
 
 def sequence_mask(lengths,maxlen=None,dtype=torch.bool):
     if not isinstance(lengths,torch.Tensor):

@@ -185,7 +185,7 @@ class WMCKeypointsItem(WBaseMaskLike):
         """Translate the Polygonpoints.
 
         Example:
-            >>> self = Polygonpoints.random(dtype=np.int)
+            >>> self = Polygonpoints.random(dtype=np.int32)
             >>> out_shape = (self.height, self.width)
             >>> new = self.translate(out_shape, 4., direction='horizontal')
             >>> assert np.all(new.points[0][0][1::2] == self.points[0][0][1::2])
@@ -313,7 +313,7 @@ class WMCKeypoints(WBaseMaskLike):
             return self.crop(bbox)
         elif isinstance(idxs,(list,np.ndarray,tuple)):
             idxs = np.array(idxs)
-            if idxs.dtype == np.bool:
+            if idxs.dtype == bool:
                 idxs = np.where(idxs)[0]
             try:
                 points = [self.points[idx] for idx in idxs]
@@ -332,7 +332,7 @@ class WMCKeypoints(WBaseMaskLike):
             self.copy_from(value,bbox)
         elif isinstance(idxs,(list,np.ndarray,tuple)):
             idxs = np.array(idxs)
-            if idxs.dtype == np.bool:
+            if idxs.dtype == bool:
                 idxs = np.where(idxs)[0]
             if len(value) != len(idxs):
                 info = f"idxs size not equal value's size {len(idxs)} vs {len(value)}"
@@ -390,7 +390,7 @@ class WMCKeypoints(WBaseMaskLike):
         x1 = sx.stop-1 if sx.stop is not None else self.width-1
         y0 = sy.start if sy.start is not None else 0
         y1 = sy.stop-1 if sy.stop is not None else self.height-1
-        return np.array([x0,y0,x1,y1],dtype=np.int)
+        return np.array([x0,y0,x1,y1],dtype=np.int32)
 
     @staticmethod
     def is_flip_slice(s:slice):

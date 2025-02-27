@@ -7,6 +7,7 @@ static methods.
 
 import time
 import torch
+import collections
 if torch.__version__ < "1.9.0":
     from torch._six import queue, container_abcs, string_classes
 else:
@@ -57,11 +58,11 @@ def pin_memory(data):
         return data.pin_memory().cuda()
     elif isinstance(data, string_classes):
         return data
-    elif isinstance(data, container_abcs.Mapping):
+    elif isinstance(data, collections.abc.Mapping):
         return {k: pin_memory(sample) for k, sample in data.items()}
     elif isinstance(data, tuple) and hasattr(data, '_fields'):  # namedtuple
         return type(data)(*(pin_memory(sample) for sample in data))
-    elif isinstance(data, container_abcs.Sequence):
+    elif isinstance(data, collections.abc.Sequence):
         return [pin_memory(sample) for sample in data]
     elif hasattr(data, "pin_memory"):
         return data.pin_memory()
@@ -109,11 +110,11 @@ def pin_memory_stream(data):
         return data.pin_memory().cuda(non_blocking=True)
     elif isinstance(data, string_classes):
         return data
-    elif isinstance(data, container_abcs.Mapping):
+    elif isinstance(data, collections.abc.Mapping):
         return {k: pin_memory_stream(sample) for k, sample in data.items()}
     elif isinstance(data, tuple) and hasattr(data, '_fields'):  # namedtuple
         return type(data)(*(pin_memory_stream(sample) for sample in data))
-    elif isinstance(data, container_abcs.Sequence):
+    elif isinstance(data, collections.abc.Sequence):
         return [pin_memory_stream(sample) for sample in data]
     elif hasattr(data, "pin_memory"):
         return data.pin_memory().cuda(non_blocking=True)

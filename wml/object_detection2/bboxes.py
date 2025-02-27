@@ -3,7 +3,7 @@ import numpy as np
 import os
 import sys
 import random
-from collections import Iterable
+from collections.abc import Iterable
 import math
 from .wmath import npsafe_divide
 import cv2 as cv
@@ -587,7 +587,7 @@ def change_bboxes_nr(bboxes0,labels0,bboxes1,labels1,threshold=0.8):
 def merge_bboxes(bboxes0,labels0,bboxes1,labels1,iou_threshold=0.5,class_agnostic=True):
     labels1 = np.array(labels1)
     labels0 = np.array(labels0)
-    mask = np.ones(labels1.shape,dtype=np.bool)
+    mask = np.ones(labels1.shape,dtype=bool)
 
     for i in range(labels1.shape[0]):
         if class_agnostic:
@@ -652,7 +652,7 @@ def npbbxoes_nms(bboxes,nms_thrsh=0.5):
     bboxes = np.array(bboxes)
     if bboxes_nr<=1:
         return bboxes,[True]
-    mask = np.ones([bboxes_nr],dtype=np.bool)
+    mask = np.ones([bboxes_nr],dtype=bool)
     for i in range(bboxes_nr-1):
         ious = npbboxes_jaccard([bboxes[i]],bboxes[i+1:])
         for j in range(len(ious)):

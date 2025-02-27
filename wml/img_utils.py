@@ -13,7 +13,8 @@ import copy
 import random
 import glob
 import math
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 from wml.basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 from wml.basic_data_def import colors_tableau
 import wml.object_detection2.basic_visualization as bodv

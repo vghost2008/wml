@@ -12,7 +12,7 @@ import uuid
 import warnings
 from argparse import Action, ArgumentParser
 from collections import abc
-from importlib import import_module
+from importlib import import_module,invalidate_caches
 import json
 from addict import Dict
 from yapf.yapflib.yapf_api import FormatCode
@@ -696,7 +696,8 @@ class Config:
             based_on_style='pep8',
             blank_line_before_nested_class_or_def=True,
             split_before_expression_after_opening_paren=True)
-        text, _ = FormatCode(text, style_config=yapf_style, verify=True)
+        #text, _ = FormatCode(text, style_config=yapf_style, verify=True)
+        text, _ = FormatCode(text, style_config=yapf_style)
 
         return text
 
@@ -1079,11 +1080,11 @@ class Config:
 
         sys.path.insert(0, temp_config_dir)
         temp_module_name = osp.splitext(temp_config_name)[0]
-        sys.path.insert(0, temp_config_dir)
         with open(temp_config_file.name,"w") as f:
             f.write(data)
+        invalidate_caches()
         mod = import_module(temp_module_name)
-        sys.path.pop(0)
+        #sys.path.pop(0)
         cfg_dict = {
                     name: value
                     for name, value in mod.__dict__.items()
@@ -1151,6 +1152,8 @@ class Config:
     def remove_tmp_value(cfg_dict):
         if isinstance(cfg_dict,dict):
             for k in list(cfg_dict.keys()):
+                if not isinstance(k,str):
+                    continue
                 if k.endswith("_"):
                     cfg_dict.pop(k)
             for k,v in cfg_dict.items():

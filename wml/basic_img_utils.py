@@ -1,5 +1,6 @@
 import numpy as np
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 import copy
 import cv2
 import math

@@ -1,5 +1,5 @@
 import numpy as np
-from collections import Iterable
+from collections.abc import Iterable
 import math
 import wml.img_utils as wmli
 

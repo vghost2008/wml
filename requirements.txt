@@ -1,8 +1,12 @@
-opencv-python==4.5.3.56
-pycocotools==2.0.7
-gast==0.2.2
-yacs==0.1.8
+opencv-python>=4.5.3.56
+pycocotools>=2.0.7
+gast>=0.2.2
+yacs>=0.1.8
 scikit-learn
 pandas
 PyTurboJPEG
 easydict
+colorama
+scipy
+addict
+einops

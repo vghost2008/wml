@@ -4,9 +4,10 @@ import torch.nn as nn
 import wml.wtorch.nn as wnn
 from torch.nn.modules.batchnorm import _BatchNorm
 from torch.nn.modules.instancenorm import _InstanceNorm
+from .nn_utils import fuse_linear_bn_eval
 
 
-
+Linear = nn.Linear
 class FCModule(nn.Module):
     def __init__(self,
                  in_channels,
@@ -17,6 +18,7 @@ class FCModule(nn.Module):
                  inplace=True,
                  ):
         super().__init__()
+        self.is_fused = False
         norm_cfg = copy.deepcopy(norm_cfg)
         assert norm_cfg is None or isinstance(norm_cfg, dict)
         assert act_cfg is None or isinstance(act_cfg, dict)
@@ -68,6 +70,16 @@ class FCModule(nn.Module):
             modules.append(activate)
         self.fc = nn.Sequential(*modules)
 
+    def fuse(self):
+        if self.training:
+            print(f"ERROR: fuse training FCModule, skip operation")
+            return
+        if self.is_fused:
+            return
+        if self.with_norm and isinstance(self.fc[1],nn._BatchNorm):
+            self.fc[0] = fuse_linear_bn_eval(self.fc[0],self.fc[1])
+            del self.fc[1]
+        self.is_fused = True
 
     def forward(self, x):
         return self.fc.forward(x)

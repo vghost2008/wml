@@ -1,5 +1,5 @@
 import torch
-from collections import Iterable
+from collections.abc import Iterable
 import wml.object_detection2.visualization as odv
 import random
 import numpy as np

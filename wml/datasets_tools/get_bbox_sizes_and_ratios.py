@@ -7,7 +7,7 @@ import sys
 import pickle
 import copy
 import pandas as pd
-from collections import Iterable
+from collections.abc import Iterable
 
 def get_size(bboxes):
     bboxes = np.transpose(bboxes,axes=[1,0])

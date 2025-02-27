@@ -16,6 +16,7 @@ setup(
     'PyTurboJPEG',
     'einops',
     'easydict',
+    'colorama',
     ],
     author='vghost2008',
     author_email='bluetornado@zju.edu.cn',

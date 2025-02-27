@@ -17,7 +17,7 @@ def dense_mask_to_sparse_mask(mask:np.ndarray,labels,default_label=0):
         N,H,W = mask.shape
         res_mask = np.ones([H,W],dtype=np.int32)*default_label
         for i in range(N):
-            pos_mask = mask[i].astype(np.bool)
+            pos_mask = mask[i].astype(bool)
             res_mask[pos_mask] = labels[i]
         return res_mask
 
@@ -48,7 +48,7 @@ def dense_mask_to_sparse_maskv2(mask:np.ndarray,labels,labels_order,default_labe
             for i in range(N):
                 if labels[i] != l:
                     continue
-                pos_mask = mask[i].astype(np.bool)
+                pos_mask = mask[i].astype(bool)
                 res_mask[pos_mask] = l
         return res_mask
 
@@ -70,7 +70,7 @@ def dense_mask_to_sparse_maskv3(mask:np.ndarray,labels,default_label=0):
         orders = np.argsort(-nrs)
         res_mask = np.ones([H,W],dtype=np.int32)*default_label
         for i in orders:
-            pos_mask = mask[i].astype(np.bool)
+            pos_mask = mask[i].astype(bool)
             res_mask[pos_mask] = labels[i]
         return res_mask
 

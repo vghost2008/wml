@@ -24,7 +24,7 @@ class WPolygonMaskItem:
         for p in points:
             if len(p.shape)!=2 or p.shape[1]!=2:
                 raise RuntimeError(f"ERROR: error polygon mask item points, p shape {p.shape}, expected [N,2]")
-        self.points = [p.copy().astype(np.int) for p in points] # shape of p is [Ni,2]
+        self.points = [p.copy().astype(np.int32) for p in points] # shape of p is [Ni,2]
         self.width = width
         self.height = height
 
@@ -287,7 +287,7 @@ class WPolygonMaskItem:
         """Translate the PolygonMasks.
 
         Example:
-            >>> self = PolygonMasks.random(dtype=np.int)
+            >>> self = PolygonMasks.random(dtype=np.int32)
             >>> out_shape = (self.height, self.width)
             >>> new = self.translate(out_shape, 4., direction='horizontal')
             >>> assert np.all(new.masks[0][0][1::2] == self.masks[0][0][1::2])
@@ -464,7 +464,7 @@ class WPolygonMasks(WBaseMask):
             return self.crop(bbox)
         elif isinstance(idxs,(list,np.ndarray,tuple)):
             idxs = np.array(idxs)
-            if idxs.dtype == np.bool:
+            if idxs.dtype == bool:
                 idxs = np.where(idxs)[0]
             try:
                 masks = [self.masks[idx] for idx in idxs]
@@ -483,7 +483,7 @@ class WPolygonMasks(WBaseMask):
             self.copy_from(value,bbox)
         elif isinstance(idxs,(list,np.ndarray,tuple)):
             idxs = np.array(idxs)
-            if idxs.dtype == np.bool:
+            if idxs.dtype == bool:
                 idxs = np.where(idxs)[0]
             if len(value) != len(idxs):
                 info = f"idxs size not equal value's size {len(idxs)} vs {len(value)}"
@@ -559,7 +559,7 @@ class WPolygonMasks(WBaseMask):
         x1 = sx.stop-1 if sx.stop is not None else self.width-1
         y0 = sy.start if sy.start is not None else 0
         y1 = sy.stop-1 if sy.stop is not None else self.height-1
-        return np.array([x0,y0,x1,y1],dtype=np.int)
+        return np.array([x0,y0,x1,y1],dtype=np.int32)
 
     @staticmethod
     def is_flip_slice(s:slice):
@@ -818,7 +818,7 @@ class WBitmapMasks(WBaseMask):
             self.masks[idxs] = value
         elif isinstance(idxs,(list,np.ndarray,tuple)):
             idxs = np.array(idxs)
-            if idxs.dtype == np.bool:
+            if idxs.dtype == bool:
                 idxs = np.where(idxs)[0]
             if len(value) != len(idxs) and not isinstance(value,(int,float)):
                 info = f"idxs size not equal value's size {len(idxs)} vs {len(value)}"
@@ -862,7 +862,7 @@ class WBitmapMasks(WBaseMask):
         t_masks: list of list [N,2] points
         '''
         t_masks = []
-        keep = np.ones([masks.shape[0]],dtype=np.bool)
+        keep = np.ones([masks.shape[0]],dtype=bool)
         res_bboxes = []
         for i in range(masks.shape[0]):
             if bboxes is not None:

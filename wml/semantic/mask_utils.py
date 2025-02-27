@@ -8,10 +8,10 @@ import torch
 import math
 
 def np_iou(mask0,mask1):
-    if mask0.dtype is not np.bool:
-        mask0 = mask0.astype(np.bool)
-    if mask1.dtype is not np.bool:
-        mask1 = mask1.astype(np.bool)
+    if mask0.dtype is not bool:
+        mask0 = mask0.astype(bool)
+    if mask1.dtype is not bool:
+        mask1 = mask1.astype(bool)
 
     if len(mask0.shape) != len(mask1.shape):
         logging.warning("Mask not compatible with each other")

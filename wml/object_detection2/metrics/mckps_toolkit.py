@@ -18,7 +18,7 @@ def getMCKpsPrecision(gtkps,gtlabels,kps,labels,sigma=3,ext_info=False,is_crowd=
     if not isinstance(gtlabels,np.ndarray):
         gtlabels = np.array(gtlabels)
     if is_crowd is None:
-        is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+        is_crowd = np.zeros([gtlabels.shape[0]],dtype=bool)
     if not isinstance(is_crowd,np.ndarray):
         is_crowd = np.array(is_crowd)
     
@@ -89,7 +89,7 @@ def getMCKpsAccuracy(gtkps,gtlabels,kps,labels,sigma=3,ext_info=False,is_crowd=N
     if not isinstance(gtlabels,np.ndarray):
         gtlabels = np.array(gtlabels)
     if is_crowd is None:
-        is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+        is_crowd = np.zeros([gtlabels.shape[0]],dtype=bool)
     if not isinstance(is_crowd,np.ndarray):
         is_crowd = np.array(is_crowd)
     
@@ -153,7 +153,7 @@ def getKpsmAP(gtkps,gtlabels,kps,labels,scores=None,sigma=3,is_crowd=None):
     if not isinstance(labels,np.ndarray):
         labels = np.array(labels)
     if is_crowd is None:
-        is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+        is_crowd = np.zeros([gtlabels.shape[0]],dtype=bool)
     if not isinstance(is_crowd,np.ndarray):
         is_crowd = np.array(is_crowd)
     gtkps = copy.deepcopy(np.array(gtkps))

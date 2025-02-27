@@ -33,7 +33,7 @@ def docalculate_scores(data,classes=[],exclude=[]):
     if len(classes)>0:
         n_data = n_data[classes]
     elif len(exclude)>0:
-        mask = np.ones([n_data.shape[0]],dtype=np.bool)
+        mask = np.ones([n_data.shape[0]],dtype=bool)
         mask[exclude] = False
         n_data = n_data[mask]
 

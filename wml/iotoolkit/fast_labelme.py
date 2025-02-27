@@ -48,7 +48,7 @@ class FastLabelMeData(LabelMeBase):
                                                     **self.read_data_kwargs)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         masks = [ann["segmentation"] for ann in annotations_list] if self.mask_on else None
-        difficult = np.array([v['difficult'] for v in annotations_list],dtype=np.bool)
+        difficult = np.array([v['difficult'] for v in annotations_list],dtype=bool)
         img_height = image['height']
         img_width = image['width']
         if masks is not None:

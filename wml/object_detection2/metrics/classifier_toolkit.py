@@ -307,7 +307,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
         for i in range(self.num_classes):
             self.data.append(model_type(num_classes=num_classes,**model_args))
         self.label_trans = label_trans
-        self.have_data = np.zeros([num_classes],dtype=np.bool)
+        self.have_data = np.zeros([num_classes],dtype=bool)
         self.accuracy = Accuracy(topk=1)
         self.name = name
         self.use_gt_and_pred_select = use_gt_and_pred_select

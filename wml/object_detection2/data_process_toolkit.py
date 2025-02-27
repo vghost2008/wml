@@ -56,14 +56,14 @@ def cut_contourv2(segmentation,rect):
 
 def remove_class_in_image(bboxes,labels,labels_to_remove,image,default_value=127,scale=1.1):
     bboxes = bboxes.astype(np.int32)
-    mask = np.ones_like(labels,dtype=np.bool)
+    mask = np.ones_like(labels,dtype=bool)
     for l in labels_to_remove:
         tm = labels==l
         mask = np.logical_and(tm,mask)
     keep_mask = np.logical_not(mask)
     keep_bboxes = bboxes[keep_mask]
     remove_bboxes = bboxes[mask]
-    img_mask = np.ones(image.shape[:2],dtype=np.bool)
+    img_mask = np.ones(image.shape[:2],dtype=bool)
 
     wmli.remove_boxes_of_img(img_mask,remove_bboxes,False)
     if scale>1.0:
@@ -80,7 +80,7 @@ def remove_class_in_image(bboxes,labels,labels_to_remove,image,default_value=127
 
 def remove_class(bboxes,labels,scores=None,labels_to_remove=[]):
     bboxes = bboxes.astype(np.int32)
-    mask = np.ones_like(labels,dtype=np.bool)
+    mask = np.ones_like(labels,dtype=bool)
     for i,l in enumerate(labels):
         if l in labels_to_remove:
             mask[i] = False

@@ -1,6 +1,6 @@
 #coding=utf-8
 from collections import Counter
-from collections import Iterable
+from collections.abc import Iterable
 import wml.wml_utils as wmlu
 from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData
 import random

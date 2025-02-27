@@ -77,9 +77,9 @@ def getmAP(gtboxes,gtlabels,boxes,labels,probability=None,threshold=0.5,is_crowd
     if len(labels)==0:
         labels = np.zeros([0],dtype=np.int32)
     if is_crowd is None:
-        is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+        is_crowd = np.zeros([gtlabels.shape[0]],dtype=bool)
     if len(is_crowd)==0:
-        is_crowd = np.zeros([0],dtype=np.bool)
+        is_crowd = np.zeros([0],dtype=bool)
     if not isinstance(is_crowd,np.ndarray):
         is_crowd = np.array(is_crowd)
 
@@ -217,7 +217,7 @@ def getAccuracy(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_cr
     if not isinstance(gtlabels,np.ndarray):
         gtlabels = np.array(gtlabels)
     if is_crowd is None:
-        is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+        is_crowd = np.zeros([gtlabels.shape[0]],dtype=bool)
     if not isinstance(is_crowd,np.ndarray):
         is_crowd = np.array(is_crowd)
     gt_shape = gtboxes.shape
@@ -292,7 +292,7 @@ def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_c
     if not isinstance(labels,np.ndarray):
         labels = np.array(labels)
     if is_crowd is None:
-        is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+        is_crowd = np.zeros([gtlabels.shape[0]],dtype=bool)
     if not isinstance(is_crowd,np.ndarray):
         is_crowd = np.array(is_crowd)
     gt_shape = gtboxes.shape
@@ -413,7 +413,7 @@ def getEasyPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.05,auto_scale_thr
         gt_mask[i] = 1
         boxes_mask[max_index] = 1
     
-    pred_labels = set(labels[boxes_mask.astype(np.bool)].tolist())
+    pred_labels = set(labels[boxes_mask.astype(bool)].tolist())
     for j in range(boxes_size):
         if boxes_mask[j] != 0:
             continue
@@ -515,7 +515,7 @@ class Accuracy(BaseMetrics):
             self.gtboxes.append(np.array(gtboxes)+self.bboxes_offset)
             self.gtlabels.append(np.array(gtlabels))
             if is_crowd is None:
-                is_crowd = np.zeros([gtlabels.shape[0]],dtype=np.bool)
+                is_crowd = np.zeros([gtlabels.shape[0]],dtype=bool)
             self.is_crowd.append(np.array(is_crowd))
         if boxes.shape[0]>0:
             self.boxes.append(np.array(boxes)+self.bboxes_offset)
@@ -628,11 +628,11 @@ class PrecisionAndRecall(BaseMetrics):
         if len(self.gtboxes) == 0:
             gtboxes = np.zeros([0,4],dtype=np.float32)
             gtlabels = np.zeros([0],dtype=np.int32)
-            is_crowd = np.zeros([0],dtype=np.bool)
+            is_crowd = np.zeros([0],dtype=bool)
         else:
             gtboxes = np.concatenate(self.gtboxes,axis=0)
             gtlabels = np.concatenate(self.gtlabels,axis=0)
-            is_crowd = np.concatenate(self.is_crowd,axis=0).astype(np.bool)
+            is_crowd = np.concatenate(self.is_crowd,axis=0).astype(bool)
         boxes = np.concatenate(self.boxes,axis=0)
         labels = np.concatenate(self.labels,axis=0)
         self.precision,self.recall = getPrecision(gtboxes, gtlabels, boxes, labels, threshold=self.threshold,
@@ -1357,12 +1357,12 @@ class ClassesWiseModelPerformace(BaseMetrics):
             self.data.append(model_type(num_classes=num_classes,**model_args))
         self.mp = model_type(num_classes=num_classes,**model_args)
         self.label_trans = label_trans
-        self.have_data = np.zeros([num_classes],dtype=np.bool)
+        self.have_data = np.zeros([num_classes],dtype=bool)
 
     @staticmethod
     def select_bboxes_and_labels(bboxes,labels,classes):
         if len(labels) == 0:
-            return np.array([],dtype=np.float32),np.array([],dtype=np.int32),np.array([],dtype=np.bool)
+            return np.array([],dtype=np.float32),np.array([],dtype=np.int32),np.array([],dtype=bool)
         if not isinstance(labels,np.ndarray):
             labels = np.array(labels)
         mask = np.equal(labels,classes)
@@ -1495,7 +1495,7 @@ class SizeWiseModelPerformace(BaseMetrics):
             self.data.append(model_type(num_classes=num_classes,**model_args))
         self.mp = model_type(num_classes=num_classes,**model_args)
         self.label_trans = label_trans
-        self.have_data = np.zeros([len(self.data)],dtype=np.bool)
+        self.have_data = np.zeros([len(self.data)],dtype=bool)
 
     def get_idx(self,gtbboxes):
         '''
@@ -1611,11 +1611,11 @@ class SubsetsModelPerformace(BaseMetrics):
     @staticmethod
     def select_bboxes_and_labels(bboxes, labels, classes):
         if len(labels) == 0:
-            return np.array([], dtype=np.float32), np.array([], dtype=np.int32), np.array([], dtype=np.bool)
+            return np.array([], dtype=np.float32), np.array([], dtype=np.int32), np.array([], dtype=bool)
 
         if not isinstance(labels, np.ndarray):
             labels = np.array(labels)
-        mask = np.zeros_like(labels, dtype=np.bool)
+        mask = np.zeros_like(labels, dtype=bool)
         for i,l in enumerate(labels):
             if l in classes:
                 mask[i] = True

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .conv_ws import ConvWS2d
-from collections import Iterable
+from collections.abc import Iterable
 from torch.nn import Parameter
 import math
 from collections import OrderedDict
@@ -894,3 +894,20 @@ class Squeeze(nn.Module):
 
     def forward(self,x):
         return torch.squeeze(x,dim=self.dim)
+
+class Scale(nn.Module):
+    """A learnable scale parameter.
+
+    This layer scales the input by a learnable factor. It multiplies a
+    learnable scale parameter of shape (1,) with input of any shape.
+
+    Args:
+        scale (float): Initial value of scale factor. Default: 1.0
+    """
+
+    def __init__(self, scale: float = 1.0):
+        super().__init__()
+        self.scale = nn.Parameter(torch.tensor(scale, dtype=torch.float))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return x * self.scale

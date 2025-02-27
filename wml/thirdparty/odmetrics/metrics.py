@@ -39,7 +39,7 @@ def compute_precision_recall(scores, labels, num_gt):
   if not isinstance(labels, np.ndarray) or len(labels.shape) != 1:
     raise ValueError("labels must be single dimension numpy array")
 
-  if labels.dtype != np.float32 and labels.dtype != np.bool:
+  if labels.dtype != np.float32 and labels.dtype != bool:
     raise ValueError("labels type must be either bool or float")
 
   if not isinstance(scores, np.ndarray) or len(scores.shape) != 1:

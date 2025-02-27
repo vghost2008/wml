@@ -7,6 +7,7 @@ import multiprocessing as python_multiprocessing
 import torch
 import torch.multiprocessing as multiprocessing
 from torch._utils import ExceptionWrapper
+import collections
 if torch.__version__ < "1.9.0":
     from torch._six import queue, container_abcs
 else:
@@ -469,7 +470,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
                     data = wtu.concat_datas(self.datas_cache[:self.batch_split_nr],dim=0)
                     self.datas_cache = self.datas_cache[self.batch_split_nr:]
                 except Exception as e:
-                    print(f"ERROR: Concat datas faild, {e}.")
+                    print(f"ERROR: Concat datas faild, {e}, {type(self.datas_cache)},{type(self.datas_cache[0])}.")
                     self.datas_cache = []
                     return False,None
                 return True,(0,data)
@@ -486,7 +487,7 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
         if torch.is_tensor(data):
             if data.dtype != torch.int16: #hack: 不处理int16
                 data.record_stream(stream)
-        elif isinstance(data,container_abcs.Mapping):
+        elif isinstance(data,collections.abc.Mapping):
             for k,v in data.items():
                 _MultiProcessingDataLoaderIter.record_stream(v,stream)
         elif isinstance(data,Iterable):
