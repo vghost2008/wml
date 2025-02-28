@@ -6,6 +6,7 @@ import shutil
 from argparse import ArgumentParser
 from wml.iotoolkit import get_auto_dataset_suffix
 from split_train_val import get_labels
+import time
 
 '''
 从指定目录下采样sample-nr个文件，或者(sub-dir==True)从指定目标的每一个子目录中采样sample-nr个文件，并把采样的文件分子目录存在
@@ -134,6 +135,8 @@ if __name__ == "__main__":
     data_dir = args.src_dir
     save_dir = args.save_dir
     wmlu.create_empty_dir(save_dir,False)
+
+    random.seed(time.time())
 
     if args.suffix == "auto":
         args.suffix = get_auto_dataset_suffix(data_dir)

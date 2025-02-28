@@ -1,15 +1,9 @@
 import numpy as np
 import sys
 import copy
-from .common import BaseClassifierMetrics
+from .common import *
 from .build import CLASSIFIER_METRICS_REGISTRY
 
-
-def _safe_persent(v0,v1):
-    if v1==0:
-        return 100.
-    else:
-        return v0*100./v1
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class Accuracy(BaseClassifierMetrics):
@@ -54,7 +48,7 @@ class Accuracy(BaseClassifierMetrics):
         print(f"Total {all_correct.size} samples")
         correct = float(np.sum(all_correct))
 
-        self.accuracy = _safe_persent(correct,all_correct.size)
+        self.accuracy = safe_score(correct,all_correct.size)
 
         return self.accuracy
 
@@ -63,14 +57,14 @@ class Accuracy(BaseClassifierMetrics):
         sys.stdout.flush()
         self.evaluate()
         print(f"Test size {self.num_examples()}")
-        print(f"accuracy={self.accuracy}")
+        print(f"accuracy={self.accuracy:.3f}")
         return self.accuracy
 
     def value(self):
         return self.accuracy
 
     def to_string(self):
-        return f"{self.accuracy:.2f}"
+        return f"{self.accuracy:.3f}"
 
     def __repr__(self):
         return self.to_string()
@@ -101,7 +95,7 @@ class BAccuracy(Accuracy):
         return super().__call__(labels,target)
 
     def to_string(self):
-        return f"{self.accuracy:.2f}"
+        return f"{self.accuracy:.3f}"
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class PrecisionAndRecall(BaseClassifierMetrics):
@@ -144,8 +138,8 @@ class PrecisionAndRecall(BaseClassifierMetrics):
         tp_fp = np.sum(all_output.astype(np.float32))
         tp_fn = np.sum(all_target.astype(np.float32))
 
-        self.precision = _safe_persent(correct,tp_fp)
-        self.recall = _safe_persent(correct,tp_fn)
+        self.precision = safe_score(correct,tp_fp)
+        self.recall = safe_score(correct,tp_fn)
 
         return self.precision,self.recall
 
@@ -157,16 +151,16 @@ class PrecisionAndRecall(BaseClassifierMetrics):
         print(self.to_string())
 
     def value(self):
-        return f"P={self.precision:.2f}/R={self.recall:.2f}"
+        return f"P={self.precision:.3f}/R={self.recall:.3f}"
 
     def to_string(self):
-        return f"P={self.precision:.2f}, R={self.recall:.2f}"
+        return f"P={self.precision:.3f}, R={self.recall:.3f}"
 
     def __repr__(self):
         return self.to_string()
     
     def value(self):
-        return _safe_persent(self.precision*self.recall,self.precision+self.recall) #F1
+        return safe_score(self.precision*self.recall,self.precision+self.recall) #F1
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class BPrecisionAndRecall(PrecisionAndRecall):
@@ -192,7 +186,7 @@ class BPrecisionAndRecall(PrecisionAndRecall):
         return super().__call__(labels,target)
 
     def to_string(self):
-        return f"BP={self.precision:.2f}, BR={self.recall:.2f}"
+        return f"BP={self.precision:.3f}, BR={self.recall:.3f}"
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class ConfusionMatrix(BaseClassifierMetrics):

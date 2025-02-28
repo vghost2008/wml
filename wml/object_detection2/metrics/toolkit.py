@@ -45,7 +45,7 @@ def getF1(gtboxes,gtlabels,boxes,labels,threshold=0.5):
         boxes_mask[max_index] = 1
 
     correct_num = np.sum(gt_mask)
-    f1 = safe_persent(2*correct_num,correct_num+gt_shape[0])
+    f1 = safe_score(2*correct_num,correct_num+gt_shape[0])
 
     return f1
 
@@ -274,7 +274,7 @@ def getAccuracy(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_cr
     TP_v = correct_bbox_num
     FP_v = boxes_size-correct_num
 
-    return safe_persent(TP_v,r_gt_size+boxes_size-correct_bbox_num)
+    return safe_score(TP_v,r_gt_size+boxes_size-correct_bbox_num)
 
 def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_crowd=None):
     '''
@@ -344,8 +344,8 @@ def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_c
     correct_gt_num = np.sum(r_gt_mask)
     correct_bbox_num = np.sum(boxes_mask)
 
-    recall = safe_persent(correct_gt_num,gt_size)
-    precision = safe_persent(correct_bbox_num,boxes_size)
+    recall = safe_score(correct_gt_num,gt_size)
+    precision = safe_score(correct_bbox_num,boxes_size)
     P_v = gt_size
     TP_v = correct_bbox_num
     FP_v = boxes_size-correct_bbox_num
@@ -424,8 +424,8 @@ def getEasyPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.05,auto_scale_thr
     correct_num = np.sum(gt_mask)
     correct_num1 = np.sum(boxes_mask)
 
-    recall = safe_persent(correct_num,gt_size)
-    precision = safe_persent(correct_num1,boxes_size)
+    recall = safe_score(correct_num,gt_size)
+    precision = safe_score(correct_num1,boxes_size)
     P_v = gt_size
     TP_v = correct_num
     FP_v = boxes_size-correct_num1
@@ -478,11 +478,11 @@ def getPrecisionV2(gt_data,pred_data,pred_func,threshold,return_f1=False):
 
     correct_num = np.sum(gt_mask)
 
-    recall = safe_persent(correct_num,NR_GT)
-    precision = safe_persent(correct_num,NR_PRED)
+    recall = safe_score(correct_num,NR_GT)
+    precision = safe_score(correct_num,NR_PRED)
 
     if return_f1:
-        f1 = safe_persent(2*correct_num,NR_PRED+NR_GT)
+        f1 = safe_score(2*correct_num,NR_PRED+NR_GT)
         return precision,recall,f1
 
     return precision,recall
@@ -812,7 +812,7 @@ class ClsPrecisionAndRecall(BaseMetrics):
             return "N.A."
 
     def __repr__(self):
-        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1}"
+        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1:.3f}"
         return res
 
 @METRICS_REGISTRY.register()
@@ -1950,4 +1950,109 @@ class DetConfusionMatrix(BaseMetrics):
         return self.image_id
 
 
+@METRICS_REGISTRY.register()
+class OKEval(BaseMetrics):
+    '''
+    对OK样本进行测试，如果在样本中检测到目标，就为一个错误的检测
+    '''
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,threshold=0.5):
+        if categories_list is None:
+            print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
+            self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(num_classes)]
+        else:
+            self.categories_list = categories_list
+        self.label_trans = label_trans
+        self.image_id = 0
+        self.num_classes = num_classes
+        self.total_error_objects = 0
+        self.total_ok_samples = 0
+        self.pred_labels = []
+        self.gt_labels = []
+        self.map = None
+        self.precision = 0
+        self.recall = 0
+        self.f1 = 0
+        self.over = 0
+        self.over_targets = 0
+    '''
+    gtboxes:[N,4]
+    gtlabels:[N]
+    img_size:[H,W]
+    gtmasks:[N,H,W]
+    '''
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
+                 gtmasks=None,
+                 masks=None,is_crowd=None,use_relative_coord=False):
+        if probability is None:
+            probability = np.ones_like(labels,dtype=np.float32)
+        if not isinstance(gtboxes,np.ndarray):
+            gtboxes = np.array(gtboxes)
+        if not isinstance(gtlabels,np.ndarray):
+            gtlabels = np.array(gtlabels)
+        if not isinstance(boxes,np.ndarray):
+            boxes = np.array(boxes)
+        if not isinstance(labels,np.ndarray):
+            labels = np.array(labels)
+        if self.label_trans is not None:
+            gtlabels = self.label_trans(gtlabels)
+            labels = self.label_trans(labels)
+        if probability is not None and not isinstance(probability,np.ndarray):
+            probability = np.array(probability)
+        
+        if len(gtlabels)>0:
+            self.gt_labels.append(1)
+        else:
+            self.gt_labels.append(0)
+            self.total_ok_samples += 1
+        
+        if len(labels)>0:
+            self.pred_labels.append(1)
+            if len(gtlabels)==0:
+                self.total_error_objects += len(labels)
+        else:
+            self.pred_labels.append(0)
 
+
+        self.image_id += 1
+
+    def num_examples(self):
+        return self.image_id
+
+    @staticmethod
+    def metrics(gt,pred,error_targets_nr=0):
+        gt = np.array(gt,dtype=np.int32)
+        pred = np.array(pred,dtype=np.int32)
+        tp = np.sum(np.logical_and(gt==pred,gt==np.ones_like(gt)).astype(np.float32))
+        tp_fp = np.sum(pred.astype(np.float32))
+        tp_fn = np.sum(gt.astype(np.float32))
+
+        tn_fp = np.sum((gt==0).astype(np.float32))
+        fp = np.sum(np.logical_and(gt==0,pred==1).astype(np.float32))
+
+        precision = safe_score(tp,tp_fp)
+        recall = safe_score(tp,tp_fn)
+        over = safe_score(fp,tn_fp)
+        over_targets = safe_score(error_targets_nr,tn_fp)
+        f1 = 2*precision*recall/max(precision+recall,1e-1)
+
+        return precision,recall,f1,over,over_targets
+
+    def evaluate(self):
+        print(f"Test size {self.num_examples()}")
+        self.precision,self.recall,self.f1,self.over,self.over_targets = \
+            self.metrics(self.gt_labels,self.pred_labels,self.total_error_objects)
+
+    def show(self,name=""):
+        sys.stdout.flush()
+        self.evaluate()
+        print(f"P={self.precision:.3f}, R={self.recall:.3f},F1={self.f1:.3f},O={self.over:.3f},OT={self.over_targets:.3f}")
+        return self.f1
+
+    def to_string(self):
+        return f"P={self.precision:.3f}, R={self.recall:.3f},F1={self.f1:.3f},O={self.over:.3f},OT={self.over_targets:.3f}"
+
+    def __repr__(self):
+        return self.to_string()
+    
+    def value(self):
+        return self.f1

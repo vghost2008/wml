@@ -29,6 +29,12 @@ def safe_persent(v0,v1):
     else:
         return v0*100./v1
 
+def safe_score(v0,v1,max_v = 1.0):
+    if v1==0:
+        return max_v
+    else:
+        return v0*max_v/v1
+
 class ComposeMetrics(BaseMetrics):
     def __init__(self,*args,**kwargs):
         super().__init__()
