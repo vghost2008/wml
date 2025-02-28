@@ -76,7 +76,7 @@ class FCModule(nn.Module):
             return
         if self.is_fused:
             return
-        if self.with_norm and isinstance(self.fc[1],nn._BatchNorm):
+        if self.with_norm and isinstance(self.fc[1],nn.BatchNorm1d):
             self.fc[0] = fuse_linear_bn_eval(self.fc[0],self.fc[1])
             del self.fc[1]
         self.is_fused = True

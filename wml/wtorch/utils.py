@@ -188,7 +188,7 @@ def load_checkpoint(
                 map_location=None,
                 strict=False):
     state_dict = torch.load(checkpoint,map_location=map_location)
-    forgiving_state_restore(module,state_dict,strict=strict)
+    return forgiving_state_restore(module,state_dict,strict=strict)
 
 def sequence_mask(lengths,maxlen=None,dtype=torch.bool):
     if not isinstance(lengths,torch.Tensor):

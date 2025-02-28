@@ -163,6 +163,72 @@ class PrecisionAndRecall(BaseClassifierMetrics):
         return safe_score(self.precision*self.recall,self.precision+self.recall) #F1
 
 @CLASSIFIER_METRICS_REGISTRY.register()
+class PrecisionAndRecall2(BaseClassifierMetrics):
+    def __init__(self,num_classes,**kwargs):
+        super().__init__(**kwargs)
+        self.all_output = []
+        self.all_target = []
+        self.num_classes = num_classes
+        self.recall = 100.0
+        self.precision = 100.0
+
+
+    def __call__(self,output,target):
+        '''
+        output: [N0,...,Nn], value range [0,C-1] 
+        target: [N0,...,Nn], value range [0,C-1]
+        C-1为背景
+        '''
+        self.all_output.append(np.reshape(output,[-1]))
+        self.all_target.append(np.reshape(target,[-1]))
+    
+    def num_examples(self):
+        if len(self.all_output)==0:
+            return
+        all_output = np.concatenate(self.all_output,axis=0)
+        return all_output.size
+
+
+    def evaluate(self):
+        self.recall = 100
+        self.precision = 100
+        if len(self.all_output)==0:
+            return self.precision,self.recall
+        all_output = np.concatenate(self.all_output,axis=0)
+        if all_output.size == 0:
+            return self.precision,self.recall
+        
+        all_target = np.concatenate(self.all_target,axis=0)
+        tp = np.logical_and(all_output==all_target,all_target<self.num_classes-1)
+        tp = np.sum(tp.astype(np.float32))
+        tp_fn = np.sum(all_target<self.num_classes-1)
+        tp_fp = np.sum(all_output<self.num_classes-1)
+
+        self.precision = safe_score(tp,tp_fp)
+        self.recall = safe_score(tp,tp_fn)
+
+        return self.precision,self.recall
+
+
+    def show(self,name=""):
+        sys.stdout.flush()
+        self.evaluate()
+        print(f"Test size {self.num_examples()}")
+        print(self.to_string())
+
+    def value(self):
+        return f"P={self.precision:.3f}/R={self.recall:.3f}"
+
+    def to_string(self):
+        return f"P={self.precision:.3f}, R={self.recall:.3f}"
+
+    def __repr__(self):
+        return self.to_string()
+    
+    def value(self):
+        return safe_score(self.precision*self.recall,self.precision+self.recall) #F1
+
+@CLASSIFIER_METRICS_REGISTRY.register()
 class BPrecisionAndRecall(PrecisionAndRecall):
     def __init__(self,num_classes,**kwargs):
         '''
@@ -302,7 +368,7 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
             self.data.append(model_type(num_classes=num_classes,**model_args))
         self.label_trans = label_trans
         self.have_data = np.zeros([num_classes],dtype=bool)
-        self.accuracy = Accuracy(topk=1)
+        self.accuracy = model_type(num_classes=num_classes,**model_args)
         self.name = name
         self.use_gt_and_pred_select = use_gt_and_pred_select
         self.total_eval_samples = 0
@@ -367,6 +433,8 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
 
     def show(self,name=""):
         sys.stdout.flush()
+        print("ALL")
+        self.accuracy.show(name=name)
         for i in range(self.num_classes):
             if not self.have_data[i]:
                 continue
