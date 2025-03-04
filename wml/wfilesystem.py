@@ -357,6 +357,8 @@ def get_relative_path(path,ref_path):
         ref_path = osp.abspath(ref_path)
         if not path.startswith(ref_path):
             return path
+    if len(path)<=len(ref_path):
+        return path
     res = path[len(ref_path):]
     if res[0] == osp.sep:
         return res[1:]

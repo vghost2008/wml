@@ -97,73 +97,13 @@ class BAccuracy(Accuracy):
     def to_string(self):
         return f"{self.accuracy:.3f}"
 
+
 @CLASSIFIER_METRICS_REGISTRY.register()
 class PrecisionAndRecall(BaseClassifierMetrics):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        self.all_output = []
-        self.all_target = []
-        self.recall = 100.0
-        self.precision = 100.0
-
-
-    def __call__(self,output,target):
-        '''
-        output: [N0,...,Nn]
-        target: [N0,...,Nn]
-        '''
-        self.all_output.append(np.reshape(output,[-1]))
-        self.all_target.append(np.reshape(target,[-1]))
-    
-    def num_examples(self):
-        if len(self.all_output)==0:
-            return
-        all_output = np.concatenate(self.all_output,axis=0)
-        return all_output.size
-
-
-    def evaluate(self):
-        self.recall = 100
-        self.precision = 100
-        if len(self.all_output)==0:
-            return self.precision,self.recall
-        all_output = np.concatenate(self.all_output,axis=0)
-        if all_output.size == 0:
-            return self.precision,self.recall
-        
-        all_target = np.concatenate(self.all_target,axis=0)
-        tmp_mask = all_output==all_target
-        correct = np.sum(all_output[tmp_mask].astype(np.float32))
-
-        tp_fp = np.sum(all_output.astype(np.float32))
-        tp_fn = np.sum(all_target.astype(np.float32))
-
-        self.precision = safe_score(correct,tp_fp)
-        self.recall = safe_score(correct,tp_fn)
-
-        return self.precision,self.recall
-
-
-    def show(self,name=""):
-        sys.stdout.flush()
-        self.evaluate()
-        print(f"Test size {self.num_examples()}")
-        print(self.to_string())
-
-    def value(self):
-        return f"P={self.precision:.3f}/R={self.recall:.3f}"
-
-    def to_string(self):
-        return f"P={self.precision:.3f}, R={self.recall:.3f}"
-
-    def __repr__(self):
-        return self.to_string()
-    
-    def value(self):
-        return safe_score(self.precision*self.recall,self.precision+self.recall) #F1
-
-@CLASSIFIER_METRICS_REGISTRY.register()
-class PrecisionAndRecall2(BaseClassifierMetrics):
+    '''
+    共分为num_classes(C)个类别，其中C-1为背景
+    二分类(OK/NEG)时num_classes=2
+    '''
     def __init__(self,num_classes,**kwargs):
         super().__init__(**kwargs)
         self.all_output = []
@@ -234,25 +174,31 @@ class BPrecisionAndRecall(PrecisionAndRecall):
         '''
         二分类的精度与召回，最后一个类别为背景，其它类别为前景，只需要将背景或前景分正确即可
         '''
-        self.bk_classes = num_classes-1
-        super().__init__(**kwargs)
+        self.real_num_classes = num_classes
+        super().__init__(num_classes=2,**kwargs)
 
 
     def __call__(self,output,target):
         '''
-        output: [N0,...,Nn,num_classes]
+        output: [N0,...,Nn,num_classes] float, value range [0,1]
+        or [N0,...,Nn] int, value range [0,C-1]
         target: [N0,...,Nn]
         '''
-        idx = np.argsort(output,axis=-1)
-        idx = idx[...,-1]
-        labels = idx!=self.bk_classes
-        target = target!=self.bk_classes
+        if len(output.shape)>len(target.shape) and output.shape[-1] == self.real_num_classes:
+            idx = np.argsort(output,axis=-1)
+            idx = idx[...,-1]
+        else:
+            idx = output
+        labels = (idx==self.real_num_classes-1)
+        target = (target==self.real_num_classes-1)
         labels = np.reshape(labels,[-1])
         target = np.reshape(target,[-1])
+        assert labels.size==target.size, f"ERROR: error lables and target size: {labels.size} vs {target.size}"
         return super().__call__(labels,target)
 
     def to_string(self):
         return f"BP={self.precision:.3f}, BR={self.recall:.3f}"
+
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class ConfusionMatrix(BaseClassifierMetrics):
