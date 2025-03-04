@@ -185,7 +185,7 @@ class ConstantInit(BaseInit):
         return info
 
 
-@INITIALIZERS.register()
+@INITIALIZERS.register(name='Xavier')
 class XavierInit(BaseInit):
     r"""Initialize module parameters with values according to the method
     described in `Understanding the difficulty of training deep feedforward
@@ -232,7 +232,7 @@ class XavierInit(BaseInit):
         return info
 
 
-@INITIALIZERS.register()
+@INITIALIZERS.register(name='Normal')
 class NormalInit(BaseInit):
     r"""Initialize module parameters with the values drawn from the normal
     distribution :math:`\mathcal{N}(\text{mean}, \text{std}^2)`.

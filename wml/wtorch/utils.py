@@ -157,6 +157,11 @@ def forgiving_state_restore(net, loaded_dict,verbose=False,strict=False):
             if net_state_dict[k].size() == loaded_dict[new_k].size():
                 new_loaded_dict[k] = loaded_dict[new_k]
                 used_loaded_dict_key.append(new_k)
+        elif 'GN' in k and new_k.replace("GN","gn") in loaded_dict:
+            new_k = new_k.replace("GN","gn")
+            if net_state_dict[k].size() == loaded_dict[new_k].size():
+                new_loaded_dict[k] = loaded_dict[new_k]
+                used_loaded_dict_key.append(new_k)
         elif ".num_batches_tracked" not in k:
             print(f"Skipped loading parameter {k} {net_state_dict[k].shape}")
             unloaded_net_state_key.append(k)

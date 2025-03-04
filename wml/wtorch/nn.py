@@ -420,6 +420,8 @@ def get_norm(norm, out_channels,norm_args={}):
 
     if norm == 'GN':
         #return nn.GroupNorm(num_channels=out_channels,**norm_args)
+        if 'requires_grad' in norm_args:
+            norm_args.pop('requires_grad')
         return GroupNorm(num_channels=out_channels,**norm_args)
 
     if isinstance(norm, str):
