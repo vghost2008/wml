@@ -201,6 +201,7 @@ class Config:
         "{'item1': [1, 2], 'item2': {'a': 0}, 'item3': True, 'item4': 'test'}"
     """
 
+    ph_regexp = r'\bvars\(?\)?.([\w_]+)'
     @staticmethod
     def _validate_py_syntax(filename,ph_values={}):
         with open(filename, 'r', encoding='utf-8') as f:
@@ -970,15 +971,16 @@ class Config:
     @staticmethod
     def get_base_file_list(file_path):
         file_path = osp.abspath(file_path)
-        base_file_list,*_ = Config.simple_get_base_file_list(file_path)
-        for f in base_file_list[::-1]:
+        cur_base_file_list,*_ = Config.simple_get_base_file_list(file_path)
+        base_file_list = []
+        for f in cur_base_file_list[::-1]:
             cur_list = Config.get_base_file_list(f)
-            base_file_list = cur_list+base_file_list
+            base_file_list = cur_list+[f]+base_file_list
         
         res_base_file_list = []
-        for x in base_file_list[::-1]:
+        for x in base_file_list:
             if x not in res_base_file_list:
-                res_base_file_list = [x] +res_base_file_list
+                res_base_file_list = res_base_file_list+[x]
         
         return res_base_file_list
 
@@ -1054,7 +1056,7 @@ class Config:
     def _remove_ph_wrap(data,ph_values={}):
         if ph_values is None:
             ph_values = {}
-        ph_regexp = r'vars\(?\)?.([\w_]+)'
+        ph_regexp = Config.ph_regexp
         base_vars = set(re.findall(ph_regexp, data))
         for base_var in base_vars:
             if base_var in ph_values:
@@ -1103,7 +1105,7 @@ class Config:
     def get_placeholder_names(filename):
         with open(filename, 'r', encoding='utf-8') as f:
             config_file = f.read()
-        ph_regexp = r'vars\(?\)?.([\w_]+)'
+        ph_regexp = Config.ph_regexp
         base_vars = set(re.findall(ph_regexp, config_file))
         res = []
         for base_var in base_vars:

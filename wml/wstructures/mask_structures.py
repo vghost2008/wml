@@ -15,6 +15,9 @@ WBaseMask = WBaseMaskLike
 
 
 class WPolygonMaskItem:
+    '''
+    用于表示一张图上的一个mask实例
+    '''
     def __init__(self,points,*,width=None,height=None):
         '''
         points:  list[[N,2]],
@@ -389,6 +392,9 @@ class WPolygonMaskItem:
             self.height = height
 
 class WPolygonMasks(WBaseMask):
+    '''
+    用于表示一张图上的多个Mask实例
+    '''
     def __init__(self,masks,*,width=None,height=None,exclusion=None) -> None:
         super().__init__()
         self.masks = copy.deepcopy(masks)
