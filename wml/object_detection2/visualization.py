@@ -16,6 +16,24 @@ from .basic_visualization import *
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
 
 def draw_text_on_image(img,text,font_scale=1.2,color=(0.,255.,0.),pos=None,thickness=1):
+
+    if len(img.shape)>=3 and img.shape[2]>3: #MCI
+        if len(img.shape)==3:
+            img = np.expand_dims(img,axis=-1)
+            img = np.tile(img,[1,1,1,3])
+        res = []
+        for i in range(img.shape[2]):
+            cur_img = np.ascontiguousarray(img[:,:,i])
+            cur_img = draw_text_on_image(cur_img,
+                              text=text,
+                              font_scale=font_scale,
+                              color=color,
+                              pos=pos,
+                              thickness=thickness)
+            res.append(cur_img)
+        res = np.stack(res,axis=2)
+        return res
+
     if isinstance(text,bytes):
         text = str(text,encoding="utf-8")
     if not isinstance(text,str):
@@ -139,6 +157,32 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                         is_crowd=None):
     if bboxes is None:
         return img
+
+    if len(img.shape)>=3 and img.shape[2]>3: #MCI
+        if len(img.shape)==3:
+            img = np.expand_dims(img,axis=-1)
+            img = np.tile(img,[1,1,1,3])
+        res = []
+        for i in range(img.shape[2]):
+            cur_img = np.ascontiguousarray(img[:,:,i])
+            cur_img = draw_bboxes(cur_img,
+                              classes=classes,
+                              scores=scores,
+                              bboxes=bboxes,
+                              color_fn=color_fn,
+                              text_fn=text_fn,
+                              get_text_pos_fn=get_text_pos_fn,
+                              thickness=thickness,
+                              show_text=show_text,
+                              font_scale=font_scale,
+                              text_color=text_color,
+                              is_relative_coordinate=is_relative_coordinate,
+                              is_show_text=is_show_text,
+                              fill_bboxes=fill_bboxes,
+                              is_crowd=is_crowd)
+            res.append(cur_img)
+        res = np.stack(res,axis=2)
+        return res
 
     bboxes = np.array(bboxes)
     if len(bboxes) == 0:
@@ -409,11 +453,32 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
                            thickness=1,
                            ):
     '''
+    img:[H,W,C]
     bboxes: [N,4] (y0,x0,y1,x1)
     mask:
         [N,H,W], mask include the area of whole image
         or WPolygonMasks
     '''
+    if len(img.shape)>=3 and img.shape[2]>3: #MCI
+        if len(img.shape)==3:
+            img = np.expand_dims(img,axis=-1)
+            img = np.tile(img,[1,1,1,3])
+        res = []
+        for i in range(img.shape[2]):
+            cur_img = np.ascontiguousarray(img[:,:,i])
+            cur_img = draw_maskv2(cur_img,
+                              classes=classes,
+                              bboxes=bboxes,
+                              masks=masks,
+                              color_fn=color_fn,
+                              is_relative_coordinate=is_relative_coordinate,
+                              alpha=alpha,
+                              fill=fill,
+                              thickness=thickness)
+            res.append(cur_img)
+        res = np.stack(res,axis=2)
+        return res
+
     if isinstance(masks,WPolygonMasks):
         img = draw_maskv2_polygon(img,
                                   classes=classes,

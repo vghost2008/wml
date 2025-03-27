@@ -3,7 +3,7 @@ import numpy as np
 import wml.img_utils as wmli
 from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData,write_voc_xml
 from wml.iotoolkit.coco_toolkit import COCOData
-from wml.iotoolkit.labelme_toolkit import LabelMeData,save_labelme_datav3
+from wml.iotoolkit.labelme_toolkit import LabelMeData,save_labelme_datav3,save_labelme_datav5
 import wml.object_detection2.bboxes as odb 
 import wml.wml_utils as wmlu
 from wml.iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
@@ -13,6 +13,9 @@ from itertools import count
 import os.path as osp
 import wml.img_utils as wmli
 import wml.semantic.mask_utils as mu 
+from wml.iotoolkit import get_auto_dataset_type
+from wml.wstructures import WPolygonMasks
+
 
 '''
 对现有数据集进行裁切生成新的数据集，目前有两种裁剪方式
@@ -24,7 +27,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('data_dir', type=str, help='source video directory')
     parser.add_argument('save_dir', type=str, help='save dir')
-    parser.add_argument('--type', type=str, default="xml",help='dataset type')
+    parser.add_argument('--type', type=str, default="auto",help='dataset type')
     parser.add_argument('--labels', nargs="+",type=str,default=[],help='Config file')
     parser.add_argument('--min-size', type=int, default=0,help='min bbox size')
     parser.add_argument('--add-classes-name', action='store_true', help='min bbox size')
@@ -49,7 +52,7 @@ def pascal_voc_dataset(data_dir,labels=None):
 
     data.read_data(data_dir,
                    silent=True,
-                   img_suffix=".bmp;;.jpg")
+                   img_suffix=wmli.BASE_IMG_SUFFIX)
 
     return data
 
@@ -77,7 +80,7 @@ def coco2014_val_dataset():
 def labelme_dataset(data_dir,labels):
     data = LabelMeData(label_text2id=None,absolute_coord=True)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
-    data.read_data(data_dir,img_suffix="bmp;;jpg;;jpeg")
+    data.read_data(data_dir,img_suffix=wmli.BASE_IMG_SUFFIX)
     #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
     return data
 
@@ -125,7 +128,7 @@ def cut_arount_bboxes_and_save(dataset,data_dir,save_dir,cut_size,keep_ratio=1e-
             continue
         print(f"Process {idx}/{len(dataset)}")
 
-        cut_bboxes = odb.set_bboxes_size(bboxes,size=cut_size).astype(np.int32)
+        cut_bboxes = odb.expand_bboxes_size(bboxes,size=cut_size).astype(np.int32)
         img = wmli.imread(img_file)
         labels_names = np.array(labels_names)
 
@@ -136,10 +139,13 @@ def cut_arount_bboxes_and_save(dataset,data_dir,save_dir,cut_size,keep_ratio=1e-
             wmli.imwrite(img_save_path,new_img)
 
             if binary_masks is not None:
-                new_masks,*_ = mu.cut_masks(new_masks,new_bboxes)
-                new_bboxes = odb.npchangexyorder(new_bboxes)
+                #new_masks,*_ = mu.cut_masks(new_masks,new_bboxes)
+                new_bboxes = odb.npchangexyorder(new_bboxes) # -> (x0,y0,x1,y1)
                 ann_save_path = osp.join(save_dir,save_base_name+".json")
-                save_labelme_datav3(ann_save_path,img_save_path,new_labels,new_bboxes,new_masks)
+                if isinstance(new_masks,WPolygonMasks):
+                    save_labelme_datav5(ann_save_path,img_save_path,None,new_labels,new_bboxes,masks=new_masks)
+                else:
+                    save_labelme_datav3(ann_save_path,img_save_path,None,new_labels,new_bboxes,masks=new_masks)
             else:
                 ann_save_path = osp.join(save_dir,save_base_name+".xml")
                 write_voc_xml(ann_save_path,img_save_path,new_img.shape,new_bboxes,new_labels,is_relative_coordinate=False)
@@ -199,7 +205,14 @@ if __name__ == "__main__":
     args = parse_args()
     data_dir = args.data_dir
     dataset_type = args.type
-    if dataset_type == "xml":
+    if dataset_type == "auto":
+        dataset = get_auto_dataset_type(data_dir)
+
+        dataset = dataset(label_text2id=None,absolute_coord=True)
+
+        dataset.read_data(data_dir,
+                   img_suffix=wmli.BASE_IMG_SUFFIX)
+    elif dataset_type == "xml":
         dataset = pascal_voc_dataset(data_dir=data_dir,
                                      labels=args.labels,
                                      )

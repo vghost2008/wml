@@ -97,7 +97,7 @@ image_info: {'height','width'}
 annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
 'segmentation' [H,W], 全图
 '''
-def read_labelme_data(file_path,label_text_to_id=lambda x:int(x),mask_on=True,use_semantic=True,
+def read_labelme_data(file_path,label_text_to_id=None,mask_on=True,use_semantic=True,
                       use_polygon_mask=False,
                       circle_points_nr=20,
                       do_raise=False):
@@ -197,17 +197,26 @@ def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=
         #shape["line_color"]=None
         #shape["fill_color"]=None
         shape["shape_type"]="polygon"
-        contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        hierarchy = np.reshape(hierarchy,[-1,4]) 
-        for he,cont in zip(hierarchy,contours):
-            if he[-1]>=0 and cv.contourArea(cont) < cv.contourArea(contours[[he[-1]]]):
-                continue
-            points = cont
-            if len(cont.shape)==3 and cont.shape[1]==1:
-                points = np.squeeze(points,axis=1)
-            points = points.tolist()
-            shape["points"] = points
-            shapes.append(copy.deepcopy(shape))
+        seg = ann["segmentation"]
+        if isinstance(seg,WPolygonMaskItem):
+            for points in seg.points:
+                if len(points.shape)==3 and points.shape[1]==1:
+                    points = np.squeeze(points,axis=1)
+                points = points.tolist()
+                shape["points"] = points
+                shapes.append(copy.deepcopy(shape))
+        else:
+            contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+            hierarchy = np.reshape(hierarchy,[-1,4]) 
+            for he,cont in zip(hierarchy,contours):
+                if he[-1]>=0 and cv.contourArea(cont) < cv.contourArea(contours[[he[-1]]]):
+                    continue
+                points = cont
+                if len(cont.shape)==3 and cont.shape[1]==1:
+                    points = np.squeeze(points,axis=1)
+                points = points.tolist()
+                shape["points"] = points
+                shapes.append(copy.deepcopy(shape))
 
     data["shapes"] = shapes
     data["imagePath"] = os.path.basename(image_path)
@@ -233,6 +242,9 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
     shapes = []
     data["version"] = "3.10.1"
     data["flags"] = {}
+    if image is None:
+        h,w = wmli.get_img_size(image_path)[:2]
+        image=dict(width=w,height=h)
     if isinstance(label_to_text,dict):
         label_to_text = wmlu.MDict.from_dict(label_to_text)
     for ann in annotations_list:
@@ -244,7 +256,7 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
         #shape["line_color"]=None
         #shape["fill_color"]=None
         shape["shape_type"]="polygon"
-        mask = ann["segmentation"]
+        mask = ann["segmentation"].astype(np.uint8)
         x0,y0,x1,y1 = ann['bbox']
         scale = np.reshape(np.array([(x1-x0)/mask.shape[1],(y1-y0)/mask.shape[0]],dtype=np.float32),[1,2])
         offset = np.reshape(np.array([x0,y0],dtype=np.float32),[1,2])
@@ -283,7 +295,7 @@ def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_
     annotatios_list = []
     for i in range(len(labels)):
         annotatios = {"category_id":labels[i],
-        'segmentation':masks[i].astype(np.uint8),
+        'segmentation':masks[i],
         'bbox':bboxes[i]}
         annotatios_list.append(annotatios)
     save_labelme_datav2(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)
@@ -298,6 +310,11 @@ def save_labelme_datav4(file_path,image_path,image,annotations_list,label_to_tex
     shapes = []
     data["version"] = "3.10.1"
     data["flags"] = {}
+
+    if image is None:
+        h,w = wmli.get_img_size(image_path)[:2]
+        image=dict(width=w,height=h)
+
     if isinstance(label_to_text,dict):
         label_to_text = wmlu.MDict.from_dict(label_to_text)
     for ann in annotations_list:

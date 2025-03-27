@@ -22,10 +22,12 @@ class Accuracy(BaseClassifierMetrics):
             idx = output
             output = np.reshape(output,[-1])
             target = np.reshape(target,[-1])
-        else:
+        elif output.size>target.size:
             idx = np.argsort(output,axis=-1)
             idx = idx[...,-self.topk:]
             target = np.repeat(np.expand_dims(target,axis=-1),self.topk,axis=-1)
+        else:
+            raise RuntimeError(f"ERROR: output and target data {output} vs {target}")
         correct = target==idx
         correct = np.reshape(correct,[-1])
         self.all_correct.append(correct)

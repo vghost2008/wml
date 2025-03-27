@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import cv2
 from wml.semantic import basic_toolkit as bmt
-from wml.semantic.mask_utils import get_bboxes_by_contours,npresize_mask
+from wml.semantic.basic_toolkit import get_bboxes_by_contours,npresize_mask
 import wml.object_detection2.bboxes as odb
 import wml.basic_img_utils as bwmli
 import wml.object_detection2.bboxes as odb
@@ -390,6 +390,12 @@ class WPolygonMaskItem:
             self.width = width
         if height is not None:
             self.height = height
+
+    def area(self):
+        res = 1e-6
+        for pts in self.points:
+            res += cv2.contourArea(pts)
+        return res
 
 class WPolygonMasks(WBaseMask):
     '''

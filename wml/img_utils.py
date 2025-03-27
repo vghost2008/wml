@@ -8,6 +8,7 @@ import matplotlib.image as mpimg
 import numpy as np
 import shutil
 import os
+import os.path as osp
 import cv2
 import copy
 import random
@@ -20,6 +21,8 @@ from wml.basic_data_def import colors_tableau
 import wml.object_detection2.basic_visualization as bodv
 import torchvision
 from wml.basic_img_utils import *
+from wml.basic_img_utils import encode_img as bencode_img
+from wml.mci import MCI
 
 try:
     from turbojpeg import TJCS_RGB, TJPF_BGR, TJPF_GRAY, TurboJPEG
@@ -163,6 +166,8 @@ def nprandom_crop(img,size):
     return sub_image(img,rect)
 
 def imread(filepath):
+    if os.path.splitext(filepath)[1].lower() == ".mci":
+        return MCI.read(filepath)
     img = cv2.imread(filepath,cv2.IMREAD_COLOR)
     cv2.cvtColor(img,cv2.COLOR_BGR2RGB,img)
     return img
@@ -195,6 +200,13 @@ def imwrite(filename, img,size=None):
     '''
     size: (W,H)
     '''
+    if isinstance(img,MCI):
+        img.write(filename)
+        return
+    elif (isinstance(img,np.ndarray) and len(img.shape)>=3 and img.shape[2]>3):
+        MCI.write(filename,img)
+        return
+
     if img.dtype != np.uint8:
         img = img.astype(np.uint8)
     dir_path = os.path.dirname(filename)
@@ -207,6 +219,18 @@ def imwrite(filename, img,size=None):
     if size is not None:
         img = resize_img(img,size=size,keep_aspect_ratio=True)
     cv2.imwrite(filename, img)
+
+
+def imwrite_for_view(save_path,img):
+    if save_path.endswith(".mci"):
+        dir = osp.splitext(save_path)[0]
+        os.makedirs(dir,exist_ok=True)
+        for i in range(img.shape[2]):
+            cur_img = np.ascontiguousarray(img[:,:,i])
+            cur_save_path = osp.join(dir,f"IMG_{i}.jpg")
+            imwrite(cur_save_path,cur_img)
+    else:
+        imwrite(save_path,img)
 
 def read_and_write_img(src_path,dst_path):
     img = cv2.imread(src_path)
@@ -481,10 +505,8 @@ bytes of jpeg string
 def encode_img(img,quality=95):
     if isinstance(img,str):
         img = imread(img)
-    pil_image = PIL.Image.fromarray(img)
-    output_io = io.BytesIO()
-    pil_image.save(output_io, format='JPEG',quality=quality)
-    return output_io.getvalue()
+    
+    return bencode_img(img)
 
 def _jpegflag(flag='color', channel_order='bgr'):
     channel_order = channel_order.lower()
@@ -501,59 +523,6 @@ def _jpegflag(flag='color', channel_order='bgr'):
     else:
         raise ValueError('flag must be "color" or "grayscale"')
 
-def decode_img(buffer,fmt='rgb'):
-    if TurboJPEG is not None:
-        global g_jpeg
-        if g_jpeg is None:
-            g_jpeg = TurboJPEG()
-        if fmt == 'rgb':
-            img = g_jpeg.decode(buffer,TJCS_RGB)
-        elif fmt=='gray':
-            img = g_jpeg.decode(buffer,TJPF_GRAY)
-        if img.shape[-1] == 1:
-            img = img[:, :, 0]
-        return img
-
-    buff = io.BytesIO(buffer)
-    img = PIL.Image.open(buff)
-
-    if fmt=='rgb':
-        img = pillow2array(img, 'color')
-    else:
-        img = pillow2array(img, 'grayscale')
-
-    return img
-
-def pillow2array(img,flag='color'):
-    # Handle exif orientation tag
-    #if flag in ['color', 'grayscale']:
-        #img = ImageOps.exif_transpose(img)
-    # If the image mode is not 'RGB', convert it to 'RGB' first.
-    if flag in ['color', 'color_ignore_orientation']:
-        if img.mode != 'RGB':
-            if img.mode != 'LA':
-                # Most formats except 'LA' can be directly converted to RGB
-                img = img.convert('RGB')
-            else:
-                # When the mode is 'LA', the default conversion will fill in
-                #  the canvas with black, which sometimes shadows black objects
-                #  in the foreground.
-                #
-                # Therefore, a random color (124, 117, 104) is used for canvas
-                img_rgba = img.convert('RGBA')
-                img = Image.new('RGB', img_rgba.size, (124, 117, 104))
-                img.paste(img_rgba, mask=img_rgba.split()[3])  # 3 is alpha
-        array = np.array(img)
-    elif flag in ['grayscale', 'grayscale_ignore_orientation']:
-        img = img.convert('L')
-        array = np.array(img)
-    else:
-        raise ValueError(
-            'flag must be "color", "grayscale", "unchanged", '
-            f'"color_ignore_orientation" or "grayscale_ignore_orientation"'
-            f' but got {flag}')
-    return array
-
 def get_standard_color(idx):
     idx = idx%len(colors_tableau)
     return colors_tableau[idx]
@@ -567,6 +536,8 @@ def get_img_size(img_path):
         print(f"ERROR: img file {img_path} not exists.")
         return [0,0,3]
     else:
+        if img_path.lower().endswith(".mci"):
+            return MCI.get_img_size(img_path)
         with PIL.Image.open(img_path) as im:
             return list(im.size)[::-1]
         #return list(wmli.imread(img_path).shape)

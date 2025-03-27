@@ -3,6 +3,7 @@ import wml.object_detection2.bboxes as odb
 import cv2 as cv
 import numpy as np
 from wml.semantic.mask_utils import cut_mask
+from wml.wstructures import WPolygonMaskItem, WPolygonMasks
 
 def motion_blur(image, degree=10, angle=20):
     image = np.array(image)
@@ -124,9 +125,13 @@ def cut_annotation(cut_bbox,img,labels,bboxes,masks=None,adjust_bbox=True,keep_r
                 new_labels.append(labels[i])
                 new_masks.append(n_mask)
         if len(new_labels)>0:
-            new_labels = np.concatenate(new_labels,axis=0)
-            new_bboxes = np.concatenate(new_bboxes,axis=0)
-            new_masks = np.concatenate(new_masks,axis=0)
+            #new_labels = np.concatenate(new_labels,axis=0)
+            new_labels = np.array(new_labels)
+            new_bboxes = np.stack(new_bboxes,axis=0)
+            if isinstance(new_masks[0],WPolygonMaskItem):
+                new_masks = WPolygonMasks(new_masks,width=new_img.shape[1],height=new_img.shape[0])
+            else:
+                new_masks = np.stack(new_masks,axis=0)
         else:
             new_labels = np.zeros([0],dtype=labels.dtype)
             new_bboxes = np.zeros([0,4],dtype=bboxes.dtype)

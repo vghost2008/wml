@@ -485,7 +485,7 @@ def coco2014_val_dataset():
 def labelme_dataset(data_dir,labels):
     data = FastLabelMeData(label_text2id=None,absolute_coord=True)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
-    data.read_data(data_dir,img_suffix="bmp;;jpg;;jpeg")
+    data.read_data(data_dir,img_suffix=wmli.BASE_IMG_SUFFIX)
     #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
     return data.get_items()
 

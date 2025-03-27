@@ -43,7 +43,7 @@ class LabelMeBase(BaseDataset):
         self.read_data_kwargs = read_data_kwargs
         self.use_polygon_mask = use_polygon_mask
 
-    def find_files_in_dir(self,dir_path,img_suffix=".jpg;;.bmp;;.png;;.jpeg"):
+    def find_files_in_dir(self,dir_path,img_suffix=wmli.BASE_IMG_SUFFIX):
         files = get_files(dir_path,img_suffix=img_suffix,keep_no_json_img=self.keep_no_ann_imgs)
         return files
 

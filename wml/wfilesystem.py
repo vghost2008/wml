@@ -216,6 +216,34 @@ def get_subdir_in_dir(dir_path,sort=True,append_self=False,absolute_path=False):
 
     return res
 
+def get_leaf_dirs(dir_path,followlinks=False):
+    '''
+    suffix: example ".jpg;;.jpeg" , ignore case
+    '''
+
+    if isinstance(dir_path,(list,tuple)):
+        res = []
+        for dp in dir_path:
+            res.extend(get_leaf_dirs(dp,followlinks=followlinks))
+        return res
+
+    def is_leaf(dir_path):
+        return len(get_subdir_in_dir(dir_path))==0
+
+    dir_path = os.path.expanduser(dir_path)
+
+    if is_leaf(dir_path):
+        return [dir_path]
+
+    res=[]
+    for dir_path,dir_names,_ in os.walk(dir_path,followlinks=followlinks):
+        for dn in dir_names:
+            path = os.path.join(dir_path,dn)
+            if is_leaf(path):
+                res.append(path)
+    res.sort()
+    return res
+
 def dir_path_of_file(file_path):
     return osp.dirname(osp.abspath(file_path))
 
@@ -487,3 +515,4 @@ def ls(path):
     sys.stdout.flush()
     os.system(f"ls -l {path}")
     sys.stdout.flush()
+

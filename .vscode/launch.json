@@ -102,19 +102,22 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "datasets_tools/cut_dataset.py",
+            "program": "wml/datasets_tools/cut_dataset.py",
             "console": "integratedTerminal",
-            "args":["/home/wj/ai/mldata/mnistodv2/test",  "/home/wj/ai/mldata/0day/tmp/mnistodv2","--size","100"]
+            //"args":["/home/wj/ai/mldata/mnistodv2/test",  "/home/wj/ai/mldata/0day/tmp/mnistodv2","--size","100"]
+            "args":["~/ai/mldata1/B17MDL/tmp/trans_file",  "~/ai/mldata1/B17MDL/tmp/trans_file_cut"]
         },
         {
             "name": "Python: view dataset",
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "datasets_tools/view_dataset.py",
+            "program": "wml/datasets_tools/view_dataset.py",
             "console": "integratedTerminal",
             //"args":["/home/wj/ai/mldata1/B11ACT/datas/train_s0" "/home/wj/ai/mldata1/B11ACT/tmp/view" "--type" "LabelMeData"],
-            "args":["~/ai/mldata1/B10CF/datasets/testv1.0/" "~/ai/mldata1/B10CF/tmp/view" "--type" "LabelMeData"],
+            //"args":["~/ai/mldata1/B10CF/datasets/testv1.0/" "~/ai/mldata1/B10CF/tmp/view" "--type" "LabelMeData"],
+            //"args":["/home/wj/ai/mldata1/B17MDL/tmp/trans_file" "/home/wj/ai/mldata1/B17MDL/tmp/trans_file_view"],
+            "args":["/home/wj/ai/mldata1/B17MDL/tmp/trans_file_cut" "/home/wj/ai/mldata1/B17MDL/tmp/trans_file_cut_view0" "--new-width" "1024"],
         },
         {
             "name": "Python: view kps dataset",

@@ -4,6 +4,7 @@ import logging
 import wml.basic_img_utils as bwmli
 import cv2
 from .basic_toolkit import *
+from wml.wstructures.mask_structures import WPolygonMaskItem,WPolygonMasks
 import torch
 import math
 
@@ -79,6 +80,17 @@ output:
 the new mask in sub image and correspond bbox
 '''
 def cut_mask(mask,rect):
+    if isinstance(mask,WPolygonMaskItem):
+        old_area = mask.area()
+        crop_bboxes = np.array([rect[1],rect[0],rect[3],rect[2]],dtype=np.int32)
+        cuted_mask = mask.crop(crop_bboxes)
+        bbox = cuted_mask.get_bbox()
+        new_area = cuted_mask.area()
+        ratio = new_area/(1e-6+old_area)
+        if ratio <= 1e-6:
+            return None,None,ratio
+        return cuted_mask,bbox,ratio
+
     max_area = np.sum(mask)
     cuted_mask = bwmli.sub_image(mask,rect)
     ratio = np.sum(cuted_mask)/max(1,max_area)
@@ -103,7 +115,7 @@ def cut_masks(masks,bboxes):
     new_bboxes = []
     ratios = []
     nr = len(masks)
-    for i in range(len(nr)):
+    for i in range(nr):
         n_mask,n_bbox,ratio = cut_mask(masks[i],bboxes[i])
         new_masks.append(n_mask)
         new_bboxes.append(n_bbox)
@@ -129,19 +141,6 @@ def resize_mask(mask,size=None,r=None,mode='nearest'):
     mask = torch.squeeze(mask,dim=0)
     return mask
 
-def npresize_mask(mask,size=None,r=None):
-    '''
-    mask: [N,H,W]
-    size: (new_w,new_h)
-    '''
-    if mask.shape[0]==0:
-        return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
-    new_mask = []
-    for i in range(mask.shape[0]):
-        cur_m = cv2.resize(mask[i],dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
-        new_mask.append(cur_m)
-    new_mask = np.stack(new_mask,axis=0)
-    return new_mask
 
 def resize_mask_structures(mask,size):
     '''

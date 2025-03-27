@@ -63,3 +63,16 @@ def findContours(mask,mode=cv2.RETR_TREE,method=cv2.CHAIN_APPROX_SIMPLE):
             contours.append(cont)
     return contours,hierarchy
 
+def npresize_mask(mask,size=None,r=None):
+    '''
+    mask: [N,H,W]
+    size: (new_w,new_h)
+    '''
+    if mask.shape[0]==0:
+        return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
+    new_mask = []
+    for i in range(mask.shape[0]):
+        cur_m = cv2.resize(mask[i],dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
+        new_mask.append(cur_m)
+    new_mask = np.stack(new_mask,axis=0)
+    return new_mask

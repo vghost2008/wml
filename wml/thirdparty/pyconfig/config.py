@@ -201,7 +201,8 @@ class Config:
         "{'item1': [1, 2], 'item2': {'a': 0}, 'item3': True, 'item4': 'test'}"
     """
 
-    ph_regexp = r'\bvars\(?\)?.([\w_]+)'
+    ph_regexp_pre = r'\bvars\(?\)?.'
+    ph_regexp = ph_regexp_pre+'([\w_]+)'
     @staticmethod
     def _validate_py_syntax(filename,ph_values={}):
         with open(filename, 'r', encoding='utf-8') as f:
@@ -1063,7 +1064,7 @@ class Config:
                 value = Config.to_placeholder_str(ph_values[base_var])
             else:
                 value = base_var
-            regexp = r'vars\(?\)?.'+base_var
+            regexp = Config.ph_regexp_pre+base_var
             data = re.sub(regexp, value, data)
         return data
 

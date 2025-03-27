@@ -461,6 +461,52 @@ def set_bboxes_size(bboxes,size):
 
     return np.stack([nxmin,nymin,nxmax,nymax],axis=-1)
 '''
+bbox:[N,4] (x0,y0,x1,y1)
+size:[W,H]
+img_size:[W,H]
+
+or 
+
+bbox:[N,4] (y0,x0,y1,x1)
+size:[H,W]
+img_size:[H,W]
+
+扩大bboxes的大小到size, 如果bboxes原大小大于size,则保持不变
+'''
+def expand_bboxes_size(bboxes,size,img_size=None):
+    if not isinstance(size,Iterable):
+        size = (size,size)
+    if not isinstance(bboxes,np.ndarray):
+        bboxes = np.array(bboxes)
+    xmin = bboxes[...,0]
+    ymin = bboxes[...,1]
+    xmax = bboxes[...,2]
+    ymax = bboxes[...,3]
+    cy = (ymax + ymin) / 2
+    cx = (xmax + xmin) / 2
+    nh = np.full_like(ymin,size[1]//2)
+    oh = (ymax-ymin)/2
+    nh = np.maximum(nh,oh)
+    nw = np.full_like(xmin,size[0]//2)
+    ow = (xmax-xmin)/2
+    nw = np.maximum(nw,ow) 
+    nymin = cy-nh
+    nxmin = cx-nw
+    nymin = np.maximum(nymin,np.zeros_like(nymin))
+    nxmin = np.maximum(nxmin,np.zeros_like(nxmin))
+    nymax = nymin+2*nh
+    nxmax = nxmin+2*nw
+
+    if img_size is not None:
+        nxmax = np.minimum(nxmax,np.ones_like(nxmax)*(img_size[0]-1))
+        nxmin = nxmax-2*nw
+        nxmin = np.clip(nxmin,a_min=0)
+        nymax = np.minimum(nymax,np.ones_like(nymax)*(img_size[1]-1))
+        nymin = nymax-2*nh
+        nymin = np.clip(nymin,a_min=0)
+
+    return np.stack([nxmin,nymin,nxmax,nymax],axis=-1)
+'''
 bbox:[N,4](x0,y0,x1,y1)
 min_size:[W,H]
 return a list of new bbox with the minimum size 'size' 

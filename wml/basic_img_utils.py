@@ -5,8 +5,17 @@ import copy
 import cv2
 import math
 import wml.walgorithm as wa
+import PIL.Image
+from PIL import Image,ImageOps
+import random
+import io
+try:
+    from turbojpeg import TJCS_RGB, TJPF_BGR, TJPF_GRAY, TurboJPEG
+except ImportError:
+    TJCS_RGB = TJPF_GRAY = TJPF_BGR = TurboJPEG = None
 
-BASE_IMG_SUFFIX=".jpg;;.jpeg;;.bmp;;.png;;.gif;;.tif"
+
+BASE_IMG_SUFFIX=".jpg;;.jpeg;;.bmp;;.png;;.gif;;.tif;;.mci"
 
 
 def normal_image(image,min_v=0,max_v=255,dtype=np.uint8):
@@ -677,9 +686,9 @@ RANDOM_PAD=1
 TOPLEFT_PAD=2
 def pad_img(img,size,pad_value=127,pad_type=CENTER_PAD,return_pad_value=False):
     '''
-    pad_type: 0, center pad
+    pad_type: 0, center pad, 原图放中心
     pad_type: 1, random pad
-    pad_type: 2, topleft_pad
+    pad_type: 2, topleft_pad, 原图放左上角
 
     '''
     if pad_type==0:
@@ -721,6 +730,7 @@ def pad_img(img,size,pad_value=127,pad_type=CENTER_PAD,return_pad_value=False):
         else:
             px0 = 0
             px1 = 0
+
     if len(img.shape)==3:
         img = np.pad(img, [[py0, py1], [px0, px1], [0, 0]], constant_values=pad_value)
     else:
@@ -761,6 +771,23 @@ def pad_imgv2(img,px0,px1,py0,py1,pad_value=127):
         img = np.pad(img, [[py0, py1], [px0, px1]], constant_values=pad_value)
     
     return img
+
+def impad_to_multiple(img, divisor, pad_val=0):
+    if isinstance(pad_val,Iterable):
+        pad_val = pad_val[0]
+    pad_h = int(np.ceil(img.shape[0] / divisor)) * divisor
+    pad_w = int(np.ceil(img.shape[1] / divisor)) * divisor
+
+    return pad_img(img, size=(pad_w,pad_h), pad_value=pad_val,pad_type=TOPLEFT_PAD)
+
+
+def mmcv_impad(img, shape, pad_val=0):
+    '''
+    与mmcv.impad适配的impad
+    '''
+    if isinstance(pad_val,Iterable):
+        pad_val = pad_val[0]
+    return pad_img(img,(shape[1],shape[0]),pad_value=pad_val,pad_type=TOPLEFT_PAD,return_pad_value=False)
 
 '''
 img:[H,W]/[H,W,C]
@@ -815,3 +842,66 @@ def pseudocolor_img(img,palette=[(0,(0,0,255)),(0.5,(255,255,255)),(1.0,(255,0,0
 
     return new_img
 
+def pillow2array(img,flag='color'):
+    # Handle exif orientation tag
+    #if flag in ['color', 'grayscale']:
+        #img = ImageOps.exif_transpose(img)
+    # If the image mode is not 'RGB', convert it to 'RGB' first.
+    if flag in ['color', 'color_ignore_orientation']:
+        if img.mode != 'RGB':
+            if img.mode != 'LA':
+                # Most formats except 'LA' can be directly converted to RGB
+                img = img.convert('RGB')
+            else:
+                # When the mode is 'LA', the default conversion will fill in
+                #  the canvas with black, which sometimes shadows black objects
+                #  in the foreground.
+                #
+                # Therefore, a random color (124, 117, 104) is used for canvas
+                img_rgba = img.convert('RGBA')
+                img = Image.new('RGB', img_rgba.size, (124, 117, 104))
+                img.paste(img_rgba, mask=img_rgba.split()[3])  # 3 is alpha
+        array = np.array(img)
+    elif flag in ['grayscale', 'grayscale_ignore_orientation']:
+        img = img.convert('L')
+        array = np.array(img)
+    else:
+        raise ValueError(
+            'flag must be "color", "grayscale", "unchanged", '
+            f'"color_ignore_orientation" or "grayscale_ignore_orientation"'
+            f' but got {flag}')
+    return array
+
+'''
+img: np.ndarray, [H,W,3], RGB order
+return:
+bytes of jpeg string
+'''
+def encode_img(img,quality=95):
+    pil_image = PIL.Image.fromarray(img)
+    output_io = io.BytesIO()
+    pil_image.save(output_io, format='JPEG',quality=quality)
+    return output_io.getvalue()
+
+def decode_img(buffer,fmt='rgb'):
+    if TurboJPEG is not None:
+        global g_jpeg
+        if g_jpeg is None:
+            g_jpeg = TurboJPEG()
+        if fmt == 'rgb':
+            img = g_jpeg.decode(buffer,TJCS_RGB)
+        elif fmt=='gray':
+            img = g_jpeg.decode(buffer,TJPF_GRAY)
+        if img.shape[-1] == 1:
+            img = img[:, :, 0]
+        return img
+
+    buff = io.BytesIO(buffer)
+    img = PIL.Image.open(buff)
+
+    if fmt=='rgb':
+        img = pillow2array(img, 'color')
+    else:
+        img = pillow2array(img, 'grayscale')
+
+    return img

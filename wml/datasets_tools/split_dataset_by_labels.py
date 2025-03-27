@@ -9,6 +9,7 @@ from wml.iotoolkit.pascal_voc_toolkit import read_voc_xml
 from wml.iotoolkit.labelme_toolkit import read_labelme_data
 from wml.iotoolkit import get_auto_dataset_suffix
 from wml.iotoolkit.image_folder import ImageFolder
+import wml.img_utils as wmli
 import shutil
 
 '''
@@ -29,7 +30,7 @@ def parse_args():
     parser.add_argument(
         '--img-suffix',
         type=str,
-        default=".jpg;;.jpeg;;.bmp;;.png",
+        default=wmli.BASE_IMG_SUFFIX,
         help='img suffix')
     parser.add_argument(
         '--allow-empty',

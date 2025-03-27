@@ -299,7 +299,7 @@ def writeVOCXml(file_path,bboxes, labels, save_path=None,difficult=None, truncat
     if save_path is None:
         dir_path  = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        base_name = wml_utils.base_name(base_name)+".xml"
+        base_name = wmlu.base_name(base_name)+".xml"
         save_path = os.path.join(dir_path,base_name)
 
     write_voc_xml(save_path,file_path,img_shape,bboxes,labels,difficult,truncated,probs=probs,
@@ -324,7 +324,7 @@ def writeVOCXmlV2(file_path,shape,bboxes, labels, save_path=None,difficult=None,
     if save_path is None:
         dir_path  = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        base_name = wml_utils.base_name(base_name)+".xml"
+        base_name = wmlu.base_name(base_name)+".xml"
         save_path = os.path.join(dir_path,base_name)
 
     write_voc_xml(save_path,file_path,shape,bboxes,labels,difficult,truncated,probs=probs,
@@ -348,7 +348,7 @@ def writeVOCXmlByImg(img,img_save_path,bboxes, labels, difficult=None, truncated
 
     dir_path  = os.path.dirname(img_save_path)
     base_name = os.path.basename(img_save_path)
-    base_name = wml_utils.base_name(base_name)+".xml"
+    base_name = wmlu.base_name(base_name)+".xml"
     save_path = os.path.join(dir_path,base_name)
     wmli.imwrite(img_save_path,img)
     write_voc_xml(save_path,img_save_path,img_shape,bboxes,labels,difficult,truncated,probs=probs,
@@ -375,12 +375,12 @@ def getVOCFiles(dir_path,image_sub_dir="JPEGImages",xml_sub_dir="Annotations",im
             xml_dir = os.path.join(dir_path,xml_sub_dir)
         else:
             xml_dir = dir_path
-    inputfilenames = wml_utils.recurse_get_filepath_in_dir(jpeg_dir,suffix=img_suffix)
+    inputfilenames = wmlu.recurse_get_filepath_in_dir(jpeg_dir,suffix=img_suffix)
 
     img_file_paths = []
     xml_file_paths = []
     for file in inputfilenames:
-        base_name = wml_utils.base_name(file)+".xml"
+        base_name = wmlu.base_name(file)+".xml"
         if xml_sub_dir is not None:
             xml_path = os.path.join(xml_dir,base_name)
         else:
@@ -425,7 +425,7 @@ def removeUnmatchVOCFiles(dir_path,image_sub_dir="JPEGImages",xml_sub_dir="Annot
         xml_dir = os.path.join(dir_path,xml_sub_dir)
     else:
         xml_dir = dir_path
-    inputfilenames = wml_utils.recurse_get_filepath_in_dir(jpeg_dir,suffix=img_suffix)
+    inputfilenames = wmlu.recurse_get_filepath_in_dir(jpeg_dir,suffix=img_suffix)
 
     total_removed_jpgs = 0
     total_removed_xmls = 0
@@ -441,7 +441,7 @@ def removeUnmatchVOCFiles(dir_path,image_sub_dir="JPEGImages",xml_sub_dir="Annot
             total_removed_jpgs += 1
             os.remove(file)
 
-    for file in wml_utils.recurse_get_filepath_in_dir(xml_dir,suffix="xml"):
+    for file in wmlu.recurse_get_filepath_in_dir(xml_dir,suffix="xml"):
         base_name = wmlu.base_name(file)
         if base_name not in good_xml_names:
             total_removed_xmls += 1

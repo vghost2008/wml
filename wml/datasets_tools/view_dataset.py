@@ -12,6 +12,7 @@ import os
 import wml.wml_utils as wmlu
 import wml.wtorch.utils as wtu
 from wml.iotoolkit import get_auto_dataset_type
+import numpy as np
 import shutil
 
 def parse_args():
@@ -21,7 +22,7 @@ def parse_args():
     parser.add_argument(
         '--ext',
         type=str,
-        default='.jpg;;.bmp;;.jpeg;;.png',
+        default=wmli.BASE_IMG_SUFFIX,
         #choices=['avi', 'mp4', 'webm','MOV'],
         help='video file extensions')
     parser.add_argument(
@@ -38,6 +39,11 @@ def parse_args():
         '--copy-imgs',
         action='store_true',
         help='whether copy raw img to target')
+    parser.add_argument(
+        '--base-name',
+        '-bn',
+        action='store_true',
+        help='save file with base name.')
     args = parser.parse_args()
 
     return args
@@ -112,7 +118,10 @@ if __name__ == "__main__":
             is_relative_coordinate=False,
             is_crowd=is_crowd)
 
-        filename = wmlu.get_relative_path(full_path,args.src_dir)
+        if args.base_name:
+            filename = osp.basename(full_path)
+        else:
+            filename = wmlu.get_relative_path(full_path,args.src_dir)
 
         if binary_masks is not None:
             if r is not None:
@@ -134,6 +143,6 @@ if __name__ == "__main__":
             save_path = osp.join(args.out_dir,filename)
         print(save_path)
 
-        wmli.imwrite(save_path,img)
+        wmli.imwrite_for_view(save_path,img)
 
     print(f"Save dir: {args.out_dir}")
