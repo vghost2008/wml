@@ -17,6 +17,7 @@ setup(
     'einops',
     'easydict',
     'colorama',
+    'imageio',
     ],
     author='vghost2008',
     author_email='bluetornado@zju.edu.cn',

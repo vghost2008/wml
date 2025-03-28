@@ -15,44 +15,7 @@ from .basic_visualization import *
 
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
 
-def draw_text_on_image(img,text,font_scale=1.2,color=(0.,255.,0.),pos=None,thickness=1):
 
-    if len(img.shape)>=3 and img.shape[2]>3: #MCI
-        if len(img.shape)==3:
-            img = np.expand_dims(img,axis=-1)
-            img = np.tile(img,[1,1,1,3])
-        res = []
-        for i in range(img.shape[2]):
-            cur_img = np.ascontiguousarray(img[:,:,i])
-            cur_img = draw_text_on_image(cur_img,
-                              text=text,
-                              font_scale=font_scale,
-                              color=color,
-                              pos=pos,
-                              thickness=thickness)
-            res.append(cur_img)
-        res = np.stack(res,axis=2)
-        return res
-
-    if isinstance(text,bytes):
-        text = str(text,encoding="utf-8")
-    if not isinstance(text,str):
-        text = str(text)
-    thickness = 2
-    size = cv2.getTextSize(text,fontFace=cv2.FONT_HERSHEY_COMPLEX,fontScale=font_scale,thickness=thickness)
-    if pos is None:
-        pos = (0,(img.shape[0]+size[0][1])//2)
-    elif isinstance(pos,str) and pos.lower() == "tl":
-        text_size,_ = cv2.getTextSize(text,cv2.FONT_HERSHEY_DUPLEX,fontScale=font_scale,thickness=thickness)
-        tw,th = text_size
-        pos = (0,th+5)
-    elif isinstance(pos,str) and pos.lower() == "bl":
-        text_size,_ = cv2.getTextSize(text,cv2.FONT_HERSHEY_DUPLEX,fontScale=font_scale,thickness=thickness)
-        tw,th = text_size
-        pos = (0,img.shape[0]-th-5)
-        
-    cv2.putText(img, text, pos, cv2.FONT_HERSHEY_COMPLEX, fontScale=font_scale, color=color, thickness=thickness)
-    return img
 
 def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
     for line in lines:

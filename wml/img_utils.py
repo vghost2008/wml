@@ -22,7 +22,13 @@ import wml.object_detection2.basic_visualization as bodv
 import torchvision
 from wml.basic_img_utils import *
 from wml.basic_img_utils import encode_img as bencode_img
+from wml.basic_utils import *
 from wml.mci import MCI
+
+try:
+    import imageio
+except:
+    imageio = None
 
 try:
     from turbojpeg import TJCS_RGB, TJPF_BGR, TJPF_GRAY, TurboJPEG
@@ -221,16 +227,24 @@ def imwrite(filename, img,size=None):
     cv2.imwrite(filename, img)
 
 
-def imwrite_for_view(save_path,img):
+def imwrite_for_view(save_path,img,size=None,fps=6):
     if save_path.endswith(".mci"):
         dir = osp.splitext(save_path)[0]
         os.makedirs(dir,exist_ok=True)
-        for i in range(img.shape[2]):
-            cur_img = np.ascontiguousarray(img[:,:,i])
-            cur_save_path = osp.join(dir,f"IMG_{i}.jpg")
-            imwrite(cur_save_path,cur_img)
+        if size is not None:
+            img = resize_img(img,size,keep_aspect_ratio=True)
+        frames = np_unstack(img,axis=2)
+        frames = [np.ascontiguousarray(frame) for frame in frames]
+        for i,frame in enumerate(frames):
+            cur_save_path = osp.join(dir,f"IMG_C{i}.jpg")
+            imwrite(cur_save_path,frame)
+        if imageio is not None:
+            gif_save_path = dir+".gif"
+            for i,frame in enumerate(frames):
+                bodv.draw_text_on_image(frame,f"C{i}",pos="tl")
+            imageio.mimsave(gif_save_path,frames,fps=fps,quality=9)
     else:
-        imwrite(save_path,img)
+        imwrite(save_path,img,size=size)
 
 def read_and_write_img(src_path,dst_path):
     img = cv2.imread(src_path)
