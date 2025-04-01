@@ -8,8 +8,9 @@ class MCI:
     Multi channel image
     后辍名 .mci
     '''
-    def __init__(self,data):
+    def __init__(self,data,metadata=None):
         self.data = np.array(data,dtype=np.uint8)
+        self.metadata = metadata
 
     @property
     def shape(self):
@@ -38,8 +39,9 @@ class MCI:
         imgs = [x if x is not None else np.zeros(shape,dtype=np.uint8) for x in imgs]
 
         imgs = np.stack(imgs,axis=2)
+        metadata=dict(files=files)
 
-        return cls(imgs)
+        return cls(imgs,metadata=metadata)
 
     @staticmethod
     def read(file_path):
@@ -55,19 +57,21 @@ class MCI:
 
     
     @staticmethod
-    def write(file_path,data):
+    def write(file_path,data,metadata=None):
         imgs = []
         for i in range(data.shape[2]):
             img = data[:,:,i]
             img = bwmli.encode_img(img)
             imgs.append(img)
         datas = {'shape':data.shape,'imgs':imgs}
+        if metadata is not None:
+            datas['metadata'] = metadata
 
         with open(file_path,"wb") as f:
             pickle.dump(datas,f)
 
     def save(self,file_path):
-        MCI.write(file_path,self.data)
+        MCI.write(file_path,self.data,metadata=self.metadata)
     
     @staticmethod
     def get_img_size(file_path):

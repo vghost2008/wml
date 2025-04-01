@@ -183,7 +183,7 @@ def read_labelme_data(file_path,label_text_to_id=None,mask_on=True,use_semantic=
                 mask = np.logical_and(mask, 1 - annotations_list[i]['segmentation'])
     return image,annotations_list
 
-def save_labelme_data(file_path,image_path,image,annotations_list,label_to_text=lambda x:str(x)):
+def save_labelme_data(file_path,image_path,image=None,annotations_list=[],label_to_text=lambda x:str(x)):
     '''
     annotations_list[i]['segmentation'] [H,W] 全图mask
     '''

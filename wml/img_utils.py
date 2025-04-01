@@ -548,10 +548,10 @@ def get_img_size(img_path):
     '''
     if not os.path.exists(img_path):
         print(f"ERROR: img file {img_path} not exists.")
-        return [0,0,3]
+        return [0,0]
     else:
         if img_path.lower().endswith(".mci"):
-            return MCI.get_img_size(img_path)
+            return MCI.get_img_size(img_path)[:2]
         with PIL.Image.open(img_path) as im:
             return list(im.size)[::-1]
         #return list(wmli.imread(img_path).shape)
