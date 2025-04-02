@@ -44,12 +44,20 @@ def parse_args():
         '-bn',
         action='store_true',
         help='save file with base name.')
+    parser.add_argument(
+        '--no-text',
+        '-nt',
+        action='store_true',
+        help='no label name.')
     args = parser.parse_args()
 
     return args
 
-def text_fn(x,scores):
+def normal_text_fn(x,scores):
     return x
+
+def no_text_fn(x,scores):
+    return ""
 
 DATASETS = {}
 
@@ -79,6 +87,11 @@ if __name__ == "__main__":
         dataset_type = DATASETS[args.type]
     data = dataset_type(label_text2id=None,shuffle=shuffle,absolute_coord=True)
     data.read_data(args.src_dir,img_suffix=args.ext)
+
+    if args.no_text:
+        text_fn = no_text_fn
+    else:
+        text_fn = normal_text_fn
 
     if view_nr>0:
         data.files = data.files[:view_nr]
@@ -126,7 +139,7 @@ if __name__ == "__main__":
         if binary_masks is not None:
             if r is not None:
                 binary_masks = binary_masks.resize(img.shape[:2][::-1])
-            img = odv.draw_maskv2(img,category_names,boxes,binary_masks,is_relative_coordinate=False)
+            img = odv.draw_maskv2(img,category_names,boxes,binary_masks,is_relative_coordinate=False,fill=True)
         if args.suffix is not None and len(args.suffix)>0:
             r_filename = osp.splitext(filename)[0]
             save_path = osp.join(args.out_dir,r_filename+args.suffix+osp.splitext(full_path)[-1])

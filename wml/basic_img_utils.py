@@ -161,10 +161,11 @@ size: (w,h)
 def crop_and_pad(img,bbox,size=None,pad_color=127):
     if size is None:
         size = (bbox[2]-bbox[0],bbox[3]-bbox[1])
+    
     img = crop_img_absolute_xy(img,bbox)
     channels = img.shape[-1]
     if img.shape[0]<size[1] or img.shape[1]<size[0]:
-        res = np.ones([size[1],size[0],3],dtype=img.dtype)
+        res = np.ones([size[1],size[0],channels],dtype=img.dtype)
         if not isinstance(pad_color,Iterable):
             pad_color = (pad_color,)*channels
         pad_color = np.array(list(pad_color),dtype=img.dtype)

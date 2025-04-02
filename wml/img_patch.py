@@ -4,15 +4,17 @@ import math
 import wml.img_utils as wmli
 
 class ImagePatch:
-    def __init__(self,patch_size,pad=True,pad_value=127,boundary=0) -> None:
+    def __init__(self,patch_size,pad=True,pad_value=127,boundary=0,drop_tail=False) -> None:
         '''
         patch_size: (H,W)
         boundary: (bh,bw) or value
+        drop_tail: 如果图像尺寸与patch_size不整除，是否扔掉最后不能被整除的部分
         '''
-        self.patch_size = patch_size
+        self.patch_size = patch_size if isinstance(patch_size,Iterable) else (patch_size,patch_size)
         self.pad = pad
         self.pad_value = pad_value
         self.boundary = boundary if isinstance(boundary,Iterable) else (boundary,boundary)
+        self.drop_tail = drop_tail
         self.patch_bboxes = []
         self.src_img = None
         self.cur_idx = 0
@@ -21,8 +23,12 @@ class ImagePatch:
         self.src_img = img
         self.cur_idx = 0
         self.patch_bboxes = []
-        self.rows = math.ceil((self.src_img.shape[0]-self.boundary[0])/(self.patch_size[0]-self.boundary[0]))
-        self.cols = math.ceil((self.src_img.shape[1]-self.boundary[1])/(self.patch_size[1]-self.boundary[1]))
+        if self.drop_tail:
+            self.rows = math.floor((self.src_img.shape[0]-self.boundary[0])/(self.patch_size[0]-self.boundary[0]))
+            self.cols = math.floor((self.src_img.shape[1]-self.boundary[1])/(self.patch_size[1]-self.boundary[1]))
+        else:
+            self.rows = math.ceil((self.src_img.shape[0]-self.boundary[0])/(self.patch_size[0]-self.boundary[0]))
+            self.cols = math.ceil((self.src_img.shape[1]-self.boundary[1])/(self.patch_size[1]-self.boundary[1]))
 
         x = np.array(list(range(self.cols)),dtype=np.int32)*(self.patch_size[1]-self.boundary[1])
         y = np.array(list(range(self.rows)),dtype=np.int32)*(self.patch_size[0]-self.boundary[0])
