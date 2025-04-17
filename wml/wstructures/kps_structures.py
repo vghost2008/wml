@@ -1,7 +1,6 @@
 import numpy as np
 import copy
 import cv2
-import wml.object_detection2.bboxes as odb
 import wml.basic_img_utils as bwmli
 import wml.object_detection2.bboxes as odb
 from .common import WBaseMaskLike

@@ -4,7 +4,7 @@ import logging
 import wml.basic_img_utils as bwmli
 import cv2
 from .basic_toolkit import *
-from wml.wstructures.mask_structures import WPolygonMaskItem,WPolygonMasks
+from wml.wstructures.mask_structures import WPolygonMaskItem
 import torch
 import math
 
@@ -153,3 +153,12 @@ def resize_mask_structures(mask,size):
     if hasattr(mask,"resize"):
         return mask.resize(size)
     raise RuntimeError("Unimplement")
+
+def get_mask_bbox(mask):
+    '''
+    mask: [H,W]
+    '''
+    points = np.nonzero(mask)
+    x_min,x_max = np.min(points[1]),np.max(points[1])
+    y_min,y_max = np.min(points[0]),np.max(points[0])
+    return np.array([x_min,y_min,x_max,y_max],dtype=np.int32)

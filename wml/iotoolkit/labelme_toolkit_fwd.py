@@ -59,10 +59,18 @@ def trans_absolute_coord_to_relative_coord(image_info,annotations_list):
 def get_files(data_dir, img_suffix=wmli.BASE_IMG_SUFFIX,keep_no_json_img=False):
     img_files = wmlu.recurse_get_filepath_in_dir(data_dir, suffix=img_suffix)
     res = []
+    json_set = set()
     for img_file in img_files:
         json_file = wmlu.change_suffix(img_file, "json")
         if keep_no_json_img or os.path.exists(json_file):
             res.append((img_file, json_file))
+            json_set.add(json_file)
+
+    all_json_files = wmlu.recurse_get_filepath_in_dir(data_dir, suffix=".json")
+
+    for f in all_json_files :
+        if f not in json_set:
+            print(f"WARNING: find img file for {f} faild.")
 
     return res
 

@@ -47,6 +47,13 @@ to_4tuple = _ntuple(4)
 to_ntuple = _ntuple
 
 def unnormalize(x:torch.Tensor,mean=[0.0,0.0,0.0],std=[1.0,1.0,1.0]):
+    if not isinstance(mean,Iterable):
+        C = x.shape[-3]
+        mean = [mean]*C
+    if not isinstance(std,Iterable):
+        C = x.shape[-3]
+        std = [std]*C
+
     if len(x.size())==4:
         C = x.shape[1]
         scale = np.reshape(np.array(std,dtype=np.float32),[1,C,1,1])

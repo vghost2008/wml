@@ -521,8 +521,11 @@ class Config:
     @staticmethod
     def fromfile(filename,
                  use_predefined_variables=True,
-                 import_custom_modules=True):
+                 import_custom_modules=True,
+                 use_predefined_ph=None):
         ph_values = Config.get_placeholder_values(filename)
+        if use_predefined_ph is not None:
+            ph_values.update(use_predefined_ph)
         if len(ph_values)>0:
             print(f"Placeholder values:")
             for k,v in ph_values.items():
