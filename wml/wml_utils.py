@@ -270,7 +270,10 @@ class MTimer():
         if self.auto_show:
             te = (end_time-begin_time)*1000
             fps = 1000/(te+1e-8)
-            print(f"{name}: total time {te:.3f}ms, FPS={fps:.3f}.")
+            if te<2000:
+                print(f"{name}: total time {te:,.3f}ms, FPS={fps:.3f}.")
+            else:
+                print(f"{name}: total time {te/1000.0:,.3f}s, FPS={fps:.3f}.")
         self._begin_time = self._begin_time[:-1]
 
         if new_time is not None:

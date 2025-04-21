@@ -881,6 +881,19 @@ class MParent:
     def __getitem__(self, name):
         return self.model.__getitem__(name)
 
+class WeakRefmodel:
+    def __init__(self,model):
+        self.model = model
+
+    def __getattr__(self, name):
+        return self.model.__getattr__(name)
+
+    def __getitem__(self, name):
+        return self.model.__getitem__(name)
+
+    def __call__(self,*args,**kwargs):
+        return self.model.__call__(*args,**kwargs)
+
 class Unsqueeze(nn.Module):
     def __init__(self,dim) -> None:
         super().__init__()
