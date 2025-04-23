@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import wml.basic_img_utils as bwmli
 import sys
+from ..threadtoolkit import par_for_each,DEFAULT_THREAD_NR
+from functools import partial
 
 def find_contours_in_bbox(mask,bbox):
     bbox = np.array(bbox).astype(np.int32)
@@ -76,5 +78,20 @@ def npresize_mask(mask,size=None,scale_factor=None):
     for i in range(len(mask)):
         cur_m = cv2.resize(mask[i],dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
         new_mask.append(cur_m)
+    new_mask = np.stack(new_mask,axis=0)
+    return new_mask
+
+def npresize_mask_mt(mask,size=None,scale_factor=None,thread_nr=DEFAULT_THREAD_NR):
+    '''
+    mask: [N,H,W]
+    size: (new_w,new_h)
+    '''
+    if scale_factor is not None and size is None:
+        size = (int(mask[0].shape[1]*scale_factor),int(mask[0].shape[0]*scale_factor))
+    if len(mask) == 0:
+        return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
+    
+    fn = partial(cv2.resize,dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
+    new_mask = par_for_each(mask,fn,thread_nr=DEFAULT_THREAD_NR)
     new_mask = np.stack(new_mask,axis=0)
     return new_mask

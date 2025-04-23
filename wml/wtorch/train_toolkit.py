@@ -601,3 +601,28 @@ def finetune_model_nottrain(model:torch.nn.Module,names_not2train):
             continue
     sys.stdout.flush()
 
+def trace_grad_fn(grad_fn, depth=0):
+    '''
+    usage:
+    gaus_loss.backward()
+    trace_grad_fn(gaus_loss.grad_fn)
+     BinaryCrossEntropyWithLogitsBackward0
+       MmBackward0
+         SiluBackward0
+           NativeBatchNormBackward0
+             AddmmBackward0
+               torch::autograd::AccumulateGrad
+               torch::autograd::AccumulateGrad
+               TBackward0
+                 torch::autograd::AccumulateGrad
+             torch::autograd::AccumulateGrad
+             torch::autograd::AccumulateGrad
+         TBackward0
+           torch::autograd::AccumulateGrad
+    '''
+    if grad_fn is None:
+        return
+    print("  " * depth, grad_fn.name())
+    for next_fn, _ in grad_fn.next_functions:
+        if next_fn is not None:
+            trace_grad_fn(next_fn, depth + 1)

@@ -13,17 +13,20 @@ def fn_wraper(datas,fn,is_factory_fn=False):
     if is_factory_fn:
         fn = fn()
     res_queue = []
-    print(f"Process {os.getpid()}: data nr {len(datas)}.")
+    #print(f"Process {os.getpid()}: data nr {len(datas)}.")
     for data,i in datas:
         try:
             res = fn(data)
             res_queue.append((i,res))
         except:
             traceback.print_exc()
-    print(f"Process {os.getpid()} is finished.")
+    #print(f"Process {os.getpid()} is finished.")
     return res_queue
 
 def par_for_each(data,fn,thread_nr=DEFAULT_THREAD_NR,is_factory_fn=False,timeout=None):
+    '''
+    fn: 一次处理一个数据元素
+    '''
     if len(data) == 0:
         return []
     thread_nr = min(len(data),thread_nr)

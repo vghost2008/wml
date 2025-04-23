@@ -4,6 +4,46 @@ import copy
 from .common import *
 from .build import CLASSIFIER_METRICS_REGISTRY
 
+def bin_precision_and_recall(preds,target):
+    '''
+    preds: value is 0 or 1 , [N0,N1, ..., Nn], 1 is pos
+    target: value is 0 or 1 , [N0,N1, ..., Nn], 1 is pos
+    '''
+    tp = np.logical_and(preds==target,target>0)
+    tp = np.sum(tp.astype(np.float32))
+    tp_fn = np.sum(target>0)
+    tp_fp = np.sum(preds>0)
+
+    precision = safe_score(tp,tp_fp)
+    recall = safe_score(tp,tp_fn)
+    if precision+recall<1e-8:
+        f1 = 0.0
+    else:
+        f1 = 2*precision*recall/(precision+recall)
+
+    return precision,recall,f1
+
+def precision_recall_curve(preds,target,thresholds=np.linspace(0.05,0.95,19)):
+    '''
+    preds: value in range [0,1] , [N0,N1, ..., Nn]
+    target: value is 0 or 1 , [N0,N1, ..., Nn], 1 is pos
+    '''
+    p = []
+    r = []
+    f1 = []
+    if not isinstance(preds,np.ndarray):
+        preds= np.array(preds)
+    if not isinstance(target,np.ndarray):
+        target = np.array(target).astype(np.int32)
+    for thr in thresholds:
+        cur_pred = (preds>thr).astype(np.int32)
+        cp,cr,cf = bin_precision_and_recall(cur_pred,target)
+        p.append(cp)
+        r.append(cr)
+        f1.append(cf)
+
+    return np.array(p),np.array(r),np.array(f1),thresholds
+
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class Accuracy(BaseClassifierMetrics):
