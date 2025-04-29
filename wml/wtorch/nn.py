@@ -926,3 +926,19 @@ class Scale(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x * self.scale
+
+class GradScale(nn.Module):
+    def __init__(self, scale_factor):
+        super().__init__()
+        self.scale_factor = scale_factor
+        self.layer = nn.Identity()
+        # 注册反向传播钩子
+        self.layer.register_full_backward_hook(self._scale_grad_hook)
+    
+    def _scale_grad_hook(self, module, grad_input, grad_output):
+        # 对梯度输出进行缩放
+        return (grad_input[0] * self.scale_factor,)
+    
+    def forward(self, x):
+        x = self.layer(x)
+        return x

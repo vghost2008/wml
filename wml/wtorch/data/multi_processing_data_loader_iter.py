@@ -490,6 +490,8 @@ class _MultiProcessingDataLoaderIter(_BaseDataLoaderIter):
         elif isinstance(data,collections.abc.Mapping):
             for k,v in data.items():
                 _MultiProcessingDataLoaderIter.record_stream(v,stream)
+        elif isinstance(data,(str,bytes)):
+            pass
         elif isinstance(data,Iterable):
             for x in data:
                 _MultiProcessingDataLoaderIter.record_stream(x,stream)

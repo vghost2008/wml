@@ -259,6 +259,16 @@ def module_parameters_numel(net,only_training=False):
             total += torch.numel(param)
     return total
 
+def has_tensor(datas):
+    if torch.is_tensor(datas):
+        return True
+    if isinstance(datas,(str,bytes)):
+        return False
+    if isinstance(datas,Iterable):
+        for v in datas:
+            if has_tensor(v):
+                return True 
+    return False
 
 def concat_datas(datas,dim=0):
     if isinstance(datas[0], Mapping):
@@ -280,6 +290,10 @@ def concat_datas(datas,dim=0):
     elif isinstance(datas[0],Iterable):
         res = []
         try:
+            if not has_tensor(datas):
+                for x in datas:
+                    res.extend(list(x))
+                return res
             for x in zip(*datas):
                 if torch.is_tensor(x[0]):
                     res.append(torch.cat(x,dim=dim))
@@ -926,3 +940,20 @@ def model_parameters_detail(model,level=0,total_nr=-1,thr=0.001,simple=False):
 
     main_str += ')'
     return main_str
+
+
+class ChainModel:
+    def __init__(self,models):
+        self.models = models
+    
+    def named_parameters(self):
+        res = []
+        for m in self.models:
+            res.extend(m.named_parameters())
+        return res
+
+    def parameters(self):
+        res = []
+        for m in self.models:
+            res.extend(m.parameters())
+        return res

@@ -10,7 +10,7 @@ import re
 if torch.__version__ < "1.9.0":
     from torch._six import container_abcs, string_classes, int_classes
 else:
-    import collections as container_abcs
+    import collections.abc as container_abcs
     string_classes = (str, bytes)
     int_classes = int
 

@@ -81,7 +81,7 @@ def npresize_mask(mask,size=None,scale_factor=None):
     new_mask = np.stack(new_mask,axis=0)
     return new_mask
 
-def npresize_mask_mt(mask,size=None,scale_factor=None,thread_nr=DEFAULT_THREAD_NR):
+def npresize_mask_mt(mask,size=None,scale_factor=None,thread_nr=0):
     '''
     mask: [N,H,W]
     size: (new_w,new_h)
@@ -90,8 +90,11 @@ def npresize_mask_mt(mask,size=None,scale_factor=None,thread_nr=DEFAULT_THREAD_N
         size = (int(mask[0].shape[1]*scale_factor),int(mask[0].shape[0]*scale_factor))
     if len(mask) == 0:
         return np.zeros([0,size[1],size[0]],dtype=mask.dtype)
+
+    if thread_nr <= 0:
+        thread_nr = min(16,DEFAULT_THREAD_NR)
     
     fn = partial(cv2.resize,dsize=(size[0],size[1]),interpolation=cv2.INTER_NEAREST)
-    new_mask = par_for_each(mask,fn,thread_nr=DEFAULT_THREAD_NR)
+    new_mask = par_for_each(mask,fn,thread_nr=thread_nr)
     new_mask = np.stack(new_mask,axis=0)
     return new_mask
