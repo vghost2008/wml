@@ -17,6 +17,7 @@ import subprocess
 import warnings
 from packaging.version import parse
 from collections import OrderedDict
+import psutil
 try:
     from importlib import metadata
 except:
@@ -494,6 +495,17 @@ def sleep_until(runtime):
             break
         else:
             time.sleep(30)
+
+def wait_pis_exit(pid,sleep_delta=30):
+    while True:
+        sys.stdout.write(f"\rwait pid {pid} exit.")
+        sys.stdout.flush()
+        if not psutil.pid_exists(pid):
+            break
+        else:
+            time.sleep(sleep_delta)
+
+
 
 def file_md5(path):
     with open(path,'rb') as f:

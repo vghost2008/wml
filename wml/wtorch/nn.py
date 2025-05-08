@@ -928,16 +928,25 @@ class Scale(nn.Module):
         return x * self.scale
 
 class GradScale(nn.Module):
-    def __init__(self, scale_factor):
+    def __init__(self, scale_factor=None,max_norm=None):
         super().__init__()
         self.scale_factor = scale_factor
+        self.max_norm = max_norm
         self.layer = nn.Identity()
         # 注册反向传播钩子
         self.layer.register_full_backward_hook(self._scale_grad_hook)
     
     def _scale_grad_hook(self, module, grad_input, grad_output):
         # 对梯度输出进行缩放
-        return (grad_input[0] * self.scale_factor,)
+        if self.scale_factor is not None:
+            grad = grad_input[0] * self.scale_factor
+        else:
+            grad = grad_input[0]
+        if self.max_norm is not None:
+            total_norm = torch.linalg.norm(grad)
+            if total_norm>self.max_norm:
+                grad = grad*self.max_norm/total_norm
+        return (grad,)
     
     def forward(self, x):
         x = self.layer(x)
