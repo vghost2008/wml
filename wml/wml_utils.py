@@ -17,11 +17,18 @@ import subprocess
 import warnings
 from packaging.version import parse
 from collections import OrderedDict
+from collections.abc import  Iterable
 import psutil
+import colorama
 try:
     from importlib import metadata
 except:
     metadata = None
+    pass
+try:
+    import pynvml
+except:
+    pynvml = None
     pass
 import re
 import torch
@@ -504,6 +511,48 @@ def wait_pis_exit(pid,sleep_delta=30):
             break
         else:
             time.sleep(sleep_delta)
+
+def wait_gpu_mem_free(gpu_id,mem_size,sleep_delta=30,delay=0):
+    '''
+    mem_size: Gb
+    '''
+    if pynvml is None:
+        print(colorama.Fore.RED+f"ERROR: pynvml not installed."+colorama.Style.RESET_ALL)
+        return
+    
+    if isinstance(gpu_id,Iterable):
+        if len(gpu_id) == 1:
+            gpu_id = gpu_id[0]
+        else:
+            for gi in gpu_id:
+                wait_gpu_mem_free(gi,mem_size=mem_size,sleep_delta=sleep_delta)
+    try:
+        pynvml.nvmlInit()
+        handle = pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
+        have_wait = False
+        while True:
+            mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            free_size = mem_info.free/1024**3
+            if free_size >= mem_size:
+                if have_wait and delay>0:
+                    print_info(f"Confirm gpu mem.")
+                    sys.stdout.flush()
+                    time.sleep(delay)
+                    mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                    free_size = mem_info.free/1024**3
+                    if free_size >= mem_size:
+                        break
+                else:
+                    break
+            else:
+                sys.stdout.write(f"\rWait {mem_size:.3f}Gb free mem for gpu {gpu_id}, current free gpu mem is {free_size:.3f} Gb.")
+                sys.stdout.flush()
+                time.sleep(sleep_delta)
+                have_wait = True
+        pynvml.nvmlShutdown()
+    except Exception as e:
+        print_error(f"wait gpu mem free faild, info={e}")
+        sys.stdout.flush()
 
 
 
