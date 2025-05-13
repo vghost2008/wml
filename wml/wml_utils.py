@@ -66,6 +66,9 @@ def show_member(obj,name=None):
         print("%s : "%(name),var)
 
 def show_list(values,fmt=None,recurse=False):
+    '''
+    fmt: example "{:.3f}"  "{:,}“
+    '''
     if values is None:
         return
     if isinstance(values,str):

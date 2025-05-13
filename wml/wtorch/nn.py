@@ -885,6 +885,12 @@ class WeakRefmodel:
     def __init__(self,model):
         self.model = model
 
+    def train(self,model=True):
+        self.model.train(model)
+
+    def eval(self):
+        self.model.eval()
+
     def __getattr__(self, name):
         return self.model.__getattr__(name)
 
