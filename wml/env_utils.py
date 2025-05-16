@@ -131,7 +131,7 @@ def _minimal_ext_cmd(cmd):
     return out
 
 
-def get_git_hash(fallback='unknown', digits=None):
+def get_git_hash(fallback='HASH_N.A.', digits=None):
     """Get the git hash of the current repo.
 
     Args:
@@ -152,7 +152,21 @@ def get_git_hash(fallback='unknown', digits=None):
         sha = out.strip().decode('ascii')
         if digits is not None:
             sha = sha[:digits]
-    except OSError:
+    except OSError as e:
+        print(f"ERROR: {e}")
         sha = fallback
 
     return sha
+
+def get_git_branch():
+    try:
+        out = _minimal_ext_cmd(['git', 'branch', '--show-current'])
+        branch = out.strip().decode('ascii')
+    except Exception as e:
+        print(f"ERROR: {e}")
+        branch = "branch_N.A."
+    
+    return branch
+
+def get_git_info():
+    return f"branch={get_git_branch()}, hash={get_git_hash()}"

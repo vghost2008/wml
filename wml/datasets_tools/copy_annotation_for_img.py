@@ -15,14 +15,26 @@ def parse_args():
     parser.add_argument('img_dir', default=None,type=str,help='img_dir')
     parser.add_argument('ann_dir', default=None,type=str,help='ann_dir')
     parser.add_argument('--type', default="auto",type=str,help='img_dir')
+    parser.add_argument('-l','--level', default=0,type=int,help='test parent level number')
     args = parser.parse_args()
     return args
 
-def get_all_ann(img_dir,suffix=".json;;.xml"):
+def get_name_key(path,level=0):
+    path = osp.abspath(path)
+    bn = wmlu.base_name(path)
+    if 0 == level:
+        return bn
+    names = path.split(osp.sep)[:-1]
+    names = names[-level:]
+    names = names+[bn]
+    dir_name = str(osp.sep).join(names)
+    return dir_name
+
+def get_all_ann(img_dir,level=0,suffix=".json;;.xml"):
     files = wmlu.get_files(img_dir,suffix=suffix)
     res = {}
     for f in files:
-        bn = wmlu.base_name(f)
+        bn = get_name_key(f,level)
         if bn in res:
             ov = res[bn]
             if not isinstance(ov,(list,tuple)):
@@ -32,14 +44,14 @@ def get_all_ann(img_dir,suffix=".json;;.xml"):
             res[bn] = f
     return res
 
-def copy_annfiles(ann_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
+def copy_annfiles(ann_dir,img_dir,level=0,img_suffix=".jpg",ann_type=".xml"):
     img_files = wmlu.get_files(img_dir,suffix=wmli.BASE_IMG_SUFFIX)
-    all_ann_files= get_all_ann(ann_dir,suffix=ann_type)
+    all_ann_files= get_all_ann(ann_dir,level=level,suffix=ann_type)
     copy_nr = 0
     error_nr = 0
     not_found_nr = 0
     for f in img_files:
-        base_name = wmlu.base_name(f)
+        base_name = get_name_key(f,level)
         if base_name in all_ann_files:
             files = all_ann_files[base_name]
             if not isinstance(files,list):
@@ -60,4 +72,4 @@ if __name__ == "__main__":
     args = parse_args()
     if args.type == "auto":
         args.type = get_auto_dataset_suffix(args.ann_dir)
-    copy_annfiles(args.ann_dir,args.img_dir,ann_type=args.type)
+    copy_annfiles(args.ann_dir,args.img_dir,level=args.level,ann_type=args.type)
