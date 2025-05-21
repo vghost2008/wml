@@ -30,7 +30,7 @@ class ModelEMA:
     GPU assignment and distributed training wrappers.
     """
 
-    def __init__(self, model, decay=0.9999, updates=0,beta=1.0, base_updates=2000):
+    def __init__(self, model, decay=0.9999, updates=0, base_updates=2000):
         """
         Args:
             model (nn.Module): model to apply EMA.
@@ -44,7 +44,6 @@ class ModelEMA:
         self.base_updates = base_updates
         self.base_decay = decay
         self.decay = lambda x: decay * (1 - math.exp(-x / self.base_updates))
-        self.beta = beta
         self.ema_persent = 0.0
         for p in self.ema.parameters():
             p.requires_grad_(False)
@@ -53,8 +52,7 @@ class ModelEMA:
         # Update EMA parameters
         #print(f"EMA Update.")
         with torch.no_grad():
-            d = self.decay(self.updates)*self.beta #old persent
-            d = min(d,0.999)
+            d = self.decay(self.updates) #old persent
             self.ema_persent = d
             self.updates += 1
 
