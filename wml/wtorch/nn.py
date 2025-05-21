@@ -7,6 +7,7 @@ from torch.nn import Parameter
 import math
 from collections import OrderedDict
 from torch import Tensor
+import copy
 #from einops import rearrange
 
 
@@ -890,15 +891,36 @@ class WeakRefmodel:
 
     def eval(self):
         self.model.eval()
+    
+    def to(self,v):
+        return self.model.to(v)
 
-    def __getattr__(self, name):
-        return self.model.__getattr__(name)
+    def seed(self):
+        return self.model.seed
+
+    def __setstate__(self,state):
+        return self.model.__setstate__(state)
+    
+    def named_modules(self):
+        return self.model.named_modules()
 
     def __getitem__(self, name):
         return self.model.__getitem__(name)
 
     def __call__(self,*args,**kwargs):
         return self.model.__call__(*args,**kwargs)
+    
+    def __deepcopy__(self, memo):
+        new_obj = WeakRefmodel(copy.deepcopy(self.model, memo))
+        memo[id(self)] = new_obj
+        return new_obj
+
+    def __copy__(self):
+        new_obj = WeakRefmodel(self.model)
+        return new_obj
+
+    def __getattr__(self, name):
+        return self.model.__getattr__(name)
 
 class Unsqueeze(nn.Module):
     def __init__(self,dim) -> None:

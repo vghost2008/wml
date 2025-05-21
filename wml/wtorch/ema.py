@@ -30,7 +30,7 @@ class ModelEMA:
     GPU assignment and distributed training wrappers.
     """
 
-    def __init__(self, model, decay=0.9999, updates=0):
+    def __init__(self, model, decay=0.9999, updates=0,beta=1.0, base_updates=2000):
         """
         Args:
             model (nn.Module): model to apply EMA.
@@ -41,7 +41,11 @@ class ModelEMA:
         self.ema = deepcopy(model.module if is_parallel(model) else model).eval()
         self.updates = updates
         # decay exponential ramp (to help early epochs)
-        self.decay = lambda x: decay * (1 - math.exp(-x / 2000))
+        self.base_updates = base_updates
+        self.base_decay = decay
+        self.decay = lambda x: decay * (1 - math.exp(-x / self.base_updates))
+        self.beta = beta
+        self.ema_persent = 0.0
         for p in self.ema.parameters():
             p.requires_grad_(False)
 
@@ -49,8 +53,10 @@ class ModelEMA:
         # Update EMA parameters
         #print(f"EMA Update.")
         with torch.no_grad():
+            d = self.decay(self.updates)*self.beta #old persent
+            d = min(d,0.999)
+            self.ema_persent = d
             self.updates += 1
-            d = self.decay(self.updates) #old persent
 
             msd = (
                 model.module.state_dict() if is_parallel(model) else model.state_dict()
@@ -59,3 +65,7 @@ class ModelEMA:
                 if v.dtype.is_floating_point:
                     v *= d
                     v += (1.0 - d) * msd[k].detach()
+
+    
+    def __repr__(self) -> str:
+        return f"EMA: (base_updates={self.base_updates}, decay={self.base_decay})"
