@@ -27,7 +27,7 @@ def draw_rectangle(img, p1, p2, color=[255, 0, 0], thickness=2):
 
 def draw_bbox(img, bbox, shape=None, label=None, color=[255, 0, 0], thickness=2,is_relative_bbox=False,xy_order=True):
     '''
-    bbox: [y0,x0,y1,x1] if xy_order = False  else [x0,y0,x1,y1]
+    bbox: [x0,y0,x1,y1] if xy_order = False  else [y0,x0,y1,x1]
     '''
     if is_relative_bbox:
         p1 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))
@@ -35,13 +35,13 @@ def draw_bbox(img, bbox, shape=None, label=None, color=[255, 0, 0], thickness=2,
     else:
         p1 = (int(bbox[0]), int(bbox[1]))
         p2 = (int(bbox[2]), int(bbox[3]))
-    if xy_order:
+    if not xy_order:
         p1 = p1[::-1]
         p2 = p2[::-1]
-    cv2.rectangle(img, p1[::-1], p2[::-1], color, thickness)
-    p1 = (p1[0]+15, p1[1])
+    cv2.rectangle(img, p1, p2, color, thickness)
+    p1 = (p1[0],p1[1]+15)
     if label is not None:
-        cv2.putText(img, str(label), p1[::-1], cv2.FONT_HERSHEY_DUPLEX, 0.5, color, 1)
+        cv2.putText(img, str(label), p1, cv2.FONT_HERSHEY_DUPLEX, 0.5, color, 1)
     return img
 
 '''

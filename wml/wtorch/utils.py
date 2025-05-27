@@ -957,3 +957,22 @@ class ChainModel:
         for m in self.models:
             res.extend(m.parameters())
         return res
+
+
+def fix_seeds(seed=0, with_torch=True, with_cuda=True):
+    """Fixed available seeds for reproducibility.
+
+    Args:
+        seed: [int] Seed value.
+        with_torch: Flag. If true, torch-related seeds are fixed.
+        with_cuda: Flag. If true, torch+cuda-related seeds are fixed
+    """
+    print(f"Fix random seed to {seed}")
+    random.seed(seed)
+    np.random.seed(seed)
+    if with_torch:
+        torch.manual_seed(seed)
+    if with_cuda:
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
