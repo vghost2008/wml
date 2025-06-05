@@ -296,7 +296,7 @@ def imrotate(img,
 
     Args:
         img (ndarray): Image to be rotated.
-        angle (float): Rotation angle in degrees, positive values mean
+        angle (float): Rotation angle in degrees(0~360), positive values mean
             clockwise rotation.
         center (tuple[float], optional): Center point (w, h) of the rotation in
             the source image. If not specified, the center of the image will be

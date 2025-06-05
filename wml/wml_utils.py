@@ -169,12 +169,13 @@ def gather(data,indexs):
     return res_data
 
 class TimeThis():
-    def __init__(self,name="TimeThis",auto_show=True):
+    def __init__(self,name="TimeThis",auto_show=True,log_thr=None):
         self.begin_time = time.time()
         self.end_time = 0
         self.name = name
         self.auto_show = auto_show
         self.idx = 0
+        self.log_thr = log_thr #ms
 
     def __enter__(self):
         self.begin_time = time.time()
@@ -183,6 +184,8 @@ class TimeThis():
         self.end_time = time.time()
         if self.auto_show:
             te = (self.end_time-self.begin_time)*1000
+            if self.log_thr is not None and te<self.log_thr:
+                return
             fps = 1000/(te+1e-8)
             print(f"{self.name}: total time {te:.3f}ms, FPS={fps:.3f}.")
 

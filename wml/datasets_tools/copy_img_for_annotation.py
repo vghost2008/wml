@@ -3,6 +3,7 @@ import glob
 import os.path as osp
 import wml.wml_utils as wmlu
 from wml.iotoolkit import get_auto_dataset_suffix
+import wml.img_utils as wmli
 import shutil
 
 '''
@@ -14,16 +15,28 @@ def parse_args():
     parser.add_argument('ann_dir', default=None,type=str,help='ann_dir')
     parser.add_argument('img_dir', default=None,type=str,help='img_dir')
     parser.add_argument('--type', default="auto",type=str,help='img_dir')
+    parser.add_argument('-l','--level', default=0,type=int,help='test parent level number')
     args = parser.parse_args()
     return args
 
-def get_all_imgs(img_dir,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
+def get_name_key(path,level=0):
+    path = osp.abspath(path)
+    bn = wmlu.base_name(path)
+    bn = bn.replace("\\","")
+    bn = wmlu.remove_non_ascii(bn)
+    if 0 == level:
+        return bn
+    names = path.split(osp.sep)[:-1]
+    names = names[-level:]
+    names = names+[bn]
+    dir_name = str(osp.sep).join(names)
+    return dir_name
+
+def get_all_imgs(img_dir,level=0,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
     files = wmlu.get_files(img_dir,suffix=img_suffix)
     res = {}
     for f in files:
-        basename = wmlu.base_name(f)
-        basename = basename.replace("\\","")
-        basename = wmlu.remove_non_ascii(basename)
+        basename = get_name_key(f,level)
         if basename in res:
             d = res[basename]
             if isinstance(d,str):
@@ -36,17 +49,17 @@ def get_all_imgs(img_dir,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
             res[basename] = f
     return res
 
-def copy_imgfiles(ann_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
+def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_type=".xml"):
     if ann_type == "auto":
         ann_type = "."+get_auto_dataset_suffix(ann_dir)
     xml_files = wmlu.get_files(ann_dir,suffix=ann_type)
-    all_img_files = get_all_imgs(img_dir)
+    all_img_files = get_all_imgs(img_dir,level=level,img_suffix=img_suffix)
     copy_nr = 0
     error_nr = 0
     not_found_nr = 0
+    #wmlu.show_list(list(all_img_files.keys()))
     for xf in xml_files:
-        base_name = wmlu.base_name(xf)
-        base_name = wmlu.remove_non_ascii(base_name)
+        base_name = get_name_key(xf,level)
         print(base_name)
         if base_name in all_img_files:
             files = all_img_files[base_name]
@@ -57,14 +70,14 @@ def copy_imgfiles(ann_dir,img_dir,img_suffix=".jpg",ann_type=".xml"):
                 shutil.copy(files,save_path)
                 copy_nr += 1
             else:
-                print(f"ERROR: Find multi img files for {xf}, img files {files}")
+                print(f"ERROR: Find multi img files for {xf}, img files {files}, key={base_name}")
                 error_nr += 1
         else:
-            print(f"ERROR: Find img file for {xf} faild.")
+            print(f"ERROR: Find img file for {xf} faild, key={base_name}")
             not_found_nr += 1
 
     print(f"total copy {copy_nr} files, {error_nr} multi files, {not_found_nr} not found files.")
 
 if __name__ == "__main__":
     args = parse_args()
-    copy_imgfiles(args.ann_dir,args.img_dir,ann_type=args.type)
+    copy_imgfiles(args.ann_dir,args.img_dir,level=args.level,ann_type=args.type)

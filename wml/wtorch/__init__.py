@@ -9,3 +9,4 @@ from .functional import soft_one_hot
 from .nn_utils import fuse_conv_and_bn, fuse_deconv_and_bn
 from .init import bias_init_with_prob, normal_init, constant_init, xavier_init,initialize, update_init_info
 from .train_toolkit import is_norm
+from .utils import forgiving_state_restore, load, load_checkpoint

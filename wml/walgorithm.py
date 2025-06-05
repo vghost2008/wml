@@ -226,3 +226,6 @@ def lower_bound(datas, target):
 
 def remove_non_ascii(s):
     return ''.join(filter(str.isascii, s))
+
+def align_to(input,align_v):
+    return ((input+align_v-1)//align_v)*align_v

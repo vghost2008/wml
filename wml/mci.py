@@ -2,6 +2,8 @@ import numpy as np
 import wml.basic_img_utils as bwmli
 import pickle
 import colorama
+import os
+import os.path as osp
 import cv2
 
 class MCI:
@@ -96,6 +98,8 @@ class MCI:
 
         datas['metadata'] = metadata
         
+        dir_path = osp.dirname(file_path)
+        os.makedirs(dir_path,exist_ok=True)
         with open(file_path,"wb") as f:
             pickle.dump(datas,f)
 

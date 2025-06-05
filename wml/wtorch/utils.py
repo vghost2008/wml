@@ -197,7 +197,7 @@ def forgiving_state_restore(net, loaded_dict,verbose=False,strict=False):
 def load_checkpoint(
                 module,
                 checkpoint,
-                map_location=None,
+                map_location='cpu',
                 strict=False):
     state_dict = torch.load(checkpoint,map_location=map_location)
     return forgiving_state_restore(module,state_dict,strict=strict)
@@ -959,7 +959,7 @@ class ChainModel:
         return res
 
 
-def fix_seeds(seed=0, with_torch=True, with_cuda=True):
+def fix_seeds(seed=0, with_torch=True, with_cuda=True,deterministic_algorithm=False):
     """Fixed available seeds for reproducibility.
 
     Args:
@@ -976,3 +976,6 @@ def fix_seeds(seed=0, with_torch=True, with_cuda=True):
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
+    
+    if deterministic_algorithm:
+        torch.use_deterministic_algorithms(True)
