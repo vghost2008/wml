@@ -20,7 +20,7 @@ class WPolygonMaskItem:
     '''
     def __init__(self,points,*,width=None,height=None):
         '''
-        points:  list[[N,2]],
+        points:  list[[N,2]],(x,y)
         example:
         [np.zeros(3,2),np.zeros(11,2)]
         '''
@@ -30,6 +30,30 @@ class WPolygonMaskItem:
         self.points = [p.copy().astype(np.int32) for p in points] # shape of p is [Ni,2]
         self.width = width
         self.height = height
+
+    @classmethod
+    def from_bbox(cls,bbox,width=None,height=None):
+        x0,y0,x1,y1 = bbox
+        n_points  = np.array([[x0,y0],[x1,y0],[x1,y1],[x0,y1]]).astype(np.int32)
+        return cls([n_points],width,height)
+
+
+    @classmethod
+    def from_ndarray(cls,mask,bbox=None):
+        '''
+        masks: [N,H,W]
+        return:
+        t_masks: list of list [N,2] points
+        '''
+        if bbox is not None:
+            contours = bmt.find_contours_in_bbox(mask,bbox)
+        else:
+            contours,hierarchy = findContours(mask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+        t_bbox = get_bboxes_by_contours(contours)
+        if len(contours)==0 or not np.all(t_bbox[2:]-t_bbox[:2]>1):
+            return None
+
+        return cls(points=contours,width=mask.shape[1],height=mask.shape[0]) 
 
     def copy(self):
         return WPolygonMaskItem(self.points,width=self.width,height=self.height)

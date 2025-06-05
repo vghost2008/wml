@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument('--min-size', type=int, default=0,help='min bbox size')
     parser.add_argument('--add-classes-name', action='store_true', help='min bbox size')
     parser.add_argument('--keep-empty', action='store_true', help='save imgs without objects.')
-    parser.add_argument('--cut-type', type=int, default=0,help='0: arount object, 1: normal cut')
+    parser.add_argument('--cut-type', type=int, default=0,help='0: around object, 1: normal cut')
     parser.add_argument('--size', nargs="+",type=int,default=[1024,1024],help='save size, [w,h] or s - > [s,s]')
     parser.add_argument('--step', type=float, default=-1,help='step size')
     parser.add_argument('--keep-ratio', type=float, default=0.01,help='area ratio to keep after cut')
@@ -113,7 +113,7 @@ def mapillary_vistas_dataset():
     data.read_data(wmlu.home_dir("ai/mldata/mapillary_vistas/mapillary-vistas-dataset_public_v2.0"))
     return data.get_boxes_items()
 
-def cut_arount_bboxes_and_save(dataset,data_dir,save_dir,cut_size,keep_ratio=1e-6):
+def cut_around_bboxes_and_save(dataset,data_dir,save_dir,cut_size,keep_ratio=1e-6):
     '''
     在已有的目标附近裁图
     cut_size: (h,w)
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     wmlu.create_empty_dir_remove_if(args.save_dir)
     
     if args.cut_type == 0:
-        cut_arount_bboxes_and_save(dataset,data_dir,args.save_dir,cut_size,keep_ratio=keep_ratio)
+        cut_around_bboxes_and_save(dataset,data_dir,args.save_dir,cut_size,keep_ratio=keep_ratio)
     else:
         cut_bboxes_and_save(dataset,data_dir,args.save_dir,cut_size,args.step,args.save_empty,keep_ratio=keep_ratio)
     

@@ -18,10 +18,57 @@ from wml.semantic.basic_toolkit import findContours
 import glob
 import math
 from wml.walgorithm import points_on_circle
+from .common import DetData,DetBboxesData,detbboxesdata2detdata
 import copy
 
 
+def trans2detdata(path,image,annotations):
+    #DetData = namedtuple('DetData','path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data') #img_shape:(H,W)
+    if image is not None:
+        img_shape = (image["height"],image["width"])
+    else:
+        img_shape = None
+    labels = [ann["category_id"] for ann in annotations]
+    labels_name = [ann["category_text"] for ann in annotations]
+    bboxes = [ann["bbox"] for ann in annotations]
+    bboxes = np.array(bboxes)
+    bboxes = np.reshape(bboxes,[-1,4])
+    bboxes[:,2:] = bboxes[:,:2]+bboxes[:,2:]-1
+    masks = [ann["segmentation"] for ann in annotations]
+    is_crowd = [ann["difficult"] for ann in annotations]
+    return DetData(path,img_shape,labels,labels_name,bboxes,masks,None,is_crowd,None)
 
+def trans2detbboxesdata(path,image,annotations):
+    #DetBboxesData = namedtuple('DetBboxesdata','path,img_shape,labels,bboxes,is_crowd')
+    if image is not None:
+        img_shape = (image["height"],image["width"])
+    else:
+        img_shape = None
+    labels = [ann["category_id"] for ann in annotations]
+    bboxes = [ann["bbox"] for ann in annotations]
+    bboxes = np.array(bboxes)
+    bboxes = np.reshape(bboxes,[-1,4])
+    bboxes[:,2:] = bboxes[:,:2]+bboxes[:,2:]-1
+    is_crowd = [ann["difficult"] for ann in annotations]
+    return DetBboxesData(path,img_shape,labels,bboxes,is_crowd)
+
+def detdata2annotations(det_data:DetData):
+    image = dict(height=det_data.img_shape[0],width=det_data.img_shape[1])
+    annotations = []
+    for i,l in enumerate(det_data.labels):
+        if det_data.labels_name is not None:
+            l = det_data.labels_name[i]
+        bbox = det_data.bboxes[i]
+        if det_data.masks is not None:
+            mask = det_data.masks[i]
+        else:
+            mask = WPolygonMaskItem.from_bbox(bbox)
+        if det_data.is_crowd is not None:
+            is_crowd = det_data.is_crowd[i]
+        else:
+            is_crowd = False
+        ann = dict(category_id=l,category_text=l,bbox=bbox,segmentation=mask,difficult=is_crowd)
+        annotations.append(ann)
 
 def trans_odresult_to_annotations_list(data):
     labels = data[RD_LABELS]
@@ -80,12 +127,18 @@ def _get_shape_points(shape,circle_points_nr=20):
         return np.array(shape['points']).astype(np.int32)
     elif shape_type == "rectangle":
         points = np.array(shape['points']).astype(np.int32)
-        x0 = np.min(points[:,0])
-        x1 = np.max(points[:,0])
-        y0 = np.min(points[:,1])
-        y1 = np.max(points[:,1])
-        n_points  = np.array([[x0,y0],[x1,y0],[x1,y1],[x0,y1]]).astype(np.int32)
-        return n_points
+        if len(points)==2:
+            x0 = np.min(points[:,0])
+            x1 = np.max(points[:,0])
+            y0 = np.min(points[:,1])
+            y1 = np.max(points[:,1])
+            n_points  = np.array([[x0,y0],[x1,y0],[x1,y1],[x0,y1]]).astype(np.int32)
+            return n_points
+        elif len(points) == 4:
+            return points
+        else:
+            wmlu.print_error(f"error rectangel points {points}")
+            raise RuntimeError(f"ERROR: error rectangle points {points}")
     elif shape_type == "circle":
         points = np.array(shape['points']).astype(np.int32)
         center = points[0]
@@ -104,11 +157,16 @@ output:
 image_info: {'height','width'}
 annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
 'segmentation' [H,W], 全图
+return_type:
+ - 0: annotations_list
+ - 1: DetData
+ - 2: DetBboxesData
 '''
 def read_labelme_data(file_path,label_text_to_id=None,mask_on=True,use_semantic=True,
                       use_polygon_mask=False,
                       circle_points_nr=20,
-                      do_raise=False):
+                      do_raise=False,
+                      return_type=0):
     if mask_on == False:
         use_semantic = False
     annotations_list = []
@@ -167,6 +225,7 @@ def read_labelme_data(file_path,label_text_to_id=None,mask_on=True,use_semantic=
                 annotations_list.append({"bbox":(xmin,ymin,xmax-xmin+1,ymax-ymin+1),
                                          "segmentation":segmentation,
                                          "category_id":label,
+                                         "category_text":ori_label,
                                          "points_x":x,
                                          "points_y":y,
                                          "difficult":difficult})
@@ -189,7 +248,27 @@ def read_labelme_data(file_path,label_text_to_id=None,mask_on=True,use_semantic=
             for i in reversed(range(len(annotations_list) - 1)):
                 annotations_list[i]['segmentation'] = np.logical_and(annotations_list[i]['segmentation'], mask)
                 mask = np.logical_and(mask, 1 - annotations_list[i]['segmentation'])
-    return image,annotations_list
+    if return_type is None or return_type == 0:
+        return image,annotations_list
+    elif return_type == 1:
+        return trans2detdata(file_path,image,annotations_list)
+    elif return_type == 2:
+        return trans2detbboxesdata(file_path,image,annotations_list)
+    else:
+        raise RuntimeError(f"ERROR: error return type {return_type}")
+
+def read_labelme2detbboxes(file_path,label_text_to_id=None,mask_on=True,use_semantic=True,
+                      use_polygon_mask=True,
+                      circle_points_nr=20,
+                      do_raise=False):
+    
+    return read_labelme_data(file_path=file_path,
+                             label_text_to_id=label_text_to_id,mask_on=mask_on,
+                             use_semantic=use_semantic,
+                             use_polygon_mask=use_polygon_mask,
+                             circle_points_nr=circle_points_nr,
+                             do_raise=do_raise,
+                             return_type=1)
 
 def save_labelme_data(file_path,image_path,image=None,annotations_list=[],label_to_text=lambda x:str(x)):
     '''
@@ -397,6 +476,67 @@ def save_labelme_datav6(file_path,image_path,masks,labels,image=None):
     with open(file_path,"w") as f:
         json.dump(data,f)
 
+def save_detdata(file_path,image_path,det_data,label_to_text=lambda x:str(x)):
+    '''
+    mask 仅包含bboxes中的部分
+    annotations_list[i]['bbox'] (x0,y0,x1,y1) 绝对坐标
+    annotations_list[i]["segmentation"] (H,W), 仅包含bbox内部分
+    '''
+
+    if isinstance(det_data,DetBboxesData):
+        det_data = detbboxesdata2detdata(det_data)
+
+    data={}
+    shapes = []
+    data["version"] = "3.10.1"
+    data["flags"] = {}
+
+    if det_data.img_shape is not None:
+        image = dict(height=det_data.img_shape[0],width=det_data.img_shape[1])
+    else:
+        image = None
+
+    if image is None:
+        h,w = wmli.get_img_size(image_path)[:2]
+        image=dict(width=w,height=h)
+
+    if isinstance(label_to_text,dict):
+        label_to_text = wmlu.MDict.from_dict(label_to_text)
+
+    for i,l in enumerate(det_data.labels):
+        if det_data.labels_name is not None:
+            l = det_data.labels_name[i]
+        elif label_to_text is not None:
+            l = label_to_text(l)
+        bbox = det_data.bboxes[i]
+        if det_data.is_crowd is not None:
+            is_crowd = det_data.is_crowd[i]
+        else:
+            is_crowd = False
+
+        shape = {}
+        shape["label"] = l
+        shape["shape_type"]="polygon"
+        if det_data.masks is not None:
+            mask = det_data.masks[i]
+            if not isinstance(mask,(WPolygonMaskItem)):
+                mask = WPolygonMaskItem.from_ndarray(mask)
+
+        else:
+            mask = WPolygonMaskItem.from_bbox(bbox)
+
+        points = mask.points[0]
+        shape["points"] = points.tolist()
+        shapes.append(copy.deepcopy(shape))
+
+    data["shapes"] = shapes
+    data["imagePath"] = os.path.basename(image_path)
+    data["imageWidth"] = image["width"]
+    data["imageHeight"] = image["height"]
+    data["imageData"] = None
+    with open(file_path,"w") as f:
+        json.dump(data,f)
+
 def save_labelme_points_data(file_path,image_path,image,points,labels):
     '''
     points: [N,2] (x,y)
@@ -521,6 +661,9 @@ def get_expand_bboxes_in_annotationsv2(annotations,size):
 def get_labels(annotations):
     labels = [ann["category_id"] for ann in annotations]
     return labels
+
+    
+
 
 '''
 size:(h,w)

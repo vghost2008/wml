@@ -3,7 +3,7 @@ import wml.object_detection2.bboxes as odb
 import cv2 as cv
 import numpy as np
 from wml.semantic.mask_utils import cut_mask
-from wml.wstructures import WPolygonMaskItem, WPolygonMasks
+from wml.wstructures import WPolygonMaskItem, WPolygonMasks, DetData,DetBboxesData,detbboxesdata2detdata
 
 def motion_blur(image, degree=10, angle=20):
     image = np.array(image)
@@ -149,3 +149,83 @@ def cut_annotation(cut_bbox,img,labels,bboxes,masks=None,adjust_bbox=True,keep_r
         new_bboxes = new_bboxes-offset
 
     return new_img,new_labels,new_bboxes,new_masks
+
+def cut_detdata(cut_bbox,img,det_data,adjust_bbox=True,keep_ratio=0):
+    '''
+    cut_bbox: [x0,y0,x1,y1]
+    img: [H,W,3/1]
+    bboxes: [N,4] [x0,y0,x1,y1]
+    masks: [N,H,W]
+    '''
+    if isinstance(det_data,DetBboxesData):
+        det_data = detbboxesdata2detdata(det_data)
+    cut_bbox = odb.npchangexyorder(cut_bbox)
+    path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data = det_data
+    if not isinstance(labels,np.ndarray):
+        if len(labels) == 0:
+            labels = np.ndarray([0],dtype=np.int32)
+        elif isinstance(labels[0],(str,bytes)):
+            labels = np.array(labels,dtype=object)
+        else:
+            labels = np.array(labels)
+    is_crowd = np.array(is_crowd)
+    cut_bbox = list(cut_bbox)
+    if adjust_bbox:
+        b_w = cut_bbox[3]-cut_bbox[1]
+        b_h = cut_bbox[2]-cut_bbox[0]
+        cut_bbox[0] = min(img.shape[0],cut_bbox[2])-b_h
+        cut_bbox[1] = min(img.shape[1],cut_bbox[3])-b_w
+
+    cut_bbox[0] = max(0,cut_bbox[0])
+    cut_bbox[1] = max(0,cut_bbox[1])
+
+    cut_bbox[2] = min(cut_bbox[2],img.shape[0])
+    cut_bbox[3] = min(cut_bbox[3],img.shape[1])
+
+    new_bboxes = []
+    new_labels = []
+    new_is_crowd = [] if is_crowd is not None  else None
+    new_img = wmli.sub_image(img,cut_bbox)
+    new_labels_name = [] if labels_name is not None else None
+    if masks is not None:
+        new_masks = []
+        for i in range(len(labels)):
+            n_mask,n_bbox,ratio = cut_mask(masks[i],cut_bbox)
+            if n_mask is not None and n_bbox is not None and ratio>keep_ratio:
+                new_bboxes.append(n_bbox)
+                new_labels.append(labels[i])
+                new_masks.append(n_mask)
+                if new_is_crowd is not None:
+                    new_is_crowd.append(is_crowd[i])
+                if new_labels_name is not None:
+                    new_labels_name.append(labels_name[i])
+        if len(new_labels)>0:
+            #new_labels = np.concatenate(new_labels,axis=0)
+            new_labels = np.array(new_labels)
+            new_bboxes = np.stack(new_bboxes,axis=0)
+            if isinstance(new_masks[0],WPolygonMaskItem):
+                new_masks = WPolygonMasks(new_masks,width=new_img.shape[1],height=new_img.shape[0])
+            else:
+                new_masks = np.stack(new_masks,axis=0)
+        else:
+            new_labels = np.zeros([0],dtype=labels.dtype)
+            new_bboxes = np.zeros([0,4],dtype=bboxes.dtype)
+            new_masks = np.zeros([0,new_img.shape[0],new_img.shape[1]],dtype=masks.dtype)
+    else:
+        new_masks = None
+        bbox_area = odb.area(bboxes)
+        new_bboxes = odb.cut_boxes_by_box0(box0=cut_bbox,box1=bboxes)
+        new_bbox_area = odb.area(new_bboxes)
+        ratios = new_bbox_area/np.maximum(bbox_area,1)
+        keep = ratios>keep_ratio
+        new_labels = labels[keep]
+        if new_is_crowd is not None:
+            new_is_crowd = is_crowd[keep]
+        if new_labels_name is not None:
+            new_labels_name = np.array(labels_name,dtype=object)[keep]
+        new_bboxes = new_bboxes[keep]
+        offset = np.reshape(np.array([cut_bbox[0],cut_bbox[1],cut_bbox[0],cut_bbox[1]],dtype=new_bboxes.dtype),[1,4])
+        new_bboxes = new_bboxes-offset
+
+    new_bboxes = odb.npchangexyorder(new_bboxes)
+    return new_img,DetData(path,img_shape,new_labels,new_labels_name,new_bboxes,new_masks,None,new_is_crowd,extra_data)

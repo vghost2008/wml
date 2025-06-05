@@ -2,6 +2,7 @@ import numpy as np
 import wml.basic_img_utils as bwmli
 import pickle
 import colorama
+import copy
 import os
 import os.path as osp
 import cv2
@@ -115,5 +116,25 @@ class MCI:
             data = pickle.load(f)
             shape = data['shape']
             return shape
+
+    def sub_image(self,rect,pad_value=127):
+        cur_img = self.data
+    
+        if rect[0]<0 or rect[1]<0 or rect[2]>cur_img.shape[0] or rect[3]>cur_img.shape[1]:
+            py0 = -rect[0] if rect[0]<0 else 0
+            py1 = rect[2]-cur_img.shape[0] if rect[2]>cur_img.shape[0] else 0
+            px0 = -rect[1] if rect[1] < 0 else 0
+            px1 = rect[3] - cur_img.shape[1] if rect[3] > cur_img.shape[1] else 0
+            cur_img = np.pad(cur_img,[[py0,py1],[px0,px1],[0,0]],constant_values=pad_value)
+            rect[0] += py0
+            rect[1] += px0
+            rect[2] += py0
+            rect[3] += px0
+    
+        cur_img = copy.deepcopy(cur_img[rect[0]:rect[2],rect[1]:rect[3]])
+
+        return MCI(cur_img,self.metadata)
+
+
 
 

@@ -224,6 +224,9 @@ rect:[ymin,xmin,ymax,xmax] absolute coordinate
 与crop_img类似，但如果rect超出img边界会先pad再剪切
 '''
 def sub_image(img,rect,pad_value=127):
+    if not isinstance(img,np.ndarray) and hasattr(img,"sub_image"):
+        return img.sub_image(rect,pad_value=pad_value)
+
     if rect[0]<0 or rect[1]<0 or rect[2]>img.shape[0] or rect[3]>img.shape[1]:
         py0 = -rect[0] if rect[0]<0 else 0
         py1 = rect[2]-img.shape[0] if rect[2]>img.shape[0] else 0

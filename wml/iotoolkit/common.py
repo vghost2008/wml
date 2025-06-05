@@ -4,10 +4,8 @@ import PIL
 import wml.img_utils as wmli
 import os.path as osp
 import glob
-from collections import namedtuple
+from wml.wstructures.detdata import *
 
-DetData = namedtuple('DetData','path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data') #img_shape:(H,W)
-DetBboxesData = namedtuple('DetBboxesdata','path,img_shape,labels,bboxes,is_crowd')
 
 def __get_resample_nr(labels,resample_parameters):
     nr = 1
