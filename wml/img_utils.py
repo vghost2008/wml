@@ -227,7 +227,7 @@ def imwrite(filename, img,size=None):
     cv2.imwrite(filename, img)
 
 
-def imwrite_for_view(save_path,img,size=None,fps=6):
+def imwrite_for_view(save_path,img,size=None,fps=6,img_channel_names=None):
     if save_path.endswith(".mci"):
         dir = osp.splitext(save_path)[0]
         os.makedirs(dir,exist_ok=True)
@@ -235,13 +235,15 @@ def imwrite_for_view(save_path,img,size=None,fps=6):
             img = resize_img(img,size,keep_aspect_ratio=True)
         frames = np_unstack(img,axis=2)
         frames = [np.ascontiguousarray(frame) for frame in frames]
+        if img_channel_names is None:
+            img_channel_names = [f"C{i}" for i in range(len(frames))]
         for i,frame in enumerate(frames):
-            cur_save_path = osp.join(dir,f"IMG_C{i}.jpg")
+            cur_save_path = osp.join(dir,f"IMG_{img_channel_names[i]}.jpg")
             imwrite(cur_save_path,frame)
         if imageio is not None:
             gif_save_path = dir+".gif"
             for i,frame in enumerate(frames):
-                bodv.draw_text_on_image(frame,f"C{i}",pos="tl")
+                bodv.draw_text_on_image(frame,f"{img_channel_names[i]}",pos="tl")
             imageio.mimsave(gif_save_path,frames,fps=fps,quality=9)
     else:
         imwrite(save_path,img,size=size)

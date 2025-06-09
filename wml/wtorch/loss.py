@@ -67,3 +67,33 @@ def focal_mse_loss_for_head_map(gt_value,pred_value,alpha=0.25,gamma=2):
         loss = loss*gamma_t
     
     return loss
+
+def wvarifocal_loss(inputs,
+                   targets,
+                   alpha=1.0,
+                   gamma=2.0,
+                   reduction='mean',
+                   avg_factor=None):
+    '''
+    inputs: logits
+    targets: same shape as inputs, value is 0 or 1
+    '''
+    assert inputs.size() == targets.size()
+    if alpha<=0:
+        alpha=1.0
+    inputs = inputs.float()
+    targets = targets.float()
+    inputs_sigmoid = inputs.sigmoid()
+    targets = targets.type_as(inputs)
+    focal_weight = targets + \
+            alpha * inputs_sigmoid.pow(gamma) * \
+            (targets <= 0.0).float()   #仅对targets<=0的部分进行衰减
+
+    loss = F.binary_cross_entropy_with_logits(
+        inputs, targets, reduction='none') * focal_weight #与标准VarFocalLoss的主要区别，WVarFocalLoss的targets的值为0或1，而VarFocalLoss的target为iou
+
+    if reduction=='mean':
+        return loss.mean()
+    elif reduction=='sum':
+        return loss.sum()
+    return loss
