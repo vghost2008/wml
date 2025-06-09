@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
         '--img-suffix',
         type=str,
-        default=".jpg;;.jpeg;;.bmp;;.png",
+        default=".jpg;;.jpeg;;.bmp;;.png;;.mci",
         help='img suffix')
     parser.add_argument(
         '--allow-empty',

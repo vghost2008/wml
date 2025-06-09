@@ -55,6 +55,7 @@ gtlabels:[X] the labels for ground truth boxes
 boxes:[Y,4](ymin,xmin,ymax,xmax) relative coordinates,predicted boxes
 labels:[Y], the labels for predicted boxes
 probability:[Y], the probability for boxes, if probability is none, assum the boxes's probability is ascending order
+threshold: iou threshold
 return:
 mAP:[0,100]
 '''
@@ -110,7 +111,7 @@ def getmAP(gtboxes,gtlabels,boxes,labels,probability=None,threshold=0.5,is_crowd
 
     for v in beg_index:
         p,r = getPrecision(gtboxes,gtlabels,boxes[v:],labels[v:],threshold,is_crowd=is_crowd)
-        t_res.append([p,r])
+        t_res.append([p*100,r*100])
 
 
     t_res1 = []
@@ -282,7 +283,7 @@ def getPrecision(gtboxes,gtlabels,boxes,labels,threshold=0.5,ext_info=False,is_c
     :param gtlabels: [N]
     :param boxes: [M,4]
     :param labels: [M]
-    :param threshold: nms_threshold,float
+    :param threshold: iou threshold,float
     :return: precision,recall float
     '''
     if not isinstance(gtboxes,np.ndarray):

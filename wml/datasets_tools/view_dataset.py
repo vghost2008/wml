@@ -49,6 +49,9 @@ def parse_args():
         '-nt',
         action='store_true',
         help='no label name.')
+    parser.add_argument(
+        '-cn',
+        '--channel-names', type=str, nargs="+", help='image channel names for mci image.')
     args = parser.parse_args()
 
     return args
@@ -118,7 +121,7 @@ if __name__ == "__main__":
         else:
             r = None
         
-        if r is not None and args.copy_imgs:
+        if args.copy_imgs:
             raw_img = img.copy()
 
         img = odv.draw_bboxes(
@@ -148,14 +151,15 @@ if __name__ == "__main__":
                 t_dir_path = osp.dirname(raw_save_path)
                 if not osp.exists(t_dir_path):
                     os.makedirs(t_dir_path)
-                if r is None:
+                if r is None and ".mci" not in full_path:
                     shutil.copy(full_path,raw_save_path)
                 else:
                     wmli.imwrite(raw_save_path,raw_img)
+                    wmli.imwrite_for_view(raw_save_path,raw_img,img_channel_names=args.channel_names)
         else:
             save_path = osp.join(args.out_dir,filename)
         print(save_path)
 
-        wmli.imwrite_for_view(save_path,img)
+        wmli.imwrite_for_view(save_path,img,img_channel_names=args.channel_names)
 
     print(f"Save dir: {args.out_dir}")
