@@ -80,7 +80,6 @@ class ConvModule(nn.Module):
                  order=('conv', 'norm', 'act')):
         super(ConvModule, self).__init__()
         norm_cfg = copy.deepcopy(norm_cfg)
-        assert conv_cfg is None or isinstance(conv_cfg, dict)
         assert norm_cfg is None or isinstance(norm_cfg, dict)
         assert act_cfg is None or isinstance(act_cfg, dict)
         official_padding_mode = ['zeros', 'circular']
@@ -112,7 +111,7 @@ class ConvModule(nn.Module):
         self.conv = get_conv_type(conv_cfg)(
             in_channels,
             out_channels,
-            kernel_size,
+            kernel_size=kernel_size,
             stride=stride,
             padding=conv_padding,
             dilation=dilation,

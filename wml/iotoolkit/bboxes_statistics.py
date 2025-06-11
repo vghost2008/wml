@@ -23,6 +23,7 @@ from wml.iotoolkit.object365v2_toolkit import Object365V2
 from wml.object_detection2.data_process_toolkit import remove_class
 from collections import OrderedDict
 from wml.walgorithm import lower_bound
+import copy
 
 class DictDatasetReader:
 
@@ -230,7 +231,7 @@ def trans_img_long_size_to(img_size,long_size=512):
     return [x*scale for x in img_size]
 
 def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_to_remove=None,max_aspect=None,absolute_size=False,
-                                trans_img_size=None,silent=False):
+                                trans_img_size=None,labels=None,silent=False):
     all_boxes = []
     all_labels = []
     max_examples = 0
@@ -243,6 +244,9 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     no_annotation_nr = 0
     total_crowd_files = 0
     total_crowd_bboxes = 0
+
+    if labels is None:
+        labels = []
 
     for data in datas:
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
@@ -314,6 +318,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         print(f"Max element size {np.max(example_nrs)}, element min {np.min(example_nrs)}, element mean {np.mean(example_nrs)}, element var {np.var(example_nrs)}.")
     except:
         pass
+    labels_counter_dict = copy.deepcopy(labels_counter)
     labels_counter = list(labels_counter.items())
     labels_counter.sort(key=lambda x:x[1],reverse=True)
 
@@ -330,15 +335,31 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
 
     print(f"Total bboxes count {total_nr}")
     print("\n--->BBoxes count:")
+    for k in labels:
+        if k not in labels_counter_dict:
+            v = 0 
+        else:
+            v = labels_counter_dict[k]
+        print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
     for k,v in labels_counter:
+        if k in labels:
+            continue
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
 
     print(f"Total file count {total_file_nr}.")
     print(f"Total no annotation file count {no_annotation_nr}, {no_annotation_nr*100/total_file_nr:.2f}%.")
     print("\n--->File count:")
-    label_file_count= list(label_file_count.items())
-    label_file_count.sort(key=lambda x:x[1],reverse=True)
-    for k,v in label_file_count:
+    label_file_count_l= list(label_file_count.items())
+    label_file_count_l.sort(key=lambda x:x[1],reverse=True)
+    for k in labels:
+        if k not in label_file_count:
+            v = 0 
+        else:
+            v = label_file_count[k]
+        print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
+    for k,v in label_file_count_l:
+        if k in label_file_count:
+            continue
         print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
     print("\n--->org statistics:")
     org_labels_counter= list(org_labels_counter.items())
@@ -482,7 +503,7 @@ def coco2014_val_dataset():
 
     return data.get_items()
 
-def labelme_dataset(data_dir,labels):
+def labelme_dataset(data_dir,labels=None):
     data = FastLabelMeData(label_text2id=None,absolute_coord=True)
     #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
     data.read_data(data_dir,img_suffix=wmli.BASE_IMG_SUFFIX)

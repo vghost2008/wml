@@ -8,6 +8,7 @@ import math
 from collections import OrderedDict
 from torch import Tensor
 import copy
+import wml.wml_utils as wmlu
 #from einops import rearrange
 
 
@@ -474,8 +475,10 @@ def get_norm1d(norm, out_channels,norm_args={}):
 def get_conv_type(conv_cfg):
     if conv_cfg is None:
         return nn.Conv2d
-    elif conv_cfg['type'] == "ConvWS":
+    elif isinstance(conv_cfg,dict) and conv_cfg['type'] == "ConvWS":
         return ConvWS2d
+    elif wmlu.is_child_of(conv_cfg,nn.Module):
+        return conv_cfg
 
 class SiLU(nn.Module):
     """export-friendly version of nn.SiLU()"""

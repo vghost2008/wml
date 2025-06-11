@@ -46,18 +46,18 @@ if __name__ == "__main__":
 
     if dataset_type == "xml":
         dataset = pascal_voc_dataset(data_dir=data_dir,
-                                     labels=args.labels,
+                                     #labels=args.labels,
                                      )
     elif dataset_type=="json":
         dataset = labelme_dataset(data_dir=data_dir,
-                                  labels=args.labels
+                                  #labels=args.labels
                                   )
     elif dataset_type == "coco":
-        dataset = coco2017_dataset(data_dir,
-                                   labels=args.labels)
+        dataset = coco2017_dataset(data_dir)
+                                   #labels=args.labels)
     elif dataset_type == "o365":
-        dataset = objects365_dataset(data_dir,
-                                   labels=args.labels)
+        dataset = objects365_dataset(data_dir)
+                                   #labels=args.labels)
     elif dataset_type == "vistas":
         dataset = mapillary_vistas_dataset(data_dir)
     else:
@@ -66,6 +66,7 @@ if __name__ == "__main__":
                                           label_encoder=default_encode_label,
                                           labels_to_remove=None,
                                           max_aspect=None,absolute_size=True,
+                                          labels=args.labels,
                                           silent=True)
                                           #trans_img_size=partial(trans_img_long_size_to,long_size=8192))
     statistics_boxes(statics[0], nr=nr)
