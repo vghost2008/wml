@@ -104,6 +104,9 @@ def trans_absolute_coord_to_relative_coord(image_info,annotations_list):
 
 
 def get_files(data_dir, img_suffix=wmli.BASE_IMG_SUFFIX,keep_no_json_img=False):
+    '''
+    return list of [img_file, json_file]
+    '''
     img_files = wmlu.recurse_get_filepath_in_dir(data_dir, suffix=img_suffix)
     res = []
     json_set = set()

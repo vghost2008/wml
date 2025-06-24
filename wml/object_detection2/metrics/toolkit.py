@@ -1842,7 +1842,7 @@ class WMAP(BaseMetrics):
 
 @METRICS_REGISTRY.register()
 class DetConfusionMatrix(BaseMetrics):
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.5,threshold=0.3):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.5,threshold=0.3,classes=None):
         super().__init__()
         if categories_list is None:
             print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
@@ -1855,7 +1855,10 @@ class DetConfusionMatrix(BaseMetrics):
         self.score_thr = score_thr
         self.pred_labels = []
         self.gt_labels = []
-        self.kernel = ConfusionMatrix(num_classes=self.num_classes+1)
+        if classes is not None:
+            classes = list(classes)+["BackGround"]
+        self.classes = classes
+        self.kernel = ConfusionMatrix(num_classes=self.num_classes+1,classes=classes)
         self.image_id = 0
 
     def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
@@ -1932,6 +1935,7 @@ class DetConfusionMatrix(BaseMetrics):
         #显示的最后一行，列为背景
         '''
         i行，j列: 表示gt类别i被分为类别j的数量
+        最后一个类别为背景
         '''
         sys.stdout.flush()
         print(f"Test size {self.num_examples()}")

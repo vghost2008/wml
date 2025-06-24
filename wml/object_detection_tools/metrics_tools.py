@@ -23,26 +23,38 @@ if __name__ == "__main__":
     args = parse_args()
     with open(args.result,"rb") as f:
         data = pickle.load(f)
+    if isinstance(data,dict):
+        classes = data.get('classes',None)
+        data = data['results']
+    else:
+        classes = None
     num_classes = args.num_classes
     if num_classes == 0:
-        for d in data:
-            try:
-                gtlabels = d['gtlabels']
-                max_label = np.max(gtlabels)
-                num_classes = max(num_classes,max_label+1)
-                labels = d['labels']
-                max_label = np.max(labels)
-                num_classes = max(num_classes,max_label+1)
-            except:
-                pass
-        print(f"Auto update num_classes to {num_classes}")
+        if classes is not None:
+            num_classes = len(classes)
+        else:
+            for d in data:
+                try:
+                    gtlabels = d['gtlabels']
+                    max_label = np.max(gtlabels)
+                    num_classes = max(num_classes,max_label+1)
+                    labels = d['labels']
+                    max_label = np.max(labels)
+                    num_classes = max(num_classes,max_label+1)
+                except:
+                    pass
+            print(f"Auto update num_classes to {num_classes}")
     if args.classes_wise:
         metrics_cfg = dict(model_type=METRICS_REGISTRY.get(args.metrics),num_classes=num_classes,classes_begin_value=0)
+        if classes is not None:
+            metrics_cfg['classes'] = classes
         if args.iou_thr is not None and args.iou_thr >0:
             metrics_cfg['model_args'] = dict(threshold = args.iou_thr)
         metrics = ClassesWiseModelPerformace(**metrics_cfg)
     else:
         metrics_cfg = dict(type=args.metrics,num_classes=num_classes,classes_begin_value=0)
+        if classes is not None:
+            metrics_cfg['classes'] = classes
         if args.iou_thr is not None and args.iou_thr >0:
             metrics_cfg['threshold'] = args.iou_thr
         metrics = build_metrics(metrics_cfg)

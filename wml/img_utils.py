@@ -240,7 +240,7 @@ def imwrite_for_view(save_path,img,size=None,fps=6,img_channel_names=None):
         for i,frame in enumerate(frames):
             cur_save_path = osp.join(dir,f"IMG_{img_channel_names[i]}.jpg")
             imwrite(cur_save_path,frame)
-        if imageio is not None:
+        if imageio is not None and fps is not None:
             gif_save_path = dir+".gif"
             for i,frame in enumerate(frames):
                 bodv.draw_text_on_image(frame,f"{img_channel_names[i]}",pos="tl")

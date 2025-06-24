@@ -90,7 +90,7 @@ if __name__ == "__main__":
     #os.environ['CUDA_VISIBLE_DEVICES'] = "3"
     #os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     args = parse_args()
-    img_files = wmlu.get_files(args.src_dir,suffix=".jpg;;.jpeg;;.png;;.bmp;;.tif")
+    img_files = wmlu.get_files(args.src_dir,suffix=".jpg;;.jpeg;;.png;;.bmp;;.tif;;.mci")
     if args.test_nr is not None and args.test_nr>0:
         print(f"Only test {args.test_nr} imgs.")
         random.shuffle(img_files)

@@ -9,6 +9,7 @@ from collections import OrderedDict
 from torch import Tensor
 import copy
 import wml.wml_utils as wmlu
+import torchvision
 #from einops import rearrange
 
 
@@ -473,10 +474,16 @@ def get_norm1d(norm, out_channels,norm_args={}):
     return norm(num_features=out_channels,**norm_args)
 
 def get_conv_type(conv_cfg):
+    name2model = {
+        'DeformConv2d':torchvision.ops.DeformConv2d,
+        'Conv2d':nn.Conv2d,
+        'ConvWS':ConvWS2d,
+    }
+
     if conv_cfg is None:
         return nn.Conv2d
-    elif isinstance(conv_cfg,dict) and conv_cfg['type'] == "ConvWS":
-        return ConvWS2d
+    elif isinstance(conv_cfg,dict):
+        return name2model[conv_cfg['type']]
     elif wmlu.is_child_of(conv_cfg,nn.Module):
         return conv_cfg
 

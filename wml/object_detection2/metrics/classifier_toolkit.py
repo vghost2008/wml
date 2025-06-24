@@ -244,8 +244,11 @@ class BPrecisionAndRecall(PrecisionAndRecall):
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class ConfusionMatrix(BaseClassifierMetrics):
-    def __init__(self,num_classes=-1,**kwargs):
+    def __init__(self,num_classes=-1,classes=None,**kwargs):
         super().__init__(**kwargs)
+        if num_classes <= 0 and classes is not None:
+            num_classes = len(classes)
+        self.classes = classes
         self.all_target = []
         self.all_pred = []
         self.accuracy = 100.0
@@ -312,8 +315,15 @@ class ConfusionMatrix(BaseClassifierMetrics):
 
     def to_string(self,blod=True):
         res = "\n"
+        if self.classes is None:
+            self.classes = [f"C{i}" for i in range(self.num_classes)]
+        res += f"{' ':<10},"
+        print(f"Num classes: {self.num_classes}, classes {self.classes}")
         for i in range(self.num_classes):
-            line = ""
+            res += f"{self.classes[i]:>5}, "
+        res += "\n"
+        for i in range(self.num_classes):
+            line = f"{self.classes[i]:<10},"
             for j in range(self.num_classes):
                 if blod and i==j:
                     #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
@@ -465,6 +475,9 @@ class ClassesWiseModelPerformace(BaseClassifierMetrics):
 
     def __repr__(self):
         return self.to_string()
+    
+    def value(self):
+        return [self.accuracy.value()]+[x.value() for x in self.data]
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class ComposeMetrics(BaseClassifierMetrics):

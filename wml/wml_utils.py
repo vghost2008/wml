@@ -362,9 +362,10 @@ class EstimateTimeCost(object):
             print(info)
 
     def time_elapse(self):
-        return time.time() - self.t0
+        return time.time() - self.t0  #秒
 
     def time_remaind(self):
+        #秒
         return ((time.time() - self.begin_time) / max(self.process_nr-self.begin_step, 1)) * (
                     self.total_nr- self.process_nr)
     

@@ -228,4 +228,5 @@ def cut_detdata(cut_bbox,img,det_data,adjust_bbox=True,keep_ratio=0):
         new_bboxes = new_bboxes-offset
 
     new_bboxes = odb.npchangexyorder(new_bboxes)
-    return new_img,DetData(path,img_shape,new_labels,new_labels_name,new_bboxes,new_masks,None,new_is_crowd,extra_data)
+    new_img_shape = [new_img.shape[0],new_img.shape[1]]
+    return new_img,DetData(path,new_img_shape,new_labels,new_labels_name,new_bboxes,new_masks,None,new_is_crowd,extra_data)
