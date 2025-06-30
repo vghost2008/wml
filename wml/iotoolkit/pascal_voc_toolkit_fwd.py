@@ -13,7 +13,7 @@ from functools import partial
 import wml.wml_utils as wmlu
 import wml.img_utils as wmli
 import copy
-from .common import resample, get_shape_from_img
+from .common import resample, get_shape_from_img, get_ann_file_path
 import wml.object_detection2.bboxes as odb
 
 
@@ -385,6 +385,7 @@ def getVOCFiles(dir_path,image_sub_dir="JPEGImages",xml_sub_dir="Annotations",im
             xml_path = os.path.join(xml_dir,base_name)
         else:
             xml_path = os.path.join(os.path.dirname(file),base_name)
+        xml_path = get_ann_file_path(xml_path,suffix="xml")
         if (check_xml_file and os.path.exists(xml_path)) or not check_xml_file:
             img_file_paths.append(file)
             xml_file_paths.append(xml_path)
@@ -402,7 +403,7 @@ def getVOCFilesV2(dir_path):
     img_files = wmlu.recurse_get_filepath_in_dir(dir_path,".jpg")
     res = []
     for f in img_files:
-        xml_path = wmlu.change_suffix(f,"xml")
+        xml_path = get_ann_file_path(f,suffix="xml")
         if os.path.exists(xml_path) and os.path.exists(f):
             res.append([f,xml_path])
     return res

@@ -1143,7 +1143,8 @@ class Config:
                 config_file = f.read()
             cur_data_dict = Config._simple_str2dict(config_file,ph_values=ph_values)
             for k,v in cur_data_dict.items():
-                if k in ph_values and v is not None:
+                #if k in ph_values and v is not None:
+                if k in ph_values:
                     ph_values[k] = v
         return ph_values
     

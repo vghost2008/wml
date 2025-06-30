@@ -16,9 +16,10 @@ from .common import resample
 from wml.semantic.structures import *
 from wml.semantic.basic_toolkit import findContours
 import glob
+import os.path as osp
 import math
 from wml.walgorithm import points_on_circle
-from .common import DetData,DetBboxesData,detbboxesdata2detdata
+from .common import DetData,DetBboxesData,detbboxesdata2detdata,get_ann_file_path
 import copy
 
 
@@ -102,7 +103,7 @@ def trans_absolute_coord_to_relative_coord(image_info,annotations_list):
     else:
         return np.zeros([0,4],dtype=np.float32),np.zeros([0],dtype=np.int32),np.zeros([0,H,W],dtype=np.uint8)
 
-
+        
 def get_files(data_dir, img_suffix=wmli.BASE_IMG_SUFFIX,keep_no_json_img=False):
     '''
     return list of [img_file, json_file]
@@ -111,7 +112,7 @@ def get_files(data_dir, img_suffix=wmli.BASE_IMG_SUFFIX,keep_no_json_img=False):
     res = []
     json_set = set()
     for img_file in img_files:
-        json_file = wmlu.change_suffix(img_file, "json")
+        json_file = get_ann_file_path(img_file,suffix="json")
         if keep_no_json_img or os.path.exists(json_file):
             res.append((img_file, json_file))
             json_set.add(json_file)

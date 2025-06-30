@@ -65,7 +65,7 @@ def show_member(obj,name=None):
     for name,var in vars(obj).items():
         print("%s : "%(name),var)
 
-def show_list(values,fmt=None,recurse=False):
+def show_list(values,fmt=None,recurse=False,max_show_nr=None):
     '''
     fmt: example "{:.3f}"  "{:,}“
     '''
@@ -73,6 +73,10 @@ def show_list(values,fmt=None,recurse=False):
         return
     if isinstance(values,str):
         return show_list([values])
+    tail_info = None
+    if max_show_nr is not None and len(values)>max_show_nr:
+        values = values[:max_show_nr]
+        tail_info = "..."
     print("[")
     if fmt is None:
         for v in values:
@@ -87,6 +91,8 @@ def show_list(values,fmt=None,recurse=False):
             else:
                 print(fmt.format(v))
 
+    if tail_info is not None:
+        print(tail_info)
     print("]")
 
 def show_dict(values,format:str=None):

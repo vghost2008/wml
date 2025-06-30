@@ -114,3 +114,14 @@ def check_dataset_dir(dir_path):
         return [osp.abspath(osp.expanduser(p)) for p in dir_path]
     else:
         return [osp.abspath(osp.expanduser(dir_path))]
+
+def get_ann_file_path(img_file,suffix):
+    '''
+    suffix: json/xml
+    '''
+    json_file = wmlu.change_suffix(img_file, suffix)
+    if not osp.exists(json_file) and "images" in json_file:
+        candidate_path = json_file.replace("images","labels")
+        if osp.exists(candidate_path):
+            return candidate_path
+    return json_file
