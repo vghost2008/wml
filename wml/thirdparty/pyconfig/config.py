@@ -1089,7 +1089,14 @@ class Config:
         with open(temp_config_file.name,"w") as f:
             f.write(data)
         invalidate_caches()
-        mod = import_module(temp_module_name)
+        try:
+            mod = import_module(temp_module_name)
+        except Exception as e:
+            print(f"ERROR: {e}")
+            print(f"INFO:")
+            print(data)
+            print(f"END INFO")
+            raise e
         #sys.path.pop(0)
         cfg_dict = {
                     name: value

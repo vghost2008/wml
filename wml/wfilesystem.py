@@ -6,6 +6,7 @@ import socket
 from functools import partial
 from wml.basic_img_utils import BASE_IMG_SUFFIX
 from wml.walgorithm import remove_non_ascii
+import colorama
 
 def get_filenames_in_dir(dir_path,suffix=None,prefix=None):
     if suffix is not None:
@@ -310,12 +311,31 @@ def safe_copy(src_file,dst_file):
 
     shutil.copy(src_file,r_dst_file)
 
+    return r_dst_file
+
 def copy_file(src_file,dst_file):
     if os.path.exists(dst_file) and os.path.isdir(dst_file):
         dst_file = os.path.join(dst_file,os.path.basename(src_file))
         shutil.copy(src_file,dst_file)
         return
     shutil.copy(src_file,dst_file)
+
+def copy_files2dir(src_dir,dst_dir):
+    ''''
+    将src_dir中的所有文件直接拷贝到dst_dir的根目录
+    '''
+    files = get_files(src_dir)
+    os.makedirs(dst_dir,exist_ok=True)
+    for f in files:
+        bn = osp.basename(f)
+        save_path = osp.join(dst_dir,bn)
+        if osp.exists(save_path):
+            save_path = safe_copy(f,save_path)
+            print(colorama.Fore.BLUE+f"Copy {f} --> {save_path}"+colorama.Style.RESET_ALL)
+        else:
+            shutil.copy(f,save_path)
+            print(f"Copy {f} --> {save_path}")
+
 
 def base_name(v,process_suffix=True):
     if v[-1] == "/" or v[-1] == "\\":

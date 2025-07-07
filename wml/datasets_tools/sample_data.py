@@ -31,6 +31,10 @@ def parse_args():
         '--keep-key',
         action='store_true',
         help='keep key in save dir')
+    parser.add_argument(
+        '--use-label-name',
+        action='store_true',
+        help='拷贝时,类别名作为文件名')
     args = parser.parse_args()
     return args
 
@@ -76,7 +80,7 @@ def sample_in_dir(dir_path,nr,split_nr=None,sample_in_sub_dirs=True):
 
     return res
 
-def save_data(data,save_dir,suffix=None,keep_key=False):
+def save_data(data,save_dir,suffix=None,keep_key=False,args=None):
     for k,v in data.items():
         if keep_key:
             tsd = osp.join(save_dir,str(k))  #保存目录中包含key(子目录中采样就为子目录的名字)
@@ -89,14 +93,24 @@ def save_data(data,save_dir,suffix=None,keep_key=False):
                 print(f"Get dir name faild {f}.")
             name = dir_name+"_"+osp.join(osp.basename(f))
             os.link(f,osp.join(tsd,name))'''
-            save_path = osp.join(tsd,osp.basename(f))
-            shutil.copy(f,save_path)
+            if args.use_label_name:
+                img_suffix = osp.splitext(f)[-1]
+                save_path = osp.join(tsd,str(k)+img_suffix)
+                save_path = wmlu.safe_copy(f,save_path)
+            else:
+                save_path = osp.join(tsd,osp.basename(f))
+                shutil.copy(f,save_path)
             ann_path = wmlu.change_suffix(f,suffix)
             if osp.exists(ann_path):
                 save_path = wmlu.change_suffix(save_path,suffix)
                 shutil.copy(ann_path,save_path)
+            elif suffix != "none":
+                print(f"{ann_path} not exists.")
 
 def sample_by_labels(args):
+    '''
+    返回:label->files
+    '''
     src_dir = args.src_dir
     img_files = wmlu.get_img_files(src_dir)
     ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
@@ -140,11 +154,16 @@ if __name__ == "__main__":
 
     if args.suffix == "auto":
         args.suffix = get_auto_dataset_suffix(data_dir)
+        print(f"Auto get data suffix {args.suffix}")
     if args.by_labels:
         data = sample_by_labels(args)
     else:
         data = sample_in_dir(data_dir,args.sample_nr,sample_in_sub_dirs=args.sub_dir)
 
-    save_data(data,save_dir,suffix=args.suffix,keep_key=args.keep_key)
+    if args.use_label_name and not args.by_labels:
+        wmlu.print_error("use_label_name only work with by_labels=True")
+        args.use_label_name = False
+
+    save_data(data,save_dir,suffix=args.suffix,keep_key=args.keep_key,args=args)
 
     print(f"Save_path {save_dir}")

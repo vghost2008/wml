@@ -16,9 +16,8 @@ import shutil
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('src_dir', type=str, default="/home/wj/ai/mldata1/B7mura/datas/try_s0",help='source video directory')
+    parser.add_argument('save_dir', type=str, help='dir to save data')
     parser.add_argument("--test-nr",type=int,help="max imgs to test")
-    parser.add_argument("--max-long-size",type=int,default=1024,help="max img long size")
-    parser.add_argument('--save-dir', type=str, help='dir to save data')
     args = parser.parse_args()
     return args
 
@@ -29,11 +28,7 @@ def in_range(v,min_v,max_v):
 
 
 def get_imgs_info(files,args):
-    max_long_size = args.max_long_size #统计图像像素值信息时，如果图像最长边长于max_long_size，则缩放至max_long_size
-    transform = None
-    if max_long_size>1:
-        transform = MaxImgLongSize(max_long_size)
-    reader = ImgsReader(files,thread_nr=8,transform=transform)
+    reader = ImgsReader(files,thread_nr=8,transform=None)
     save_dir = args.save_dir
     if save_dir is not None:
         os.makedirs(save_dir,exist_ok=True)
@@ -49,7 +44,7 @@ def get_imgs_info(files,args):
             #条件判断
             width = shape[1]
             height = shape[0]
-            if in_range(width,120,130) and in_range(height,120,130):
+            if in_range(width,0,224) and in_range(height,0,224):
                 continue
             print(f"{file} shape={shape}")
             if save_dir is not None:
@@ -65,8 +60,6 @@ def get_imgs_info(files,args):
     sys.stdout.flush()
 
 if __name__ == "__main__":
-    #os.environ['CUDA_VISIBLE_DEVICES'] = "3"
-    #os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     args = parse_args()
     img_files = wmlu.get_files(args.src_dir,suffix=".jpg;;.jpeg;;.png;;.bmp")
     if args.test_nr is not None and args.test_nr>0:
