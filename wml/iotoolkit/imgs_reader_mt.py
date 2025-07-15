@@ -59,6 +59,8 @@ class ImgsReader:
         dataloader_kwargs["batch_size"] = None
         dataloader_kwargs["batch_split_nr"] = 1
         dataloader_kwargs['collate_fn'] = null_convert
+        if thread_nr==0:
+            dataloader_kwargs['persistent_workers'] = False
         #dataloader_kwargs['collate_fn'] = default_collate
 
         data_loader = DataLoader(self.dataset, **dataloader_kwargs)

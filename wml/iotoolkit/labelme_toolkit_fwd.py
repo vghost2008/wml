@@ -347,8 +347,15 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
         #shape["line_color"]=None
         #shape["fill_color"]=None
         shape["shape_type"]="polygon"
-        mask = ann["segmentation"].astype(np.uint8)
         x0,y0,x1,y1 = ann['bbox']
+        mask = ann["segmentation"]
+        if mask is None:
+            points = [[x0,y0],[x1,y0],[x1,y1],[x0,y1]]
+            shape["points"] = points
+            shapes.append(copy.deepcopy(shape))
+            continue
+
+        mask = mask.astype(np.uint8)
         scale = np.reshape(np.array([(x1-x0)/mask.shape[1],(y1-y0)/mask.shape[0]],dtype=np.float32),[1,2])
         offset = np.reshape(np.array([x0,y0],dtype=np.float32),[1,2])
 
@@ -386,7 +393,7 @@ def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_
     annotatios_list = []
     for i in range(len(labels)):
         annotatios = {"category_id":labels[i],
-        'segmentation':masks[i],
+        'segmentation':masks[i] if masks is not None else None,
         'bbox':bboxes[i]}
         annotatios_list.append(annotatios)
     save_labelme_datav2(file_path,image_path,image,annotatios_list,label_to_text=label_to_text)

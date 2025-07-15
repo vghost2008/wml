@@ -4,7 +4,7 @@ import os.path as osp
 import os
 import shutil
 import wml.img_utils as wmli
-from wml.iotoolkit.common import find_imgs_for_ann_file
+from wml.iotoolkit.common import find_imgs_for_ann_file, get_auto_dataset_suffix
 
 '''
 删除没有标注的图像或者没有图像的标注
@@ -13,7 +13,7 @@ from wml.iotoolkit.common import find_imgs_for_ann_file
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")
-    parser.add_argument("--ext",type=str,default="xml",help="annotation ext")
+    parser.add_argument("--ext",type=str,default="auto",help="annotation ext")
     parser.add_argument("--save-dir",type=str,help="save dir")
     parser.add_argument('--type', type=int,default=0,
                                   choices=['0', '1', '2'],help="0: remove imgs without annotations or annotation files without img; \
@@ -26,6 +26,8 @@ if __name__ == "__main__":
     args = parse_args()
     op_type = args.type
     imgs = wmlu.get_files(args.src_dir,wmli.BASE_IMG_SUFFIX)
+    if args.ext == "auto":
+        args.ext = get_auto_dataset_suffix(args.src_dir)
     ann_files = wmlu.get_files(args.src_dir,args.ext)
 
     files2remove = []

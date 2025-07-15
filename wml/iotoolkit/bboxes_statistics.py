@@ -341,6 +341,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         else:
             v = labels_counter_dict[k]
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
+    print("")
     for k,v in labels_counter:
         if k in labels:
             continue

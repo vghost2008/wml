@@ -1,17 +1,12 @@
 import sys
-
 from wml.iotoolkit.labelme_toolkit import *
-from multiprocess import Pool
 import wml.img_utils as wmli
-import object_detection_tools.visualization as odv
-import matplotlib.pyplot as plt
 import numpy as np
 import wml.object_detection2.mask as odm
 import wml.wml_utils as wmlu
-import copy
-import json
 import cv2
-import shutil
+import argparse
+import functools
 
 lid = 0
 
@@ -47,20 +42,36 @@ lid = 0
 }
 resize_size = (2560,1440)'''
 name_to_id_dict = {
-    'person':0,
-    'seatbelt':2,
 }
 resize_size = None
 
-def trans_data(data_dir,save_dir):
+def parse_args():
+    parser = argparse.ArgumentParser(description="build gif")
+    parser.add_argument("src_dir",type=str,help="src dir")
+    parser.add_argument("out_dir",type=str,help="out dir")
+    parser.add_argument("--labels",type=str,nargs="+",help="labels")
+    args = parser.parse_args()
+    return args
+
+def trans_data(data_dir,save_dir,labels):
     global name_to_id_dict
     wmlu.show_dict(name_to_id_dict)
     wmlu.create_empty_dir(save_dir,remove_if_exists=False)
 
-    def name_to_id(x):
-        return name_to_id_dict[x]
+    def name_to_id(x,data):
+        if x in data:
+            return data[x]
+        elif len(data)==0:
+            data[x] = 0
+            print("add first label:",data)
+            return 0
+        else:
+            ml = max(list(data.values()))
+            data[x] = ml+1
+            print(f"add label {x}:",data)
+            return data[x]
 
-    data = LabelMeData(label_text2id=name_to_id, shuffle=False)
+    data = LabelMeData(label_text2id=functools.partial(name_to_id,data=name_to_id_dict), shuffle=False)
     data.read_data(data_dir)
     for i,x in enumerate(data.get_items()):
         full_path, img_info, category_ids, category_names, boxes, binary_mask, area, is_crowd, num_annotations_skipped = x
@@ -95,6 +106,8 @@ if __name__ == "__main__":
     save_dir = os.path.join("/home/wj/ai/mldata/boesemantic/",'boe_labels_validation')
     trans_data(data_dir,save_dir)'''
 
-    data_dir = "/home/wj/ai/mldata1/safety_belt/src_data/data1/safetybelt_seg_imgs"
-    save_dir = "/home/wj/ai/mldata1/safety_belt/training/safetybelt_seg_imgs"
-    trans_data(data_dir, save_dir)
+    args = parse_args()
+
+    data_dir = args.src_dir
+    save_dir = args.out_dir
+    trans_data(data_dir, save_dir,args.labels)

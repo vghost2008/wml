@@ -149,6 +149,17 @@
             //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
             "args":["~/ai/mldata1/B17MDL/labeled_data,~/ai/mldata1/B17MDL/labeled_data2"]
         },
+        {
+            "name": "Python: trans dataset",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "wml/datasets_trans/trans_labelme_to_cityscapes.py",
+            "console": "integratedTerminal",
+            //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
+            //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
+            "args":["~/ai/mldata1/0day/a" "~/ai/mldata1/0day/c"],
+        },
     ]
     
 }

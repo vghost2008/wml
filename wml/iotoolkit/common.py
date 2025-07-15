@@ -64,7 +64,7 @@ def dict_label_text2id(name,dict_data):
 
 def find_imgs_for_ann_file(ann_path):
     ann_path = osp.abspath(ann_path)
-    img_suffix = [".jpg",".jpeg",".bmp",".png",".gif"]
+    img_suffix = wmli.BASE_IMG_SUFFIX.split(";;")
     pattern = wmlu.change_suffix(ann_path,"*")
     files = glob.glob(pattern)
     img_file = None

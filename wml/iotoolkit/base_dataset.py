@@ -63,8 +63,8 @@ class BaseDataset(metaclass=ABCMeta):
             #从单一目录读取数据
             print(f"Read {dir_path}")
             if not os.path.exists(dir_path):
-                print(f"Data path {dir_path} not exists.")
-                return False
+                wmlu.print_error(f"Data path {dir_path} not exists.")
+                return []
             files = self.find_files_in_dir_or_dl(dir_path,img_suffix=img_suffix)
         elif isinstance(dir_path,(list,tuple)):
             if isinstance(dir_path[0],(str,bytes)) and os.path.isdir(dir_path[0]):
