@@ -375,6 +375,13 @@ def isfinite_hook(module,fea_in,fea_out):
             return None
     #if not torch.all(torch.isfinite(fea_in)):
         #return None
+    _check_fea_out_isfinite(module,fea_in,fea_out)
+
+def _check_fea_out_isfinite(module,fea_in,fea_out):
+    if isinstance(fea_out,(list,tuple)):
+        for i,fo in enumerate(fea_out):
+            _check_fea_out_isfinite(module,fea_in,fo)
+        return
     if not torch.all(torch.isfinite(fea_out)):
         print("Find NaN or infininite")
         #print(f"{inspect.stack()}")
@@ -438,8 +445,7 @@ def register_backward_hook(net,hook):
     for module in net.children():
         register_backward_hook(module,hook)
         nr += 1
-    if True:
-    #if nr == 0:
+    if nr == 0:
         #net.register_full_backward_hook(hook=hook)
         net.register_backward_hook(hook=hook)
 

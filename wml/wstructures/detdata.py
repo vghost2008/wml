@@ -53,6 +53,11 @@ def concat_detdata(datas):
     if masks is not None:
         if isinstance(masks[0],np.ndarray):
             masks = np.concatenate(masks,axis=0)
+        if isinstance(masks[0],(list,tuple)):
+            _masks = []
+            for mask in masks:
+                _masks.extend(list(mask))
+            masks = _masks
         else:
             masks = type(masks[0]).concatenate(masks)
     

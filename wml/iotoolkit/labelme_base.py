@@ -26,7 +26,7 @@ class LabelMeBase(BaseDataset):
                  silent=False,
                  keep_no_ann_imgs=False,
                  mask_on=True,
-                 read_data_kwargs={'circle_points_nr':20}):
+                 read_data_kwargs={'circle_points_nr':20},**kwargs):
         '''
         label_text2id: func(name)->int
         '''
@@ -39,7 +39,8 @@ class LabelMeBase(BaseDataset):
                           silent=silent,
                           absolute_coord=absolute_coord,
                           keep_no_ann_imgs=keep_no_ann_imgs,
-                          mask_on=mask_on)
+                          mask_on=mask_on,
+                          **kwargs)
         self.read_data_kwargs = read_data_kwargs
         self.use_polygon_mask = use_polygon_mask
 

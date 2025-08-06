@@ -1166,6 +1166,55 @@ class COCOEvaluation(BaseMetrics):
         else:
             return self.box_evaluator.to_string()
 
+@METRICS_REGISTRY.register()
+class OneTargetmAP(COCOEvaluation):
+    '''
+    用于处理检出一个目标就满足要求的情况
+    '''
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,
+                 gtmasks=None,
+                 masks=None,is_crowd=None,*args, **kwargs):
+        if len(gtlabels) == 0 or len(labels)==0 or len(set(gtlabels)&set(labels))==0 or (len(labels)==1 and len(gtlabels)==1) or (len(set(gtlabels))>1):
+            return super().__call__(gtboxes,gtlabels,boxes,labels,probability=probability,
+                                    gtmasks=gtmasks,masks=masks,is_crowd=is_crowd,
+                                     *args,**kwargs)
+
+        offset = np.max(np.concatenate([gtboxes,boxes]))
+
+        gtboxes = gtboxes+offset*np.expand_dims(gtlabels,axis=1)
+        boxes = boxes+offset*np.expand_dims(labels,axis=1)
+
+        im = odb.iou_matrix(gtboxes,boxes)
+        idx = np.argmax(im)
+        gt_idx = idx//im.shape[1]
+        pred_idx = idx%im.shape[1]
+
+        gtboxes = gtboxes[gt_idx:gt_idx+1]
+        gtlabels = gtlabels[gt_idx:gt_idx+1]
+        if gtmasks is not None:
+            gtmasks = gtmasks[gt_idx:gt_idx+1]
+        if is_crowd is not None:
+            is_crowd = is_crowd[gt_idx:gt_idx+1]
+        #多余类别的检出需要保留
+        det_label = labels[pred_idx]
+        extra_m = labels!=det_label
+        extra_labels = labels[extra_m]
+        extra_boxes = boxes[extra_m]
+        if probability is not None:
+            extra_probability = probability[extra_m]
+            probability = probability[pred_idx:pred_idx+1]
+            probability = np.concatenate([probability,extra_probability],axis=0)
+        if masks is not None:
+            extra_masks = masks[extra_m]
+            masks = masks[pred_idx:pred_idx+1]
+            masks = np.concatenate([masks,extra_masks],axis=0)
+        boxes = boxes[pred_idx:pred_idx+1]
+        boxes = np.concatenate([boxes,extra_boxes],axis=0)
+        labels = labels[pred_idx:pred_idx+1]
+        labels = np.concatenate([labels,extra_labels],axis=0)
+        return super().__call__(gtboxes,gtlabels,boxes,labels,probability=probability,
+                                    gtmasks=gtmasks,masks=masks,is_crowd=is_crowd,
+                                     *args,**kwargs)
 
 @METRICS_REGISTRY.register()
 class OneClassesCOCOEvaluation(BaseMetrics):

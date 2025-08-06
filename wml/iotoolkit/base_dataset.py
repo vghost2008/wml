@@ -169,6 +169,9 @@ class BaseDataset(metaclass=ABCMeta):
         for fs in files:
             try:
                 labels,labels_names = self.get_labels(fs)
+                if labels is not None and -1 in labels:
+                    print(f"Skip file {fs}, by filter error, labels={labels}, labels_names={labels_names}")
+                    continue
                 new_files.append(fs)
             except Exception as e:
                 print(f"Read {fs[1]} faild, info: {e}.")
