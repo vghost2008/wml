@@ -1167,6 +1167,32 @@ class COCOEvaluation(BaseMetrics):
             return self.box_evaluator.to_string()
 
 @METRICS_REGISTRY.register()
+class ObjEquaityEvaluation(COCOEvaluation):
+    '''
+    每一个obj都公平的mAP计算方式
+    (默认COCO会对不同类别分别计算指标后平均)
+    '''
+    def __init__(self,num_classes,*args,**kwargs):
+        super().__init__(num_classes=1,*args,**kwargs)
+        self.bboxes_offset = np.zeros([2],dtype=np.float32)
+
+    def __call__(self, gtboxes,gtlabels,boxes,labels,*args, **kwargs):
+        max_vs = np.concatenate([gtboxes[:,2:],boxes[:,2:]],axis=0) 
+        if len(max_vs) == 0:
+            return super().__call__(gtboxes,gtlabels,boxes,labels,*args,**kwargs)
+        max_v = np.max(max_vs,axis=0,keepdims=True)
+        gt_offset = gtlabels[:,None]*max_v
+        gt_offset = np.concatenate([gt_offset,gt_offset],axis=-1)
+        gtboxes = gtboxes+gt_offset
+
+        offset = labels[:,None]*max_v
+        offset = np.concatenate([offset,offset],axis=-1)
+        boxes = boxes+offset
+        gtlabels = np.zeros_like(gtlabels)
+        labels = np.zeros_like(labels)
+        return super().__call__(gtboxes,gtlabels,boxes,labels,*args,**kwargs)
+
+@METRICS_REGISTRY.register()
 class OneTargetmAP(COCOEvaluation):
     '''
     用于处理检出一个目标就满足要求的情况
@@ -1217,54 +1243,21 @@ class OneTargetmAP(COCOEvaluation):
                                      *args,**kwargs)
 
 @METRICS_REGISTRY.register()
-class OneClassesCOCOEvaluation(BaseMetrics):
+class LocationmAP(COCOEvaluation):
+    def __init__(self,num_classes=None,classes_begin_value=1,**kwargs):
+        super().__init__(num_classes=1,classes_begin_value=0,**kwargs)
     '''
-    num_classes: 不包含背景 
+    用于处理定位mAP
     '''
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,**kwargs):
-        print(f"Init OneClassesCOCOEvaluation")
-        super().__init__(**kwargs)
-        self.box_evaluator = COCOBoxEvaluation(categories_list=categories_list,
-                                               num_classes=num_classes,
-                                               label_trans=label_trans,
-                                               classes_begin_value=classes_begin_value,
-                                               one_classes=True,
-                                               **kwargs)
-        self.mask_evaluator = None
-        if mask_on:
-            self.mask_evaluator = COCOMaskEvaluation(categories_list=categories_list,
-                                                     num_classes=num_classes,
-                                                     label_trans=label_trans,
-                                                     classes_begin_value=classes_begin_value,
-                                                     one_classes=True,
-                                                     **kwargs)
-    def __call__(self, *args, **kwargs):
-        self.box_evaluator(*args,**kwargs)
-        self._current_info = self.box_evaluator.current_info()
-        if self.mask_evaluator is not None:
-            self.mask_evaluator(*args,**kwargs)
-            self._current_info += ", mask" + self.mask_evaluator.current_info()
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,
+                 gtmasks=None,
+                 masks=None,is_crowd=None,*args, **kwargs):
+        gtlabels = np.zeros_like(gtlabels)
+        labels = np.zeros_like(labels)
+        return super().__call__(gtboxes,gtlabels,boxes,labels,probability=probability,
+                                    gtmasks=gtmasks,masks=masks,is_crowd=is_crowd,
+                                     *args,**kwargs)
 
-    def num_examples(self):
-        return self.box_evaluator.num_examples()
-
-    def evaluate(self):
-        res = self.box_evaluator.evaluate()
-        if self.mask_evaluator is not None:
-            res1 = self.mask_evaluator.evaluate()
-            return res,res1
-        return res
-
-    def show(self,name=""):
-        self.box_evaluator.show(name=name)
-        if self.mask_evaluator is not None:
-            self.mask_evaluator.show(name=name)
-
-    def to_string(self):
-        if self.mask_evaluator is not None:
-            return self.box_evaluator.to_string()+";"+self.mask_evaluator.to_string()
-        else:
-            return self.box_evaluator.to_string()
 
 @METRICS_REGISTRY.register()
 class COCOKeypointsEvaluation(BaseMetrics):
@@ -1856,7 +1849,7 @@ class WMAP(BaseMetrics):
         if labels.shape[0]>0 and gtlabels.shape[0]>0:
             if use_relative_coord:
                 boxes = boxes*[[img_size[0],img_size[1],img_size[0],img_size[1]]]
-            labels = gtlabels+self.image_id*self.num_classes
+            labels = labels+self.image_id*self.num_classes
             self.a_bboxes.append(boxes)
             self.a_labels.append(labels)
             self.a_scores.append(probability)
@@ -1867,26 +1860,39 @@ class WMAP(BaseMetrics):
 
     def evaluate(self):
         print(f"Test size {self.num_examples()}")
-        gtlabels = np.stack(self.a_gtbboxes,axis=0)
-        gtbboxes = np.stack(self.a_gtbboxes,axis=0)
-        labels = np.stack(self.a_labels,axis=0)
-        bboxes = np.stack(self.a_bboxes,axis=0)
-        scores = np.stack(self.a_scores,axis=0)
+        if len(self.a_gtlabels) == 0:
+            self.map = None
+            return
+        if len(self.a_labels) == 0:
+            self.map = 0
+            return
+        gtlabels = np.concatenate(self.a_gtlabels,axis=0)
+        gtbboxes = np.concatenate(self.a_gtbboxes,axis=0)
+        labels = np.concatenate(self.a_labels,axis=0)
+        bboxes = np.concatenate(self.a_bboxes,axis=0)
+        scores = np.concatenate(self.a_scores,axis=0)
+        print(scores.shape,labels.shape)
         self.map = getmAP(gtbboxes,gtlabels,bboxes,labels,scores,threshold=self.threshold)
 
     def show(self,name=""):
         sys.stdout.flush()
+        if self.map is None:
+            self.evaluate()
         print(f"Test size {self.num_examples()}")
         print(f"mAP={self.map}")
         return self.map
 
     def to_string(self):
+        if self.map is None:
+            self.evaluate()
         return self.map
 
     def __repr__(self):
         return self.to_string()
     
     def value(self):
+        if self.map is None:
+            self.evaluate()
         return self.map
 
 @METRICS_REGISTRY.register()

@@ -229,3 +229,127 @@ def remove_non_ascii(s):
 
 def align_to(input,align_v):
     return ((input+align_v-1)//align_v)*align_v
+
+def point2point_distance_square(p0,p1):
+    '''
+    p0: [...,2] (x,y)
+    p1: [...,2] (x,y)
+    '''
+
+    delta = p1-p0
+    return np.square(delta[...,0])+np.square(delta[...,1])
+
+def point2point_distance(p0,p1):
+    '''
+    p0: [...,2] (x,y)
+    p1: [...,2] (x,y)
+    '''
+    return np.sqrt(point2point_distance_square(p0,p1))
+
+
+
+def point2line_distance(p,line_p0,line_p1,abs=True):
+    '''
+    p: [...,2] (x,y)
+    '''
+    x0,y0 = line_p0
+    x1,y1 = line_p1
+    #转换为ax+by+c=0的形式
+    a = y1-y0
+    b = x0-x1
+    c = y0*x1-x0*y1
+    inv_s = math.sqrt(a*a+b*b)
+
+    if inv_s<1e-9:
+        raise RuntimeError(f"ERROR: line {line_p0}, {line_p1}")
+    
+    x,y = np.split(p,2,axis=-1)
+    x = np.squeeze(x,axis=-1)
+    y = np.squeeze(y,axis=-1)
+    numerator = a*x+b*y+c
+    if abs:
+        if len(numerator)>1:
+            numerator = np.abs(numerator)
+        else:
+            numerator = math.abs(numerator)
+    return numerator/inv_s
+
+def trans_line2abc(line):
+    x0,y0,x1,y1 = line
+    a = y1-y0
+    b = x0-x1
+    c = y0*x1-x0*y1
+    return a,b,c
+
+def line_cross_point(a1,b1,c1,a2,b2,c2):
+    d = a1*b2-a2*b1
+    if math.fabs(d)<1e-9:
+        return None
+    
+    x = (b1*c2-b2*c1)/d
+    y = (a2*c1-a1*c2)/d
+
+    return (x,y)
+
+def line_cross_point_p(line0,line1):
+    '''
+    line0: [4](x0,y0,x1,y1)
+    line1: [4](x0,y0,x1,y1)
+    '''
+    a1,b1,c1 = trans_line2abc(line0) 
+    a2,b2,c2 = trans_line2abc(line1)
+    return line_cross_point(a1,b1,c1,a2,b2,c2)
+
+def __norm_point(p):
+    inv_s = math.sqrt(p[0]*p[0]+p[1]*p[1])
+    if inv_s<1e-9:
+        return p
+    return p/inv_s
+
+def __point_len(p):
+    return math.sqrt(p[0]*p[0]+p[1]*p[1])
+
+def line_len(line):
+    v = line[2:]-line[:2]
+    return __point_len(v)
+
+def is_on_line_segment(line,p,eps=1e-1):
+    '''
+    测试点p是否在线段line上
+    '''
+    p0 = line[:2]
+    p1 = line[2:]
+    v0 = p1-p0
+    v1 = p-p0
+
+    v1_len = __point_len(v1)
+
+    if v1_len < eps:
+        return True
+    
+    if __point_len(v1)>__point_len(v0):
+        return False
+
+    v0 = __norm_point(v0)
+    v1 = __norm_point(v1)
+
+    d = v0[0]*v1[0]+v0[1]*v1[1]
+
+    delta = eps*1e-2
+
+    if math.fabs(d-1)<delta:
+        return True
+    return False
+
+
+def line_segment_cross_point_p(line0,line1,eps=1e-1):
+    '''
+    line0: [4](x0,y0,x1,y1)
+    line1: [4](x0,y0,x1,y1)
+    '''
+    p = line_cross_point_p(line0,line1)
+
+    if is_on_line_segment(line0,p,eps=eps) and is_on_line_segment(line1,p,eps=eps):
+        return p
+    
+    return None

@@ -154,7 +154,7 @@ class BaseDataset(metaclass=ABCMeta):
             try:
                 labels,labels_names = self.get_labels(fs)
                 is_none = [x is None for x in labels]
-                if not all(is_none):
+                if not all(is_none) and -1 not in labels:
                     new_files.append(fs)
                 else:
                     print(f"File {fs[1]} is empty, remove from dataset, labels names {labels_names}, labels {labels}")

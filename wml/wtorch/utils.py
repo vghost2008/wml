@@ -11,7 +11,7 @@ import wml.img_utils as wmli
 import cv2
 from wml.thirdparty.config import CfgNode 
 from wml.thirdparty.pyconfig.config import ConfigDict
-from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints
+from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints,WMLines
 from wml.semantic.basic_toolkit import *
 from itertools import repeat
 import collections.abc
@@ -580,7 +580,7 @@ def npresize_mask_in_bboxes(mask,bboxes,size=None,r=None):
     bboxes: [N,4](x0,y0,x1,y1)
     size: (new_w,new_h)
     '''
-    if isinstance(mask,(WPolygonMasks,WBitmapMasks,WMCKeypoints)):
+    if isinstance(mask,(WPolygonMasks,WBitmapMasks,WMCKeypoints,WMLines)):
         return mask.resize_mask_in_bboxes(bboxes,size=size,r=r)
     if mask.shape[0]==0:
         return np.zeros([0,size[1],size[0]],dtype=mask.dtype),np.zeros([0,4],dtype=bboxes.dtype)

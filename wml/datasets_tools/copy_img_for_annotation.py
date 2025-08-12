@@ -14,6 +14,7 @@ def parse_args():
         description='arguments')
     parser.add_argument('ann_dir', default=None,type=str,help='ann_dir')
     parser.add_argument('img_dir', default=None,type=str,help='img_dir')
+    parser.add_argument('--suffix', default=wmli.BASE_IMG_SUFFIX,type=str,help='img suffix')
     parser.add_argument('--type', default="auto",type=str,help='img_dir')
     parser.add_argument('-l','--level', default=0,type=int,help='test parent level number')
     args = parser.parse_args()
@@ -52,8 +53,18 @@ def get_all_imgs(img_dir,level=0,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
 def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_type=".xml"):
     if ann_type == "auto":
         ann_type = "."+get_auto_dataset_suffix(ann_dir)
-    xml_files = wmlu.get_files(ann_dir,suffix=ann_type)
     all_img_files = get_all_imgs(img_dir,level=level,img_suffix=img_suffix)
+    imgs_for_ann = get_all_imgs(ann_dir,img_suffix=img_suffix)
+    imgs_for_ann = [osp.abspath(f) for f in imgs_for_ann]
+    imgs_for_ann = [wmlu.change_suffix(f,ann_type[1:]) for f in imgs_for_ann]
+    _xml_files = wmlu.get_files(ann_dir,suffix=ann_type)
+    _xml_files = [osp.abspath(f) for f in _xml_files]
+    xml_files = []
+    for xf in _xml_files:
+        if xf in imgs_for_ann:
+            print(f"Img for {xf} exists, skip.")
+            continue
+        xml_files.append(xf)
     copy_nr = 0
     error_nr = 0
     not_found_nr = 0
@@ -80,4 +91,4 @@ def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_ty
 
 if __name__ == "__main__":
     args = parse_args()
-    copy_imgfiles(args.ann_dir,args.img_dir,level=args.level,ann_type=args.type)
+    copy_imgfiles(args.ann_dir,args.img_dir,level=args.level,ann_type=args.type,img_suffix=args.suffix)

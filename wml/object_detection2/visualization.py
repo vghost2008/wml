@@ -8,7 +8,7 @@ from wml.basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_l
 from wml.basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 #import .bboxes as odb
 from .bboxes import npchangexyorder
-from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem
+from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem, WMLines, WMLinesItem
 import math
 import wml.basic_img_utils as bwmli
 from .basic_visualization import *
@@ -468,6 +468,12 @@ def draw_maskv2(img,classes,bboxes=None,masks=None,
                                keypoints=masks,
                                color_fn=color_fn)
         return img
+    elif isinstance(masks,WMLines):
+        img = draw_mlines(img,
+                          labels=classes,
+                          lines=masks,
+                          color_fn=color_fn)
+        return img
 
     try:
         if not isinstance(masks,np.ndarray):
@@ -637,16 +643,19 @@ def try_draw_rgb_heatmap_on_imagev2(image,scores,palette=[(0,(0,0,255)),(0.5,(25
                                      alpha=alpha)
     if scores.shape[0]<3:
         scores = np.concatenate([scores,np.zeros([3-scores.shape[0],scores.shape[1],scores.shape[2]],dtype=scores.dtype)],axis=0)
-    color_pos=(255,0,0)
+    color_pos=(255,255,255)
     color_neg=(0,0,0)
     color_pos = np.reshape(np.array(color_pos),[1,1,3])
     color_neg = np.reshape(np.array(color_neg),[1,1,3])
     color_pos = color_pos*np.ones_like(image).astype(np.float32)
     color_neg = color_neg*np.ones_like(image).astype(np.float32)
     scores = np.transpose(scores,[1,2,0])
-    scores = scores*alpha
+    sum_scores = np.sum(scores,axis=-1,keepdims=True)
+    sum_scores = np.tile(sum_scores,[1,1,3])
+    #scores = scores*alpha
     color = color_pos*scores+color_neg*(1-scores)
     new_img = image.astype(np.float32)*(1-alpha)+color*alpha
+    new_img = np.where(sum_scores>0.1,new_img,image)
     new_img = np.clip(new_img,0,255).astype(np.uint8)
     return new_img
 
@@ -670,6 +679,38 @@ def draw_mckeypoints(image,labels,keypoints,r=2,
             if show_text:
                 text = text_fn(labels[i])
                 cv2.putText(image, text, (int(p[0]), int(p[1])), cv2.FONT_HERSHEY_DUPLEX,
+                            fontScale=font_scale,
+                            color=text_color,
+                            thickness=text_thickness)
+
+
+    return image
+
+def draw_mlines(image,labels,lines,r=2,
+                     color_fn=fixed_color_large_fn,
+                     text_fn=default_text_fn,
+                     show_text=False,
+                     font_scale=0.8,
+                     text_thickness=1,
+                     text_color=(0,0,255)):
+    '''
+    gt_labels: [N]
+    keypoints: WMLines or list (size is N) of [M,2]
+    '''
+    for i, l in enumerate(lines):
+        color = color_fn(labels[i])
+        if isinstance(l,WMLinesItem):
+            l = l.lines
+        cur_l = l.astype(np.int32)
+        if len(cur_l)==0:
+            continue
+        for sub_l in cur_l:
+            p0 = sub_l[:2]
+            p1 = sub_l[2:]
+            cv2.line(image, (int(p0[0]), int(p0[1])), (p1[0],p1[1]),color,thickness=r)
+            if show_text:
+                text = text_fn(labels[i])
+                cv2.putText(image, text, (int(p0[0]), int(p0[1])), cv2.FONT_HERSHEY_DUPLEX,
                             fontScale=font_scale,
                             color=text_color,
                             thickness=text_thickness)

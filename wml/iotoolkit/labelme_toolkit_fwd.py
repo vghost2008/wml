@@ -157,6 +157,9 @@ def _get_shape_points(shape,circle_points_nr=20):
 
 
 '''
+mask_on: 是否返回mask
+use_polygon_mask: 在mask_on的情况下,如果use_polygon_mask,那么返回多边形mask
+use_semantic: 在mask_on的情况下,将mask当作语义分割标注,如果一个像素之前已被标注为一个类别,之后再次被标注,以后一次为准
 output:
 image_info: {'height','width'}
 annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
@@ -910,3 +913,49 @@ def read_labelme_mckp_data(file_path,label_text_to_id=None,keep_no_json_img=Fals
 
     return image_info,labels,points
 
+
+def read_labelme_mlines_data(file_path,label_text_to_id=None,keep_no_json_img=False):
+    '''
+
+    Args:
+        file_path: json file path
+        label_text_to_id: int f(string)
+
+    Returns:
+        labels:[N]
+        points:list of [N,4] lines, [x0,y0,x1,y1]
+    '''
+    labels = []
+    points = []
+    image_info = {}
+
+    kp_datas = wmlu.MDict(dtype=list)
+
+    if os.path.exists(file_path):
+        with open(file_path,"r") as f:
+            data = json.load(f)
+        for d in data['shapes']:
+            label = d['label']
+            point = np.reshape(np.array(d['points']),[-1,2])
+            if len(point)<2:
+                continue
+            elif (len(point)//2)*2 != len(point):
+                wmlu.print_error(f"find {len(point)} points for line, points={point}")
+                nr = (len(point)//2)*2
+                point = point[:nr]
+            point = np.reshape(point,[-1,4])
+            if label_text_to_id is not None:
+                label = label_text_to_id(label)
+            kp_datas[label.lower()].append(point)
+
+    image_info[WIDTH] = int(data['imageWidth'])
+    image_info[HEIGHT] = int(data["imageHeight"])
+    image_info[FILENAME] = wmlu.base_name(data["imagePath"])
+    image_info[FILEPATH] = data["imagePath"]
+
+    for k,v in kp_datas.items():
+        #v is [N,2]
+        labels.append(k)
+        points.append(np.concatenate(v,axis=0))
+
+    return image_info,labels,points

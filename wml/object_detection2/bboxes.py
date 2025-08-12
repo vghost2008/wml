@@ -6,6 +6,7 @@ import random
 from collections.abc import Iterable
 import math
 from .wmath import npsafe_divide
+from wml.walgorithm import line_segment_cross_point_p, line_len
 import cv2 as cv
 import torch
 
@@ -856,3 +857,47 @@ def correct_bboxes(bboxes,size):
 
 def equal_bboxes(bbox0,bbox1):
     return np.all(bbox0==bbox1)
+
+
+def cut_line(bbox,line):
+    '''
+    bbox:[x0,y0,x1,y1]
+    line:[x0,y0,x1,y1]
+    '''
+    ps = np.reshape(line,[-1,2])
+    is_in = is_points_in_bbox(ps,bbox)
+
+    if np.all(is_in):
+        return line
+
+    x0,y0,x1,y1 = bbox
+    lines = [[x0,y0,x1,y0],[x1,y0,x1,y1],[x1,y1,x0,y1],[x0,y1,x0,y0]]
+    lines = np.array(lines)
+
+    if not np.any(is_in):
+        points = []
+        for i in range(4):
+            p = line_segment_cross_point_p(lines[i],line)
+            if p is not None:
+                points.append(p)
+        if len(points)>=2:
+            points = np.reshape(np.array(points),[-1])[:4]
+            if line_len(points)<1e-3:
+                return None
+            return points
+        return None
+
+    
+
+    for i in range(4):
+        p = line_segment_cross_point_p(lines[i],line)
+        if p is not None:
+            if is_in[0]:
+                rline = np.array([line[0],line[1],p[0],p[1]])
+            else:
+                rline = np.array([p[0],p[1],line[2],line[3]])
+            if line_len(rline)<1e-3:
+                return None
+            else:
+                return rline
+    return None
