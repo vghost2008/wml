@@ -881,10 +881,16 @@ def cut_line(bbox,line):
             if p is not None:
                 points.append(p)
         if len(points)>=2:
-            points = np.reshape(np.array(points),[-1])[:4]
-            if line_len(points)<1e-3:
-                return None
-            return points
+            points = np.reshape(np.array(points),[-1])
+            cur_line = None
+            while len(points)>=4:
+                cur_line = points[:4]
+                if line_len(cur_line)>1e-3:
+                    break
+                cur_line = None
+                points = points[2:]
+                
+            return cur_line
         return None
 
     
