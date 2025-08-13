@@ -378,6 +378,10 @@ def isfinite_hook(module,fea_in,fea_out):
     _check_fea_out_isfinite(module,fea_in,fea_out)
 
 def _check_fea_out_isfinite(module,fea_in,fea_out):
+    if isinstance(fea_out,dict):
+        for k,fo in fea_out.items():
+            _check_fea_out_isfinite(module,fea_in,fo)
+        return
     if isinstance(fea_out,(list,tuple)):
         for i,fo in enumerate(fea_out):
             _check_fea_out_isfinite(module,fea_in,fo)

@@ -613,6 +613,9 @@ class WPolygonMasks(WBaseMask):
         return w,h
 
     def copy_from(self,masks,dst_bbox=None,src_bbox=None,update_size=False):
+
+        if len(self) != 0:
+            print(f"ERROR: WPolygonMasks copy_from only support copy to empty target.")
         if src_bbox is not None:
             masks = masks.crop(src_bbox)
             if dst_bbox is not None:

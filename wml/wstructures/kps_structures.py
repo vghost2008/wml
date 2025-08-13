@@ -406,6 +406,9 @@ class WMCKeypoints(WBaseMaskLike):
         return w,h
 
     def copy_from(self,points,dst_bbox=None,src_bbox=None,update_size=False):
+
+        if len(self) != 0:
+            print(f"ERROR: WMCKeypoints copy_from only support copy to empty target.")
         if src_bbox is not None:
             points = points.crop(src_bbox)
             if dst_bbox is not None:

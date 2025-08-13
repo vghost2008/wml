@@ -897,7 +897,8 @@ def cut_line(bbox,line):
             else:
                 rline = np.array([p[0],p[1],line[2],line[3]])
             if line_len(rline)<1e-3:
-                return None
+                #p可能和内部点都在边框上
+                continue
             else:
                 return rline
     return None
