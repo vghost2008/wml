@@ -10,3 +10,4 @@ colorama
 scipy
 addict
 einops
+pillow

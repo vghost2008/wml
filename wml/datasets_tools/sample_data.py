@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('save_dir', type=str, help='save dir')
     parser.add_argument("-nr","--sample-nr",type=int,help="sample nr")
     parser.add_argument("--suffix",type=str,default="auto", help="annotation suffix")
-    parser.add_argument('--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
+    parser.add_argument('-sd','--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
     parser.add_argument(
         '-bl',
         '--by-labels',

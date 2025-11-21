@@ -248,6 +248,7 @@ def imwrite_for_view(save_path,img,size=None,fps=6,img_channel_names=None):
     else:
         imwrite(save_path,img,size=size)
 
+
 def read_and_write_img(src_path,dst_path):
     img = cv2.imread(src_path)
     cv2.imwrite(dst_path,img)

@@ -2,7 +2,11 @@ from collections import namedtuple
 import copy
 import numpy as np
 
-DetData = namedtuple('DetData','path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data') #img_shape:(H,W), masks 为全图np.ndarray或WPolygonMasks
+'''
+bbox: [N,4], y0,x0,y1,x1, absolute_coord
+'''
+#path: img path, img_shape:(H,W), masks 为全图np.ndarray[N,H,W]或WPolygonMasks
+DetData = namedtuple('DetData','path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data') 
 DetBboxesData = namedtuple('DetBboxesdata','path,img_shape,labels,bboxes,is_crowd')
 
 def detbboxesdata2detdata(bboxes_data):

@@ -10,7 +10,10 @@ from functools import partial
 
 class BaseDataset(metaclass=ABCMeta):
     def __init__(self,label_text2id=None,
-                      filter_empty_files=False,filter_error=False,resample_parameters=None,shuffle=True,silent=False,keep_no_ann_imgs=False,absolute_coord=True,mask_on=False):
+                      filter_empty_files=False,
+                      filter_error=False,
+                      resample_parameters=None,shuffle=True,silent=False,
+                      keep_no_ann_imgs=False,absolute_coord=True,mask_on=False,**kwargs):
         '''
         filter_empty_files: remove files without any objects
         keep_no_ann_imgs: keep images without annotation files

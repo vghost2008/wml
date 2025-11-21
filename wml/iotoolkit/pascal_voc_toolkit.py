@@ -21,7 +21,7 @@ from .base_dataset import BaseDataset
 class PascalVOCData(BaseDataset):
     def __init__(self, label_text2id=None, shuffle=False,image_sub_dir=None,xml_sub_dir=None,
                  has_probs=False,
-                 absolute_coord=False,
+                 absolute_coord=True,
                  filter_error=False,
                  silent=False,
                  filter_empty_files=False,

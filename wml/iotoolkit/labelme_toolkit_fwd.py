@@ -493,8 +493,6 @@ def save_labelme_datav6(file_path,image_path,masks,labels,image=None):
 def save_detdata(file_path,image_path,det_data,label_to_text=lambda x:str(x)):
     '''
     mask 仅包含bboxes中的部分
-    annotations_list[i]['bbox'] (x0,y0,x1,y1) 绝对坐标
-    annotations_list[i]["segmentation"] (H,W), 仅包含bbox内部分
     '''
 
     if isinstance(det_data,DetBboxesData):
@@ -517,12 +515,12 @@ def save_detdata(file_path,image_path,det_data,label_to_text=lambda x:str(x)):
     if isinstance(label_to_text,dict):
         label_to_text = wmlu.MDict.from_dict(label_to_text)
 
-    for i,l in enumerate(det_data.labels):
+    for i,bbox in enumerate(det_data.bboxes):
         if det_data.labels_name is not None:
             l = det_data.labels_name[i]
-        elif label_to_text is not None:
+        elif label_to_text is not None and det_data.labels is not None:
+            l = det_data.labels[i]
             l = label_to_text(l)
-        bbox = det_data.bboxes[i]
         if det_data.is_crowd is not None:
             is_crowd = det_data.is_crowd[i]
         else:
@@ -537,7 +535,7 @@ def save_detdata(file_path,image_path,det_data,label_to_text=lambda x:str(x)):
                 mask = WPolygonMaskItem.from_ndarray(mask)
 
         else:
-            mask = WPolygonMaskItem.from_bbox(bbox)
+            mask = WPolygonMaskItem.from_bbox_yx(bbox)
 
         points = mask.points[0]
         shape["points"] = points.tolist()

@@ -6,6 +6,7 @@ from wml.iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
 from wml.iotoolkit.coco_toolkit import COCOData
 from wml.iotoolkit.labelme_toolkit import LabelMeData
 from wml.iotoolkit.fast_labelme import FastLabelMeData
+from wml.iotoolkit.labelmemlines_dataset import LabelmeMLinesDataset
 import argparse
 import os.path as osp
 import os
@@ -72,6 +73,7 @@ register_dataset(COCOData)
 register_dataset(MapillaryVistasData)
 register_dataset(LabelMeData)
 register_dataset(FastLabelMeData)
+register_dataset(LabelmeMLinesDataset)
 
 def simple_names(x):
     if "--" in x:
@@ -113,26 +115,29 @@ if __name__ == "__main__":
         if args.new_width > 1:
             img = wmli.resize_width(img,args.new_width)
             r = img.shape[0]/old_shape[0]
-            boxes = boxes*r
+            if boxes is not None:
+                boxes = boxes*r
         elif args.new_height > 1:
             img = wmli.resize_height(img,args.new_height)
             r = img.shape[0]/old_shape[0]
-            boxes = boxes*r
+            if boxes is not None:
+                boxes = boxes*r
         else:
             r = None
         
         if args.copy_imgs:
             raw_img = img.copy()
 
-        img = odv.draw_bboxes(
-            img=img, classes=category_names, scores=None, 
-            bboxes=boxes, 
-            color_fn=None,
-            text_fn=text_fn, thickness=args.line_width,
-            show_text=True,
-            font_scale=0.8,
-            is_relative_coordinate=False,
-            is_crowd=is_crowd)
+        if boxes is not None:
+            img = odv.draw_bboxes(
+                img=img, classes=category_names, scores=None, 
+                bboxes=boxes, 
+                color_fn=None,
+                text_fn=text_fn, thickness=args.line_width,
+                show_text=True,
+                font_scale=0.8,
+                is_relative_coordinate=False,
+                is_crowd=is_crowd)
 
         if args.base_name:
             filename = osp.basename(full_path)

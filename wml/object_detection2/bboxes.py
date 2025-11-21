@@ -7,7 +7,6 @@ from collections.abc import Iterable
 import math
 from .wmath import npsafe_divide
 from wml.walgorithm import line_segment_cross_point_p, line_len
-import cv2 as cv
 import torch
 
 '''

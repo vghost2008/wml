@@ -32,7 +32,8 @@ class LabelmeMLinesDataset(BaseDataset):
                  resample_parameters=None,
                  silent=True,
                  keep_no_ann_imgs=False,
-                 ignore_case=True):
+                 ignore_case=True,
+                 **kwargs):
         '''
 
         :param label_text2id: trans a single label text to id:  int func(str)
@@ -47,6 +48,7 @@ class LabelmeMLinesDataset(BaseDataset):
                          shuffle=shuffle,
                          silent=silent,
                          keep_no_ann_imgs=keep_no_ann_imgs,
+                         **kwargs,
                          )
         self.files = None
 
@@ -84,7 +86,10 @@ class LabelmeMLinesDataset(BaseDataset):
             print(f"Read {fs} {e} faild.")
             traceback.print_exc()
             return None
-        return EasyDict(data)
+        
+        img_info = data[IMG_INFO]
+        img_shape = (img_info[HEIGHT],img_info[WIDTH])
+        return DetData(data[IMAGE],img_shape,data[GT_LABELS],labels_names,None,data[GT_LINES],None,None,None)
 
 
     def read_one_file(self,data):

@@ -35,7 +35,13 @@ class WPolygonMaskItem:
     def from_bbox(cls,bbox,width=None,height=None):
         x0,y0,x1,y1 = bbox
         n_points  = np.array([[x0,y0],[x1,y0],[x1,y1],[x0,y1]]).astype(np.int32)
-        return cls([n_points],width,height)
+        return cls([n_points],width=width,height=height)
+
+    @classmethod
+    def from_bbox_yx(cls,bbox,width=None,height=None):
+        y0,x0,y1,x1 = bbox
+        n_points  = np.array([[x0,y0],[x1,y0],[x1,y1],[x0,y1]]).astype(np.int32)
+        return cls([n_points],width=width,height=height)
 
 
     @classmethod
