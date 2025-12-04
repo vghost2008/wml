@@ -53,7 +53,7 @@ def main(args,trans_dict):
         dirname = osp.dirname(rpath)
         save_path = osp.join(args.out_dir,dirname,trans_dict[bn])
         '''
-        save_path = osp.join(args.out_dir,trans_dict[bn])
+        save_path = osp.join(args.out_dir,trans_dict[bn].lower())
         print(f"Copy dir {dir} --> {save_path}")
         wmlu.copy_files2dir(dir,save_path)
 
@@ -68,11 +68,14 @@ if __name__ == "__main__":
     "5-异物":"YW",
     "6-阻镀":"ZD",
     "7-边缘阻镀":"BYZD",
+    "8-氧化":"YH",
+    "9-焊盘击伤":"HPJS",
     "10-焊盘缺陷":"HPQX",
     "11-水渍":"SZ",         
     "12-镍金线":"NJX",
     "13-Bonding异常":"BondingYC",
     "13-bonding不良":"BondingYC",
+    "14-Dummy pattern":"DP",
      }
 
     

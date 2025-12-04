@@ -8,6 +8,7 @@ import shutil
 
 '''
 指定标注文件目录，从图像文件目标中拷贝base name相同的图像文件到标注文件目录
+如果有多个文件与标注对应,那么会打印错误信息,并且跳过拷贝
 '''
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -63,7 +64,7 @@ def copy_annfiles(ann_dir,img_dir,level=0,img_suffix=".jpg",ann_type=".xml"):
                 print(f"ERROR: Find multi img files for {f}, ann files {files}")
                 error_nr += 1
         else:
-            print(f"ERROR: Find img file for {f} faild.")
+            print(f"INFO: Find annotation file for {f} faild.")
             not_found_nr += 1
 
     print(f"total copy {copy_nr} files, {error_nr} multi files, {not_found_nr} not found files.")

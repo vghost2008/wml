@@ -12,7 +12,7 @@ from wml.iotoolkit.image_folder import ImageFolder
 import shutil
 
 '''
-将一个数据集中指定的labels删除
+将一个数据集中除指定的labels外的数据拷贝到输出目录
 '''
 
 def parse_args():
@@ -49,13 +49,16 @@ def parse_args():
 
     return args
 
-def copy_files(imgf,annf,save_dir,add_nr,silent=False,allow_empty=False):
+def copy_files(imgf,annf,save_dir,silent=False,allow_empty=False,args=None):
+
+    rpath = wmlu.get_relative_path(imgf,args.src_dir)
+    save_path = osp.join(save_dir,rpath)
+    save_dir = osp.dirname(save_path)
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
 
     basename = wmlu.base_name(imgf)
-    if add_nr:
-        basename = basename+f"_{i}"
+
     suffix = osp.splitext(imgf)[1]
     if osp.exists(imgf):
         if not silent:
@@ -100,11 +103,6 @@ if __name__ == "__main__":
     else:
         ann_files = wmlu.get_files(args.src_dir,suffix=args.suffix)
         img_files = [wmlu.change_suffix(x,"jpg") for x in ann_files]
-    basenames = [wmlu.base_name(x) for x in img_files]
-    if len(basenames) == len(set(basenames)):
-        add_nr = False
-    else:
-        add_nr = True
     all_files = list(zip(img_files,ann_files))
     wmlu.show_list(all_files[:100])
     if len(all_files)>100:
@@ -119,16 +117,23 @@ if __name__ == "__main__":
 
     rm_labels = set(args.labels)
 
+    total_skip = 0
+    total_copy = 0
+
     for i,(img_f,ann_f) in enumerate(all_files):
         labels = get_labels(ann_f,args.suffix)
         labels = set(labels)
         print(labels,rm_labels,len(rm_labels&labels))
         if len(rm_labels&labels)>0:
             print(f"Skip {img_f}, labels {labels}")
+            total_skip += 1
             continue
         t_dir_name = osp.dirname(wmlu.get_relative_path(img_f,args.src_dir))
         t_save_dir = osp.join(save_dir,t_dir_name)
         os.makedirs(t_save_dir,exist_ok=True)
-        copy_files(img_f,ann_f,t_save_dir,add_nr,silent=args.silent,allow_empty=args.allow_empty)
+        copy_files(img_f,ann_f,t_save_dir,silent=args.silent,allow_empty=args.allow_empty,args=args)
+        total_copy += 1 
+    
+    print(f"Total {len(all_files)} files, total copy {total_copy} files, total skip {total_skip} files")
 
 

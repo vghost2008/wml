@@ -15,6 +15,7 @@ import shutil
 '''
 将指定数据集按每一个样本中包含的标签名拷贝到相应的子目录中
 如果一个样本有多个不同类型的标签，那么会拷贝到多个相应的子目录中
+如果有重复的文件名,文件名后会加上序号
 '''
 
 def parse_args():
@@ -55,13 +56,15 @@ def copy_files(imgf,annf,save_dir,add_nr,silent=False,allow_empty=False):
         os.makedirs(save_dir)
 
     basename = wmlu.base_name(imgf)
-    if add_nr:
-        basename = basename+f"_{i}"
     suffix = osp.splitext(imgf)[1]
+    save_path = osp.join(save_dir,basename+suffix)
+    if add_nr and osp.exists(save_path):
+        basename = basename+f"_{i}"
+        save_path = osp.join(save_dir,basename+suffix)
     if osp.exists(imgf):
         if not silent:
-            print(imgf,"--->",osp.join(save_dir,basename+suffix))
-        shutil.copy(imgf,osp.join(save_dir,basename+suffix))
+            print(imgf,"--->",save_path)
+        shutil.copy(imgf,save_path)
 
     if allow_empty and not osp.exists(annf):
         return

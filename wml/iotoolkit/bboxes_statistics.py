@@ -359,9 +359,10 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             v = label_file_count[k]
         print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
     for k,v in label_file_count_l:
-        if k in label_file_count:
+        if k in labels:
             continue
         print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
+
     print("\n--->org statistics:")
     org_labels_counter= list(org_labels_counter.items())
     org_labels_counter.sort(key=lambda x:x[1],reverse=True)

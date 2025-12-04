@@ -16,6 +16,7 @@ class BaseDataset(metaclass=ABCMeta):
                       keep_no_ann_imgs=False,absolute_coord=True,mask_on=False,**kwargs):
         '''
         filter_empty_files: remove files without any objects
+        filter_error: 标签为-1认为是一个错误的标签,filter_error会将这类样本删除
         keep_no_ann_imgs: keep images without annotation files
         label_text2id: func(name)->int
         '''

@@ -1002,9 +1002,11 @@ class Config:
         end_no = -1
         find_bracket = False
         find_bias = False
+        pattern = r'\s*\b'+BASE_KEY+r'\b'
+        pattern = re.compile(pattern)
         for i,l in enumerate(lines):
             l = l.rstrip()
-            if BASE_KEY in l and start_no<0:
+            if start_no<0 and pattern.match(l) is not None:
                 start_no = i
                 if "[" in l:
                     find_bracket = True
