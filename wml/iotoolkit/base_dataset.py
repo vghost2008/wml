@@ -15,19 +15,22 @@ class BaseDataset(metaclass=ABCMeta):
                       resample_parameters=None,shuffle=True,silent=False,
                       keep_no_ann_imgs=False,absolute_coord=True,mask_on=False,**kwargs):
         '''
-        filter_empty_files: remove files without any objects
+        filter_empty_files: remove files without any objects and filter label -1
         filter_error: 标签为-1认为是一个错误的标签,filter_error会将这类样本删除
         keep_no_ann_imgs: keep images without annotation files
         label_text2id: func(name)->int
         '''
         self.files = None
+        self.filter_empty_files = filter_empty_files
+        self.filter_error = filter_error
         if isinstance(label_text2id,dict):
+            if not self.filter_empty_files and not self.filter_error and min(list(label_text2id.values()))<0:
+                wmlu.print_error(f"error text2label min value is less than 0, force set filter_error to True")
+                self.filter_error = True
             self.label_text2id = partial(ignore_case_dict_label_text2id,
                     dict_data=wmlu.trans_dict_key2lower(label_text2id))
         else:
             self.label_text2id = label_text2id
-        self.filter_empty_files = filter_empty_files
-        self.filter_error = filter_error
 
         if resample_parameters is not None:
             self.resample_parameters = {}

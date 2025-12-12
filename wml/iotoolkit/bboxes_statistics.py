@@ -259,7 +259,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
                 total_crowd_bboxes += np.sum(is_crowd)
         if bboxes.shape[0]<1:
             if not silent:
-                print(f"{file} no annotation, skip")
+                #print(f"{file} no annotation, skip")
+                pass
             no_annotation_nr += 1
             continue
         if absolute_size:
@@ -329,7 +330,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     total_nr = 0
     for k,v in labels_counter:
         total_nr += v
-
+    if total_file_nr==0 or total_nr==0:
+        return None
     print(f"Total files contain crowd bboxes: {total_crowd_files}/{total_crowd_files*100/total_file_nr:.2f}%")
     print(f"Total crowd bboxes: {total_crowd_bboxes}/{total_crowd_bboxes*100/max(total_nr,1):.2f}%")
 
