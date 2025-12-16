@@ -540,6 +540,10 @@ class Config:
         Config.set_sibling_key_vals(cfg)
         Config.set_key_vals(cfg,cfg)
 
+        if use_predefined_ph is not None:
+            for k,v in use_predefined_ph.items():
+                cfg[k] = v
+
         return cfg
 
     @staticmethod

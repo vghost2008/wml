@@ -21,6 +21,17 @@ import math
 from wml.walgorithm import points_on_circle
 from .common import DetData,DetBboxesData,detbboxesdata2detdata,get_ann_file_path
 import copy
+from .reader import JsonReader
+
+reader_ = JsonReader()
+
+def set_reader(reader):
+    global reader_
+    reader_ = reader
+
+def get_reader():
+    global reader_
+    return reader_
 
 
 def trans2detdata(path,image,annotations):
@@ -179,63 +190,61 @@ def read_labelme_data(file_path,label_text_to_id=None,mask_on=True,use_semantic=
     annotations_list = []
     image = {}
     try:
-        with open(file_path,"r",encoding="utf-8") as f:
-            data_str = f.read()
-            json_data = json.loads(data_str)
-            img_width = int(json_data["imageWidth"])
-            img_height = int(json_data["imageHeight"])
-            image["height"] = int(img_height)
-            image["width"] = int(img_width)
-            image["file_name"] = wmlu.base_name(file_path)
-            for shape in json_data["shapes"]:
-                all_points = _get_shape_points(shape,circle_points_nr=circle_points_nr).astype(np.int32) #[1,N,2]
-                if len(all_points)<1:
+        json_data = reader_(file_path)
+        img_width = int(json_data["imageWidth"])
+        img_height = int(json_data["imageHeight"])
+        image["height"] = int(img_height)
+        image["width"] = int(img_width)
+        image["file_name"] = wmlu.base_name(file_path)
+        for shape in json_data["shapes"]:
+            all_points = _get_shape_points(shape,circle_points_nr=circle_points_nr).astype(np.int32) #[1,N,2]
+            if len(all_points)<1:
+                continue
+            points = np.transpose(all_points)
+            x,y = np.vsplit(points,2)
+            x = np.reshape(x,[-1])
+            y = np.reshape(y,[-1])
+            x = np.minimum(np.maximum(0,x),img_width-1)
+            y = np.minimum(np.maximum(0,y),img_height-1)
+            xmin = np.min(x)
+            xmax = np.max(x)
+            ymin = np.min(y)
+            ymax = np.max(y)
+            if mask_on:
+                all_points = np.expand_dims(all_points,axis=0)
+                if use_polygon_mask:
+                    segmentation = WPolygonMaskItem(all_points,width=img_width,height=img_height)
+                else:
+                    mask = np.zeros(shape=[img_height,img_width],dtype=np.uint8)
+                    segmentation = cv.drawContours(mask,all_points,-1,color=(1),thickness=cv.FILLED)
+            else:
+                segmentation = None
+
+            flags = shape.get('flags',{})
+            difficult = False
+            for k,v in flags.items():
+                if not v:
                     continue
-                points = np.transpose(all_points)
-                x,y = np.vsplit(points,2)
-                x = np.reshape(x,[-1])
-                y = np.reshape(y,[-1])
-                x = np.minimum(np.maximum(0,x),img_width-1)
-                y = np.minimum(np.maximum(0,y),img_height-1)
-                xmin = np.min(x)
-                xmax = np.max(x)
-                ymin = np.min(y)
-                ymax = np.max(y)
-                if mask_on:
-                    all_points = np.expand_dims(all_points,axis=0)
-                    if use_polygon_mask:
-                        segmentation = WPolygonMaskItem(all_points,width=img_width,height=img_height)
-                    else:
-                        mask = np.zeros(shape=[img_height,img_width],dtype=np.uint8)
-                        segmentation = cv.drawContours(mask,all_points,-1,color=(1),thickness=cv.FILLED)
-                else:
-                    segmentation = None
-
-                flags = shape.get('flags',{})
-                difficult = False
-                for k,v in flags.items():
-                    if not v:
-                        continue
-                    if k.lower() in ['crowd','ignore','difficult']:
-                        difficult = True
-
-                ori_label = shape['label']
-                if "*" in ori_label:
+                if k.lower() in ['crowd','ignore','difficult']:
                     difficult = True
-                    ori_label = ori_label.replace("*","")
 
-                if label_text_to_id is not None:
-                    label = label_text_to_id(ori_label)
-                else:
-                    label = ori_label
+            ori_label = shape['label']
+            if "*" in ori_label:
+                difficult = True
+                ori_label = ori_label.replace("*","")
 
-                annotations_list.append({"bbox":(xmin,ymin,xmax-xmin+1,ymax-ymin+1),
-                                         "segmentation":segmentation,
-                                         "category_id":label,
-                                         "category_text":ori_label,
-                                         "points_x":x,
-                                         "points_y":y,
-                                         "difficult":difficult})
+            if label_text_to_id is not None:
+                label = label_text_to_id(ori_label)
+            else:
+                label = ori_label
+
+            annotations_list.append({"bbox":(xmin,ymin,xmax-xmin+1,ymax-ymin+1),
+                                     "segmentation":segmentation,
+                                     "category_id":label,
+                                     "category_text":ori_label,
+                                     "points_x":x,
+                                     "points_y":y,
+                                     "difficult":difficult})
     except Exception as e:
         if do_raise:
             raise e
@@ -854,8 +863,7 @@ def read_labelme_kp_data(file_path,label_text_to_id=lambda x:int(x)):
     labels = []
     points = []
     image_info = {}
-    with open(file_path,"r") as f:
-        data = json.load(f)
+    data = reader_(file_path)
 
     for d in data['shapes']:
         label = d['label']
@@ -890,8 +898,7 @@ def read_labelme_mckp_data(file_path,label_text_to_id=None,keep_no_json_img=Fals
     kp_datas = wmlu.MDict(dtype=list)
 
     if os.path.exists(file_path):
-        with open(file_path,"r") as f:
-            data = json.load(f)
+        data = reader_(file_path)
         for d in data['shapes']:
             label = d['label']
             point = np.reshape(np.array(d['points']),[-1,2])
@@ -930,8 +937,7 @@ def read_labelme_mlines_data(file_path,label_text_to_id=None,keep_no_json_img=Fa
     kp_datas = wmlu.MDict(dtype=list)
 
     if os.path.exists(file_path):
-        with open(file_path,"r") as f:
-            data = json.load(f)
+        data = reader_(file_path)
         for d in data['shapes']:
             label = d['label']
             point = np.reshape(np.array(d['points']),[-1,2])
