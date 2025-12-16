@@ -51,16 +51,22 @@ def parse_args():
 
     return args
 
-def copy_files(imgf,annf,save_dir,add_nr,silent=False,allow_empty=False):
+def copy_files(imgf,annf,save_dir,add_nr,silent=False,allow_empty=False,args=None):
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
 
-    basename = wmlu.base_name(imgf)
+    #basename = wmlu.base_name(imgf)
+    if args is not None:
+        basename = wmlu.get_relative_path(imgf,args.src_dir)
+        basename = osp.splitext(basename)[0]
     suffix = osp.splitext(imgf)[1]
     save_path = osp.join(save_dir,basename+suffix)
     if add_nr and osp.exists(save_path):
         basename = basename+f"_{i}"
         save_path = osp.join(save_dir,basename+suffix)
+    t_dir = osp.dirname(save_path)
+    if not osp.exists(t_dir):
+        os.makedirs(t_dir)
     if osp.exists(imgf):
         if not silent:
             print(imgf,"--->",save_path)
@@ -126,6 +132,6 @@ if __name__ == "__main__":
         for l in set(labels):
             t_save_dir = osp.join(save_dir,l)
             os.makedirs(t_save_dir,exist_ok=True)
-            copy_files(img_f,ann_f,t_save_dir,add_nr,silent=args.silent,allow_empty=args.allow_empty)
+            copy_files(img_f,ann_f,t_save_dir,add_nr,silent=args.silent,allow_empty=args.allow_empty,args=args)
 
 

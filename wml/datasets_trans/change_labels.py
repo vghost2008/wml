@@ -18,6 +18,10 @@ import numpy as np
 import copy
 import shutil
 
+'''
+将标注文件中的文件名修改为label-name, 如果没有设置label-name,则修改为目录名
+'''
+
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')
     parser.add_argument('src_dir', type=str, help='source video directory')
