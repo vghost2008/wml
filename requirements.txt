@@ -11,3 +11,7 @@ scipy
 addict
 einops
 pillow
+#mmcv-full==1.6.0
+#torch==1.13.0
+#matplotlib
+#apt install libgl1-mesa-glx
