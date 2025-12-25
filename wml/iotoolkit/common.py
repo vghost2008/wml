@@ -50,7 +50,7 @@ def get_shape_from_img(xml_path,img_path):
 def ignore_case_dict_label_text2id(name,dict_data):
     name = name.lower()
     if name not in dict_data:
-        print(f"ERROR: trans {name} faild.")
+        wmlu.print_warning(f"trans {name} faild in ignore_case_dict_label_text2id.")
     v = dict_data.get(name,None)
     if isinstance(v,(str,bytes)) and v.lower() in dict_data:
         return ignore_case_dict_label_text2id(v.lower(), dict_data)
@@ -59,7 +59,7 @@ def ignore_case_dict_label_text2id(name,dict_data):
 
 def dict_label_text2id(name,dict_data):
     if name not in dict_data:
-        print(f"ERROR: trans {name} faild.")
+        wmlu.print_warning(f"trans {name} faild in dict_label_text2id.")
     return dict_data.get(name,None)
 
 def find_imgs_for_ann_file(ann_path):
@@ -74,7 +74,7 @@ def find_imgs_for_ann_file(ann_path):
         if osp.splitext(file)[1].lower() in img_suffix:
             img_file = file
         else:
-            print(f"WARNING: Unknow img format file {file} for {ann_path}")
+            wmlu.print_warning(f"Unknow img format file {file} for {ann_path}")
             img_file = file
     return img_file
 

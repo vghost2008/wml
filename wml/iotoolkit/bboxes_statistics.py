@@ -1,7 +1,6 @@
 import sys
 import os
 import wml.object_detection2.npod_toolkit as npod
-import wml.wml_utils
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -11,17 +10,12 @@ from wml.iotoolkit.pascal_voc_toolkit import PascalVOCData,read_voc_xml
 from wml.iotoolkit.coco_toolkit import COCOData
 from wml.iotoolkit.labelme_toolkit import LabelMeData
 from wml.iotoolkit.fast_labelme import FastLabelMeData
-import wml.object_detection2.bboxes as odb 
 import pandas as pd
 import wml.wml_utils as wmlu
 from wml.iotoolkit.mapillary_vistas_toolkit import MapillaryVistasData
-from sklearn.cluster import KMeans
-from functools import partial
-from argparse import ArgumentParser
 from itertools import count
 from wml.iotoolkit.object365v2_toolkit import Object365V2
 from wml.object_detection2.data_process_toolkit import remove_class
-from collections import OrderedDict
 from wml.walgorithm import lower_bound
 import copy
 
@@ -58,19 +52,7 @@ def statistics_boxes(boxes,nr=100,name=""):
         print(f"Real Ratio:Min {min(rratios):.2f}, max {max(rratios):.2f}, mean: {np.mean(rratios):.2f}, std: {np.std(rratios):.2f}.")
     except:
         pass
-    '''plt.figure(2,figsize=(10,10))
-    n, bins, patches = plt.hist(sizes, nr, normed=None, facecolor='blue', alpha=0.5)
-    plt.grid(axis='y', alpha=0.75)
-    plt.grid(axis='x', alpha=0.75)
-    plt.title(name+" area")
-    plt.figure(3,figsize=(10,10))
-    n, bins, patches = plt.hist(ratios, nr, normed=None, facecolor='red', alpha=0.5)
-    plt.grid(axis='y', alpha=0.75)
-    plt.grid(axis='x', alpha=0.75)
-    plt.title(name+" ratio")
-    plt.show()
-    print(max(ratios))
-    return _statistics_value(sizes,nr),_statistics_value(ratios,nr)'''
+
     pd_sizes = pd.Series(sizes)
     pd_ratios = pd.Series(ratios)
     pd_side = pd.Series(sizes1)
@@ -84,19 +66,13 @@ def statistics_boxes(boxes,nr=100,name=""):
     plt.title(name)
 
     plt.figure(1,figsize=(15,10))
-    #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
-    #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', desnsity= True, label = "hist")
     pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black',  label = "hist")
-    #pd_ratios.plot(kind = 'kde', color = 'red', label ="kde")
     plt.grid(axis='y', alpha=0.75)
     plt.grid(axis='x', alpha=0.75)
     plt.title(name+" ratio")
 
     plt.figure(2,figsize=(15,10))
-    #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', normed = True, label = "hist")
-    #pd_ratios.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black', desnsity= True, label = "hist")
     pd_side.plot(kind = 'hist', bins = nr, color = 'steelblue', edgecolor = 'black',  label = "hist")
-    #pd_ratios.plot(kind = 'kde', color = 'red', label ="kde")
     plt.grid(axis='y', alpha=0.75)
     plt.grid(axis='x', alpha=0.75)
     plt.title(name+" side length")
@@ -212,7 +188,7 @@ def statistics_boxes_in_dir(dir_path,label_encoder=default_encode_label,labels_t
     def get_datas():
         if not os.path.exists(dir_path):
             print("path {} not exists.".format(dir_path))
-        files = wml_utils.recurse_get_filepath_in_dir(dir_path,suffix=".xml")
+        files = wmlu.get_files(dir_path,suffix=".xml")
         print("\ntotal file size {}.".format(len(files)))
         for file in files:
             shape, bboxes, labels_text, difficult, truncated = read_voc_xml(file,aspect_range=aspect_range)
@@ -266,7 +242,6 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         if absolute_size:
             if trans_img_size is not None:
                 img_size = trans_img_size(img_size)
-            #bboxes = odb.relative_boxes_to_absolutely_boxes(bboxes,width=img_size[1],height=img_size[0])
             pass
         classes_nr_per_img.append(len(set(labels_text)))
         file = os.path.basename(file)
@@ -332,6 +307,9 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         total_nr += v
     if total_file_nr==0 or total_nr==0:
         return None
+    
+    #打印框的统计数
+    print("*"*80)
     print(f"Total files contain crowd bboxes: {total_crowd_files}/{total_crowd_files*100/total_file_nr:.2f}%")
     print(f"Total crowd bboxes: {total_crowd_bboxes}/{total_crowd_bboxes*100/max(total_nr,1):.2f}%")
 
@@ -349,6 +327,9 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             continue
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
 
+    print("")
+    print("-"*80)
+    #打印文件统计数
     print(f"Total file count {total_file_nr}.")
     print(f"Total no annotation file count {no_annotation_nr}, {no_annotation_nr*100/total_file_nr:.2f}%.")
     print("\n--->File count:")
@@ -360,21 +341,23 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         else:
             v = label_file_count[k]
         print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
+    print("")
     for k,v in label_file_count_l:
         if k in labels:
             continue
         print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
 
-    print("\n--->org statistics:")
-    org_labels_counter= list(org_labels_counter.items())
-    org_labels_counter.sort(key=lambda x:x[1],reverse=True)
-    total_nr = 0
-    for k,v in org_labels_counter:
-        total_nr += v
-    for k,v in org_labels_counter:
-        print(f"{k:>8}:{v:<8}, {v*100./total_nr:>4.2f}%")
-    if labels_to_remove is not None:
-        all_boxes,encoded_labels = remove_class(all_boxes,encoded_labels,labels_to_remove)
+    print("*"*80)
+    #print("\n--->org statistics:")
+    #org_labels_counter= list(org_labels_counter.items())
+    #org_labels_counter.sort(key=lambda x:x[1],reverse=True)
+    #total_nr = 0
+    #for k,v in org_labels_counter:
+    #    total_nr += v
+    #for k,v in org_labels_counter:
+    #    print(f"{k:>8}:{v:<8}, {v*100./total_nr:>4.2f}%")
+    #if labels_to_remove is not None:
+    #    all_boxes,encoded_labels = remove_class(all_boxes,encoded_labels,labels_to_remove)
 
     #show classes per img info
     classes_nr_per_img = np.array(classes_nr_per_img)
@@ -448,36 +431,17 @@ def test_dataset():
     return data.get_items()
 
 def pascal_voc_dataset(data_dir,labels=None):
-    #labels = ['MS7U', 'MP1U', 'MU2U', 'ML9U', 'MV1U', 'ML3U', 'MS1U', 'Other']
     if labels is not None and len(labels)>0:
         label_text2id = dict(zip(labels,count()))
     else:
         label_text2id = None
     
-    #data = PascalVOCData(label_text2id=label_text2id,resample_parameters={6:8,5:2,7:2})
     data = PascalVOCData(label_text2id=label_text2id,absolute_coord=True,silent=True)
 
-    '''data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/train"
-    data_path = "/mnt/data1/wj/ai/smldata/boedcvehicle/wt_06"
-    data_path = "/home/wj/ai/mldata1/GDS1Crack/train"
-    data_path = "/home/wj/ai/mldata1/take_photo/train/coco"
-    data_path = "/mnt/data1/wj/ai/mldata/MOT/MOT17/train/MOT17-09-SDP/img1"
-    data_path = "/home/wj/ai/mldata1/B11ACT/datas/labeled"
-    data_path = "/home/wj/ai/mldata1/B7mura/datas/data/ML3U"
-    data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MV1U"
-    data_path = "/home/wj/ai/mldata1/B7mura/datas/data/MU4U"
-    data_path = "/home/wj/ai/mldata1/B7mura/datas/data"
-    data_path = "/home/wj/下载/_数据集"'''
-    #data_path = "/home/wj/ai/mldata1/B7mura/datas/test_s0"
-    #data_path = "/home/wj/0day/wt_06"
-    #data_path = '/home/wj/0day/pyz'
     xmls = wmlu.get_files(data_dir,suffix=".xml")
     imgs = [wmlu.change_suffix(x,"jpg") for x in xmls]
     files = list(zip(imgs,xmls))
     data.read_data(files)
-    '''data.read_data(data_dir,
-                   silent=True,
-                   img_suffix=".bmp;;.jpg")'''
 
     return data.get_items()
 
@@ -509,9 +473,7 @@ def coco2014_val_dataset():
 
 def labelme_dataset(data_dir,labels=None):
     data = FastLabelMeData(label_text2id=None,absolute_coord=True)
-    #data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10")
     data.read_data(data_dir,img_suffix=wmli.BASE_IMG_SUFFIX)
-    #data.read_data("/home/wj/ai/mldata1/B11ACT/datas/test_s0",img_suffix="bmp")
     return data.get_items()
 
 
@@ -537,16 +499,10 @@ def _mapillary_vistas_dataset():
         'give-way-row','ground-animal','phone-booth','give-way-single','garage','temporary-back','caravan','other-barrier'
     ]
     data = MapillaryVistasData(label_text2id=name_to_id, shuffle=False, ignored_labels=ignored_labels)
-    # data.read_data("/data/mldata/qualitycontrol/rdatasv5_splited/rdatasv5")
-    # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatav10_preproc")
-    # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10_neg_preproc")
     data.read_data(wmlu.home_dir("ai/mldata/mapillary_vistas/mapillary-vistas-dataset_public_v2.0"))
     return data.get_boxes_items()
 
 def mapillary_vistas_dataset(data_dir):
     data = MapillaryVistasData(shuffle=False,use_semantic=False)
-    # data.read_data("/data/mldata/qualitycontrol/rdatasv5_splited/rdatasv5")
-    # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatav10_preproc")
-    # data.read_data("/home/vghost/ai/mldata2/qualitycontrol/rdatasv10_neg_preproc")
     data.read_data(data_dir)
     return data.get_boxes_items()
