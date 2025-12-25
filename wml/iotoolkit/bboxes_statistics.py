@@ -44,6 +44,8 @@ def statistics_boxes(boxes,nr=100,name=""):
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     sizes1 = [math.fabs(x[2]-x[0]) for x in boxes] + [math.fabs(x[3]-x[1]) for x in boxes]
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]
+    print("")
+    print(f"="*80,"\n")
     try:
         print(f"Min area size (sqrt(w*h)) {min(sizes):.2f}, max area size {max(sizes):.2f} (pixel), mean {np.mean(sizes):.2f}, std {np.std(sizes):.2f}.")
         print(f"Min ratio {min(ratios):.2f}, max ratios {max(ratios):.2f}, mean: {np.mean(ratios):.2f}.")
@@ -77,10 +79,7 @@ def statistics_boxes(boxes,nr=100,name=""):
     plt.grid(axis='x', alpha=0.75)
     plt.title(name+" side length")
     plt.show()
-    try:
-        print(max(ratios))
-    except:
-        pass
+
     return _statistics_value(sizes,nr),_statistics_value(ratios,nr)
 
 def statistics_classes_per_img(data,nr=100):
@@ -118,12 +117,13 @@ def statistics_boxes_by_different_area(boxes,nr=100,bin_size=5,level=0,size_arra
         else:
             l_bboxes[index] = [boxes[i]]
 
+    print(f"-"*40)
     print(f"bboxes nr of each range")
     for k in range(bin_size):
         if k not in l_bboxes:
             continue
         v = l_bboxes[k]
-        print(k,len(v),f"{len(v)*100.0/len(boxes):.2f}%")
+        print(f"{k}, {len(v):<5}, {len(v)*100.0/len(boxes):5.2f}%")
 
     size_array = [min_size]+size_array+[max_size]
     for i in range(bin_size):
