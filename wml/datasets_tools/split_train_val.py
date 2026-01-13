@@ -209,11 +209,28 @@ if __name__ == "__main__":
     print(f"src dir: {src_dir}")
     args.suffix = get_auto_dataset_suffix(src_dir,args.suffix)
     if not args.no_imgs:
-        img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
-        ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
+        _img_files = wmlu.get_files(src_dir,suffix=args.img_suffix)
+        _ann_files = [wmlu.change_suffix(x,args.suffix) for x in _img_files]
     else:
-        ann_files = wmlu.get_files(src_dir,suffix=args.suffix)
-        img_files = [wmlu.change_suffix(x,"jpg") for x in ann_files]
+        _ann_files = wmlu.get_files(src_dir,suffix=args.suffix)
+        _img_files = [wmlu.change_suffix(x,"jpg") for x in _ann_files]
+    
+    ann_files = []
+    for af in _ann_files:
+        if not osp.exists(af):
+            paf = af.replace("images","labels")
+            if osp.exists(paf):
+                af = paf
+        ann_files.append(af)
+    
+    img_files = []
+    for imgf in _img_files:
+        if not osp.exists(imgf):
+            pimgf = imgf.replace("labels","images")
+            if osp.exists(pimgf):
+                imgf = pimgf
+        img_files.append(imgf)
+    
     basenames = [wmlu.base_name(x) for x in img_files]
     if len(basenames) == len(set(basenames)):
         add_nr = False

@@ -34,9 +34,10 @@ class BaseDataset(metaclass=ABCMeta):
 
         if resample_parameters is not None:
             self.resample_parameters = {}
+            print(f"Process resample parameters...")
             for k,v in resample_parameters.items():
                 if isinstance(k,(str,bytes)) and self.label_text2id is not None:
-                    k = self.label_text2id(k)
+                    k = self.label_text2id(k,info=f"resample {k}")
                 self.resample_parameters[k] = v
             print("resample parameters")
             wmlu.show_dict(self.resample_parameters)

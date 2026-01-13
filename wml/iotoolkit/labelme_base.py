@@ -56,7 +56,7 @@ class LabelMeBase(BaseDataset):
                                                     **self.read_data_kwargs)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         if self.label_text2id:
-            labels = [self.label_text2id(x) for x in labels_names] #测试转label是否有误
+            labels = [self.label_text2id(x,info=json_file) for x in labels_names] #测试转label是否有误
         else:
             labels = None
         
@@ -99,5 +99,5 @@ class LabelMeBase(BaseDataset):
             sys.stdout.flush()
             image, annotations_list = read_labelme_data(json_file, None,mask_on=False,**self.read_data_kwargs)
             labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
-            labels = [self.label_text2id(x) for x in labels_names]
+            labels = [self.label_text2id(x,info=json_file) for x in labels_names]
             yield DetBboxesData(img_file,[image['height'],image['width']],labels, bboxes,  None)

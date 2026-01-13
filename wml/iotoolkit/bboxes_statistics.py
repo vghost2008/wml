@@ -340,12 +340,12 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             v = 0 
         else:
             v = label_file_count[k]
-        print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
+        print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
     print("")
     for k,v in label_file_count_l:
         if k in labels:
             continue
-        print("{:>8}:{:<8}, {:>4.2f}".format(k,v,v*100./total_file_nr))
+        print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
 
     print("*"*80)
     #print("\n--->org statistics:")
@@ -423,12 +423,6 @@ def show_anchor_box(img_file,boxes,size=None):
     plt.imshow(img)
     plt.show()
     return img
-
-def test_dataset():
-    data = PascalVOCData(label_text2id=None)
-    data.read_data("/home/vghost/ai/mldata2/test_data_0day/test_s")
-
-    return data.get_items()
 
 def pascal_voc_dataset(data_dir,labels=None):
     if labels is not None and len(labels)>0:

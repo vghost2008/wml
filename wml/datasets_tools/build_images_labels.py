@@ -1,41 +1,34 @@
-import numpy as np
-import cv2 as cv
-import imageio
-import glob
 import os
-import sys
 import os.path as osp
-import wml.img_utils as wmli
 import wml.wml_utils as wmlu
 import argparse
 import shutil
-from wml.iotoolkit.labelme_toolkit_fwd import get_files,read_labelme_data
+from wml.iotoolkit.labelme_toolkit_fwd import get_files,get_labels_set
+
+'''
+将数据集按images/labels分别存放,可指定labels, 如果没有指定自动获取所有labels
+'''
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="build gif")
     parser.add_argument("src_dir",type=str,help="src dir")
     parser.add_argument("out_dir",type=str,help="out dir")
-    parser.add_argument("--labels",type=str,nargs="+",default=None,help="video ext")
+    parser.add_argument("--labels",type=str,nargs="+",default=None,help="labels")
     args = parser.parse_args()
     return args
-
-def get_labels(files):
-    res = set()
-    for imgf,annf in files:
-        data = read_labelme_data(annf,mask_on=False,return_type=1)
-        labels = data.labels_name
-        res = res|set(list(labels))
-    return list(res)
-
 
 if __name__ == "__main__":
     args = parse_args()
     wmlu.create_empty_dir(args.out_dir,remove_if_exists=False)
     files = get_files(args.src_dir)
+
+    print(f"Total find {len(files)} files.")
+
     img_save_dir = osp.join(args.out_dir,"images")
     json_save_dir = osp.join(args.out_dir,"labels")
     classes_save_path = osp.join(args.out_dir,"classes.txt")
+
     for imgf,annf in files:
         bn = wmlu.get_relative_path(imgf,args.src_dir)
         save_path = osp.join(img_save_dir,bn)
@@ -51,12 +44,12 @@ if __name__ == "__main__":
 
     labels = args.labels
     if labels is None or len(labels) == 0:
-        labels = get_labels(files)
+        labels = get_labels_set(files)
     if len(labels)>0:
-        info = labels[0]
-        for l in labels[1:]:
-            info += f"; {l}"
+        info = ",".join(labels)
+        print(f"Classes: {info}")
         with open(classes_save_path,"w") as f:
             f.write(info)
+    print(f"Save dir {args.out_dir}")
 
 

@@ -153,7 +153,15 @@ def _get_shape_points(shape,circle_points_nr=20):
             return points
         else:
             wmlu.print_error(f"error rectangel points {points}")
-            raise RuntimeError(f"ERROR: error rectangle points {points}")
+            '''
+            x0 = np.min(points[:,0])
+            x1 = np.max(points[:,0])
+            y0 = np.min(points[:,1])
+            y1 = np.max(points[:,1])
+            n_points  = np.array([[x0,y0],[x1,y0],[x1,y1],[x0,y1]]).astype(np.int32)
+            return n_points
+            '''
+            raise RuntimeError("error rectangel points")
     elif shape_type == "circle":
         points = np.array(shape['points']).astype(np.int32)
         center = points[0]
@@ -161,6 +169,8 @@ def _get_shape_points(shape,circle_points_nr=20):
         r = math.sqrt(d[0]*d[0]+d[1]*d[1])
         points = points_on_circle(center=center,r=r,points_nr=circle_points_nr)
         return points
+    elif shape_type == "linestrip":
+        return np.array(shape['points']).astype(np.int32)
     else:
         print(f"WARNING: unsupport labelme shape type {shape_type}")
         return np.zeros([0,2],dtype=np.int32)
@@ -963,3 +973,11 @@ def read_labelme_mlines_data(file_path,label_text_to_id=None,keep_no_json_img=Fa
         points.append(np.concatenate(v,axis=0))
 
     return image_info,labels,points
+
+def get_labels_set(files):
+    res = set()
+    for imgf,annf in files:
+        data = read_labelme_data(annf,mask_on=False,return_type=1)
+        labels = data.labels_name
+        res = res|set(list(labels))
+    return list(res)

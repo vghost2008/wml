@@ -32,6 +32,7 @@ def parse_args():
         action='store_true',
         help='keep key in save dir')
     parser.add_argument(
+        '-uln',
         '--use-label-name',
         action='store_true',
         help='拷贝时,类别名作为文件名')
