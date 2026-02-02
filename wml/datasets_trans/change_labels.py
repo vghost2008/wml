@@ -19,14 +19,14 @@ import copy
 import shutil
 
 '''
-将标注文件中的文件名修改为label-name, 如果没有设置label-name,则修改为目录名
+将标注文件中的标签名修改为label-name, 如果没有设置label-name,则修改为目录名
 '''
 
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')
     parser.add_argument('src_dir', type=str, help='source video directory')
-    parser.add_argument('out_dir', type=str, help='output rawframe directory')
-    parser.add_argument('--label-name', type=str, help='change label name')
+    parser.add_argument('--out_dir', type=str, help='output rawframe directory')
+    parser.add_argument('-ln','--label-name', type=str, help='change label name')
     parser.add_argument(
         '--ext',
         type=str,
@@ -92,8 +92,6 @@ if __name__ == "__main__":
         old_shape = img.shape
 
         filename = wmlu.get_relative_path(full_path,args.src_dir)
-        save_path = osp.join(args.out_dir,filename)
-        wmlu.make_dir_for_file(save_path)
         cur_labels = copy.deepcopy(x.labels_name)
         if label_name is not None and len(label_name)>0:
             new_label_name = label_name
@@ -102,7 +100,14 @@ if __name__ == "__main__":
             new_label_name = wmlu.base_name(dirname)
         new_labels = [new_label_name]*len(cur_labels)
         x = x._replace(labels_name=new_labels)
-        shutil.copy(full_path,save_path)
+
+        if args.out_dir is not None:
+            save_path = osp.join(args.out_dir,filename)
+            wmlu.make_dir_for_file(save_path)
+            shutil.copy(full_path,save_path)
+        else:
+            save_path = full_path
+
         if isinstance(data,(LabelMeData,FastLabelMeData)):
             print(f"Change {filename} labels from {cur_labels} to {new_labels}")
             json_path = wmlu.change_suffix(save_path,"json")

@@ -21,9 +21,17 @@ import math
 from wml.walgorithm import points_on_circle
 from .common import DetData,DetBboxesData,detbboxesdata2detdata,get_ann_file_path
 import copy
-from .reader import JsonReader
+from .reader import JsonReader,AIOTJsonReader, DecryptReader
 
-reader_ = JsonReader()
+try:
+    reader_ = AIOTJsonReader()
+except:
+    try:
+        reader_ = DecryptReader()
+    except:
+        print(f"use decrypt reader faild.")
+        reader_ = JsonReader()
+
 
 def set_reader(reader):
     global reader_
@@ -183,7 +191,7 @@ use_polygon_mask: 在mask_on的情况下,如果use_polygon_mask,那么返回多�
 use_semantic: 在mask_on的情况下,将mask当作语义分割标注,如果一个像素之前已被标注为一个类别,之后再次被标注,以后一次为准
 output:
 image_info: {'height','width'}
-annotations_list: [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
+annotations_list: list of dict, [{'bbox','segmentation','category_id','points_x','points_y'}' #bbox[xmin,ymin,width,height] absolute coordinate, 
 'segmentation' [H,W], 全图
 return_type:
  - 0: annotations_list
@@ -550,11 +558,15 @@ def save_detdata(file_path,image_path,det_data,label_to_text=lambda x:str(x)):
         shape["shape_type"]="polygon"
         if det_data.masks is not None:
             mask = det_data.masks[i]
-            if not isinstance(mask,(WPolygonMaskItem)):
+            if mask is not None and not isinstance(mask,(WPolygonMaskItem)):
                 mask = WPolygonMaskItem.from_ndarray(mask)
+            elif mask is None:
+                mask = WPolygonMaskItem.from_bbox(bbox)
+                shape["shape_type"]="rectangle"
 
         else:
-            mask = WPolygonMaskItem.from_bbox_yx(bbox)
+            mask = WPolygonMaskItem.from_bbox(bbox)
+            shape["shape_type"]="rectangle"
 
         points = mask.points[0]
         shape["points"] = points.tolist()

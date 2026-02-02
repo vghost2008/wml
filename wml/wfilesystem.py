@@ -8,6 +8,9 @@ from wml.basic_img_utils import BASE_IMG_SUFFIX
 from wml.walgorithm import remove_non_ascii
 import colorama
 
+def abspath(path):
+    return osp.abspath(osp.expanduser(path))
+
 def get_filenames_in_dir(dir_path,suffix=None,prefix=None):
     if suffix is not None:
         suffix = suffix.split(";;")
@@ -394,9 +397,9 @@ def get_relative_path(path,ref_path):
     if ref_path is None or path is None:
         return path
 
-    path = osp.abspath(path)
+    path = abspath(path)
     if isinstance(ref_path,(list,tuple)):
-        ref_path = [osp.abspath(osp.expanduser(rp)) for rp in ref_path]
+        ref_path = [abspath(rp) for rp in ref_path]
         for rp in ref_path:
             if path.startswith(rp):
                 ref_path = rp
@@ -404,7 +407,7 @@ def get_relative_path(path,ref_path):
         if isinstance(ref_path,(list,tuple)):
             return path
     else:
-        ref_path = osp.abspath(ref_path)
+        ref_path = abspath(ref_path)
         if not path.startswith(ref_path):
             return path
     if len(path)<=len(ref_path):

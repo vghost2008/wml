@@ -47,6 +47,7 @@ def parse_args():
         action='store_true',
         help='include img files without annotation')
     parser.add_argument('--sub-dir', action='store_true',help='whether to sample data in sub dirs.')
+
     args = parser.parse_args()
 
     return args

@@ -14,6 +14,11 @@ class MCI:
     '''
     def __init__(self,data,metadata=None):
         self.data = np.array(data,dtype=np.uint8)
+        '''
+        metadata:
+        annotations: 原始标注文件的通道号
+        annotation_files: 原始标注文件名
+        '''
         self.metadata = metadata
 
     @property
@@ -29,7 +34,7 @@ class MCI:
 
     
     @classmethod
-    def from_files(cls,files):
+    def from_files(cls,files,annotations=None,annotation_files=None):
         imgs = []
         shape = None
         for f in files:
@@ -43,7 +48,7 @@ class MCI:
         imgs = [x if x is not None else np.zeros(shape,dtype=np.uint8) for x in imgs]
 
         imgs = np.stack(imgs,axis=2)
-        metadata=dict(files=files)
+        metadata=dict(files=files,annotations=annotations,annotation_files=annotation_files)
 
         return cls(imgs,metadata=metadata)
 

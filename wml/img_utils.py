@@ -245,8 +245,10 @@ def imwrite_for_view(save_path,img,size=None,fps=6,img_channel_names=None):
             for i,frame in enumerate(frames):
                 bodv.draw_text_on_image(frame,f"{img_channel_names[i]}",pos="tl")
             imageio.mimsave(gif_save_path,frames,fps=fps,quality=9)
+        return dir
     else:
         imwrite(save_path,img,size=size)
+        return osp.dirname(save_path)
 
 
 def read_and_write_img(src_path,dst_path):
