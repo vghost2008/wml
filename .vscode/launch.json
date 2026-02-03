@@ -68,7 +68,8 @@
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101" "~/ai/mldata1/0day/NG- PSF-2024.5.23-7#B8F161QH5V101"],
             //"args":["~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125" "~/ai/mldata1/0day/PSA-NEG-B8F160WU5V125b" "--sigma" "100"],
-            "args":["~/ai/mldata1/B10CFOD/feedback/HQ_7.19_toreannotation/" "~/ai/mldata1/B10CFOD/raw_datasets/7.22_HQ_reannotation/" "--save-dir" "~/ai/mldata1/B10CFOD/tmp/cmpdatasets" "--type" "LabelMeData"],
+            //"args":["~/ai/mldata1/B10CFOD/feedback/HQ_7.19_toreannotation/" "~/ai/mldata1/B10CFOD/raw_datasets/7.22_HQ_reannotation/" "--save-dir" "~/ai/mldata1/B10CFOD/tmp/cmpdatasets" "--type" "LabelMeData"],
+            "args":["/home/wj/ai/mldata1/B17MDL/tmp/d0" "/home/wj/ai/mldata1/B17MDL/tmp/d1" "--save-dir" "/home/wj/ai/mldata1/B17MDL/tmp/ds"],
         },
         {
             "name": "Python: check split dataset",

@@ -22,10 +22,12 @@ def parse_args():
     parser.add_argument(
         '--ext',
         type=str,
-        default='.jpg;;.bmp;;.jpeg;;.png',
+        default=wmli.BASE_IMG_SUFFIX,
         help='video file extensions')
     parser.add_argument('--type', type=str, default='auto',help='Data set type')
     parser.add_argument('--metrics', type=str, default='COCOEvaluation',help='metrics type')
+    #parser.add_argument('--metrics', type=str, default='PrecisionAndRecall',help='metrics type')
+    #parser.add_argument('--metrics', type=str, default='ClsPrecisionAndRecall',help='metrics type')
     parser.add_argument('--save-dir', type=str, help='save dir for different annotation.')
     parser.add_argument('--classes-wise', action='store_true', help='is classes wise')
     args = parser.parse_args()
@@ -57,15 +59,16 @@ def save_data(lh_data,rh_data,save_dir):
 def save_one_data(data,save_dir,suffix):
     full_path, shape, category_ids, category_names, boxes, binary_masks, area, is_crowd, num_annotations_skipped = data
     img = wmli.imread(full_path)
-    img = odv.draw_bboxes(img,category_names,None,boxes,show_text=True,is_relative_coordinate=False)
+    img = odv.draw_bboxes_xy(img,category_names,None,boxes,show_text=True,is_relative_coordinate=False)
     if binary_masks is not None:
-        img = odv.draw_maskv2(img,category_names,boxes,binary_masks)
+        img = odv.draw_maskv2_xy(img,category_names,boxes,binary_masks)
     
     os.makedirs(save_dir,exist_ok=True)
 
     save_name = wmlu.base_name(full_path)+suffix
-    save_path = osp.join(save_dir,save_name+".jpg")
-    wmli.imwrite(save_path,img)
+    suffix = osp.splitext(full_path)[-1]
+    save_path = osp.join(save_dir,save_name+suffix)
+    wmli.imwrite_for_view(save_path,img)
 
 
 def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_value=1,args=None,**kwargs):
@@ -126,10 +129,11 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
         kwargs['boxes'] = boxes
         kwargs['labels'] = [name2idx[name.lower()] for name in category_names]
         p,r = getPrecision(**kwargs,threshold=0.8)
-        if p>=99 and r>=99:
+        print(p,r)
+        if p>=0.99 and r>=0.99:
             total_same_nr += 1
         if args.save_dir is not None:
-            if p<99.0 or r<99:
+            if p<0.990 or r<0.99:
                 save_data(data,rh_data,args.save_dir)
             else:
                 save_one_data(data,osp.join(args.save_dir,"same"),suffix="")
@@ -164,5 +168,7 @@ if __name__ == "__main__":
     data1.read_data(args.dir1,img_suffix=args.ext)
 
     model = METRICS_REGISTRY.get(args.metrics)
+
+    wmlu.create_empty_dir_remove_if(args.save_dir)
 
     cmp_datasets(data0,data1,mask_on=False,model=model,classes_begin_value=0,args=args)

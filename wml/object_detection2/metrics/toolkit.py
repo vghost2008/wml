@@ -589,9 +589,13 @@ class PrecisionAndRecall(BaseMetrics):
             labels = self.label_trans(labels)
 
         if gtboxes.shape[0]>0:
+            gtlabels = np.array(gtlabels)
             self.gtboxes.append(gtboxes+self.bboxes_offset)
-            self.gtlabels.append(np.array(gtlabels))
+            self.gtlabels.append(gtlabels)
+            if is_crowd is None:
+                is_crowd = np.zeros(gtlabels.shape,dtype=bool)
             self.is_crowd.append(np.array(is_crowd))
+
 
         if boxes.shape[0]>0:
             self.boxes.append(boxes+self.bboxes_offset)

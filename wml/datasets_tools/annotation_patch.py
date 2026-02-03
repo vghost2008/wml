@@ -47,21 +47,20 @@ def patch_one_xml_file(bbox,label,xml_path,img_path,save_dir=None,max_size=None)
         save_img_path = osp.join(save_dir,basename+"_old.jpg")
         img = wmli.imread(img_path)
         if not osp.exists(save_img_path):
-            oimg = odv.draw_bboxes(img.copy(),
+            oimg = odv.draw_bboxes_xy(img.copy(),
                                    labels_text,bboxes=bboxes,show_text=True,
                                    is_relative_coordinate=False)
             if max_size is not None:
                 oimg = wmli.resize_long_size(oimg,max_size)
             wmli.imwrite(save_img_path,oimg)
 
-    bbox = odb.npchangexyorder([bbox])
     bboxes = np.concatenate([bboxes,bbox],axis=0)
     labels_text.append(label)
     if save_dir is not None:
         save_img_path = osp.join(save_dir,basename+"_new.jpg")
         save_img_path = wmlu.get_unused_path_with_suffix(save_img_path)
         if not osp.exists(save_img_path):
-            nimg = odv.draw_bboxes(img.copy(),
+            nimg = odv.draw_bboxes_xy(img.copy(),
                                    labels_text,bboxes=bboxes,show_text=True,
                                    is_relative_coordinate=False)
             if max_size is not None:

@@ -24,7 +24,7 @@ file_path: xml文件路径
 adjust:左，上，右，下向中间的收缩像素大小
 return:
 shape: image size
-boxes: [N,4] relative coordinate,(ymin,xmin,ymax,xmax)
+boxes: [N,4] relative coordinate,(xmin,ymin,xmax,ymax)
 '''
 def read_voc_xml(file_path, adjust=None, aspect_range=None, has_probs=False,absolute_coord=False):
     tree = ET.parse(file_path)
