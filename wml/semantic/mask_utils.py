@@ -104,6 +104,9 @@ def cut_mask(mask,rect):
     bbox = np.array([xmin,ymin,xmax,ymax],dtype=np.int32)
     return cuted_mask,bbox,ratio
 
+def cut_mask_xy(mask,rect):
+    return cut_mask(mask,[rect[1],rect[0],rect[3],rect[2]])
+
 '''
 mask:[N,H,W] value is 1 or 0
 bboxes:[N,4] [ymin,xmin,ymax,xmax]

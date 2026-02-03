@@ -135,16 +135,15 @@ def read_voc_xml(file_path, adjust=None, aspect_range=None, has_probs=False,abso
         bboxes = np.array(bboxes,dtype=np.float32)
     else:
         bboxes = np.zeros([0,4],dtype=np.float32)
+    
+    bboxes = odb.npchangexyorder(bboxes)
     return shape, bboxes, labels_text, difficult, truncated, probs
     
 def read_voc_xml_xy(file_path, has_probs=False):
-    data = read_voc_xml(file_path=file_path,
+    return read_voc_xml(file_path=file_path,
                         has_probs=has_probs,
                         absolute_coord=True,
                         )
-    shape, bboxes, labels_text, difficult, truncated, probs = data
-    bboxes = odb.npchangexyorder(bboxes)
-    return shape, bboxes, labels_text, difficult, truncated, probs
 
 def create_text_element(doc,name,value):
     if not isinstance(value,str):
@@ -158,10 +157,12 @@ def create_text_element(doc,name,value):
 save_path:xml文件保存路径
 file_path:图像文件路径
 shape:[h,w,d]
-boxes:[N,4] (y0,x0,y1,x1) 
+boxes:[N,4] (x0,y0,x1,y1) 
 '''
 def write_voc_xml(xml_path,img_path,shape, bboxes, labels_text, difficult=None, truncated=None,probs=None,is_relative_coordinate=True):
 
+
+    bboxes = odb.npchangexyorder(bboxes)
     if shape is None or shape[0] < 5 or shape[1] < 5:
         _shape = get_shape_from_img(xml_path,img_path)
         print(f"Force update img shape, old={shape}, new={_shape}.")

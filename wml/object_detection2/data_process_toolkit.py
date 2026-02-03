@@ -2,7 +2,7 @@ import wml.img_utils as wmli
 import wml.object_detection2.bboxes as odb
 import cv2 as cv
 import numpy as np
-from wml.semantic.mask_utils import cut_mask
+from wml.semantic.mask_utils import cut_mask,cut_mask_xy
 from wml.wstructures import WPolygonMaskItem, WPolygonMasks, DetData,DetBboxesData,detbboxesdata2detdata
 
 def motion_blur(image, degree=10, angle=20):
@@ -159,7 +159,6 @@ def cut_detdata(cut_bbox,img,det_data,adjust_bbox=True,keep_ratio=0):
     '''
     if isinstance(det_data,DetBboxesData):
         det_data = detbboxesdata2detdata(det_data)
-    cut_bbox = odb.npchangexyorder(cut_bbox)
     path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data = det_data
     if not isinstance(labels,np.ndarray):
         if len(labels) == 0:
@@ -171,26 +170,26 @@ def cut_detdata(cut_bbox,img,det_data,adjust_bbox=True,keep_ratio=0):
     is_crowd = np.array(is_crowd)
     cut_bbox = list(cut_bbox)
     if adjust_bbox:
-        b_w = cut_bbox[3]-cut_bbox[1]
-        b_h = cut_bbox[2]-cut_bbox[0]
-        cut_bbox[0] = min(img.shape[0],cut_bbox[2])-b_h
-        cut_bbox[1] = min(img.shape[1],cut_bbox[3])-b_w
+        b_h = cut_bbox[3]-cut_bbox[1]
+        b_w = cut_bbox[2]-cut_bbox[0]
+        cut_bbox[0] = min(img.shape[1],cut_bbox[3])-b_w
+        cut_bbox[1] = min(img.shape[0],cut_bbox[2])-b_h
 
     cut_bbox[0] = max(0,cut_bbox[0])
     cut_bbox[1] = max(0,cut_bbox[1])
 
-    cut_bbox[2] = min(cut_bbox[2],img.shape[0])
-    cut_bbox[3] = min(cut_bbox[3],img.shape[1])
+    cut_bbox[2] = min(cut_bbox[2],img.shape[1])
+    cut_bbox[3] = min(cut_bbox[3],img.shape[0])
 
     new_bboxes = []
     new_labels = []
     new_is_crowd = [] if is_crowd is not None  else None
-    new_img = wmli.sub_image(img,cut_bbox)
+    new_img = wmli.sub_imagev2(img,cut_bbox)
     new_labels_name = [] if labels_name is not None else None
     if masks is not None:
         new_masks = []
         for i in range(len(labels)):
-            n_mask,n_bbox,ratio = cut_mask(masks[i],cut_bbox)
+            n_mask,n_bbox,ratio = cut_mask_xy(masks[i],cut_bbox)
             if n_mask is not None and n_bbox is not None and ratio>keep_ratio:
                 new_bboxes.append(n_bbox)
                 new_labels.append(labels[i])
@@ -227,6 +226,6 @@ def cut_detdata(cut_bbox,img,det_data,adjust_bbox=True,keep_ratio=0):
         offset = np.reshape(np.array([cut_bbox[0],cut_bbox[1],cut_bbox[0],cut_bbox[1]],dtype=new_bboxes.dtype),[1,4])
         new_bboxes = new_bboxes-offset
 
-    new_bboxes = odb.npchangexyorder(new_bboxes)
+    #new_bboxes = odb.npchangexyorder(new_bboxes)
     new_img_shape = [new_img.shape[0],new_img.shape[1]]
     return new_img,DetData(path,new_img_shape,new_labels,new_labels_name,new_bboxes,new_masks,None,new_is_crowd,extra_data)

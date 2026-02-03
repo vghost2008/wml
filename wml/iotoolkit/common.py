@@ -5,6 +5,7 @@ import wml.img_utils as wmli
 import os.path as osp
 import glob
 from wml.wstructures.detdata import *
+import traceback
 
 
 def __get_resample_nr(labels,resample_parameters):
@@ -53,7 +54,7 @@ def ignore_case_dict_label_text2id(name,info="",dict_data={}):
         wmlu.print_warning(f"{info}: trans {name} faild in ignore_case_dict_label_text2id.")
     v = dict_data.get(name,None)
     if isinstance(v,(str,bytes)) and v.lower() in dict_data:
-        return ignore_case_dict_label_text2id(v.lower(), dict_data)
+        return ignore_case_dict_label_text2id(v.lower(), info,dict_data)
     else:
         return v
 

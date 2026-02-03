@@ -624,7 +624,7 @@ def get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=False):
         ymin = t_box[1]
         xmax = xmin+t_box[2]
         ymax = ymin+t_box[3]
-        bboxes.append([ymin,xmin,ymax,xmax])
+        bboxes.append([xmin,ymin,xmax,ymax])
         labels.append(ann["category_id"])
     if len(bboxes)>0:
         bboxes = np.array(bboxes,dtype=np.float32)
@@ -647,7 +647,7 @@ def get_labels_bboxes_and_masks(image,annotations_list):
         ymin = t_box[1]/height
         xmax = xmin+t_box[2]/width
         ymax = ymin+t_box[3]/height
-        bboxes.append([ymin,xmin,ymax,xmax])
+        bboxes.append([xmin,ymin,xmax,ymax])
         labels.append(ann["category_id"])
         masks.append(ann["segmentation"])
     return np.array(labels),np.array(bboxes),np.array(masks)

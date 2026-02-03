@@ -601,6 +601,9 @@ def relative_boxes_to_absolutely_boxesi(boxes,width,height):
 '''
 box0:[ymin,xmin,ymax,xmax]
 box1:[N,4],[ymin,xmin,ymax,xmax]
+or:
+box0:[xmin,ymin,xmax,ymax]
+box1:[N,4],[xmin,ymin,xmax,ymax]
 用box0裁box1,也就是说box1仅取与box0有重叠的部分
 '''
 def cut_boxes_by_box0(box0,box1):

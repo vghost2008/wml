@@ -24,6 +24,7 @@ from wml.basic_img_utils import *
 from wml.basic_img_utils import encode_img as bencode_img
 from wml.basic_utils import *
 from wml.mci import MCI
+from wml.mci_tiff import MCITIFF
 
 try:
     import imageio
@@ -174,6 +175,8 @@ def nprandom_crop(img,size):
 def imread(filepath):
     if os.path.splitext(filepath)[1].lower() == ".mci":
         return MCI.read(filepath)
+    elif os.path.splitext(filepath)[1] == ".TIFF":
+        return MCITIFF.read(filepath)
     img = cv2.imread(filepath,cv2.IMREAD_COLOR)
     cv2.cvtColor(img,cv2.COLOR_BGR2RGB,img)
     return img
@@ -206,7 +209,7 @@ def imwrite(filename, img,size=None):
     '''
     size: (W,H)
     '''
-    if isinstance(img,MCI):
+    if isinstance(img,(MCI,MCITIFF)):
         img.write(filename)
         return
     elif (isinstance(img,np.ndarray) and len(img.shape)>=3 and img.shape[2]>3):
@@ -228,7 +231,9 @@ def imwrite(filename, img,size=None):
 
 
 def imwrite_for_view(save_path,img,size=None,fps=6,img_channel_names=None):
-    if save_path.endswith(".mci"):
+    if save_path.endswith(".mci") or save_path.endswith(".TIFF"):
+        if not isinstance(img,np.ndarray) and hasattr(img,'data'):
+            img = img.data
         dir = osp.splitext(save_path)[0]
         os.makedirs(dir,exist_ok=True)
         if size is not None:

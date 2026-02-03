@@ -532,6 +532,7 @@ def draw_bboxes_and_maskv2(img,classes,scores=None,bboxes=None,masks=None,
                            show_text=False,
                            is_relative_coordinate=True,
                            font_scale=0.8):
+    bboxes = npchangexyorder(bboxes)
     img = draw_maskv2(img=img,
                     classes=classes,bboxes=bboxes,
                     masks=masks,color_fn=color_fn,

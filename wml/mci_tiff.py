@@ -9,7 +9,7 @@ import cv2
 import tifffile
 import json
 
-class MCI:
+class MCITIFF:
     '''
     Multi channel image
     后辍名 .mci
@@ -21,19 +21,17 @@ class MCI:
         annotations: 原始标注文件的通道号
         annotation_files: 原始标注文件名
         '''
+        if metadata is None:
+            metadata = {}
         self.metadata = metadata
-
-    @property
-    def annotations(self):
-        return self.metadata.get('annotations',None)
-
-    @property
-    def annotation_files(self):
-        return self.metadata.get('annotation_files',None)
 
     @property
     def shape(self):
         return self.data.shape
+
+    @property
+    def annotations(self):
+        return self.metadata.get('annotations',None)
     
     @classmethod
     def zeros(cls,shape):
@@ -64,66 +62,61 @@ class MCI:
 
     @staticmethod
     def read(file_path):
-        with open(file_path,"rb") as f:
-            data = pickle.load(f)
-            shape = data['shape']
-            datas = []
-
-            if 'metadata' in data:
-                metadata = data['metadata']
-                fmt = metadata.get('fmt',"jpg")
-            else:
-                fmt = 'jpg'
-
-            if fmt.lower() == "raw":
-                datas = data['imgs']
-            else:
-                for d in data['imgs']:
-                    d = bwmli.decode_img(d,fmt="grayscale")
-                    datas.append(d)
-                datas = np.stack(datas,axis=-1)
-
-            return datas
+        with tifffile.TiffFile(file_path) as tif:
+            image_data = tif.asarray()
+            shape = image_data.shape
+            image_data = np.reshape(image_data,[shape[2],shape[0],shape[1]])
+            image_data = np.transpose(image_data,[1,2,0])
+            
+            # 读取元数据
+            metadata = {}
+            if tif.pages[0].description:
+                try:
+                    metadata = json.loads(tif.pages[0].description)
+                except json.JSONDecodeError:
+                    metadata['raw_description'] = tif.pages[0].description
+            
+            return MCITIFF(image_data,metadata)
 
     
     @staticmethod
-    def write(file_path,data,metadata=None,fmt='jpg'):
+    def write(file_path,data,metadata=None,*args,**kwargs):
         '''
         data: [H,W,C]
         fmt: raw/jpg
         '''
 
-        if fmt not in ['raw','jpg']:
-            print(colorama.Fore.YELLOW+f"WARNING: MCI: unknow save fmt {fmt}, use default jpg.")
-            fmt = 'jpg'
 
-        if fmt == 'raw':
-            imgs = data
-        else:
-            imgs = []
-            for i in range(data.shape[2]):
-                img = data[:,:,i]
-                img = bwmli.encode_img(img)
-                imgs.append(img)
-        datas = {'shape':data.shape,'imgs':imgs}
-        if metadata is not None:
-            metadata = dict(metadata)
-            metadata['fmt'] = fmt
-        else:
-            metadata = {'fmt':fmt}
-
-        datas['metadata'] = metadata
-        
         dir_path = osp.dirname(file_path)
         os.makedirs(dir_path,exist_ok=True)
-        with open(file_path,"wb") as f:
-            pickle.dump(datas,f)
+        if metadata is None:
+            metadata = {}
+        metadata['shape'] = data.shape
+
+        data = np.transpose(data,[2,0,1])
+        if metadata is not None:
+            metadata_json = json.dumps(metadata, indent=2)
+        else:
+            metadata_json = None
+
+        data = np.ascontiguousarray(data)
+    
+        tifffile.imwrite(
+            file_path, 
+            data, 
+            shape=data.shape,
+            description=metadata_json,
+            compression='lzw',
+            software='WML MCITIFF Writer'
+        )
+    
+
 
     def save(self,file_path,fmt="jpg"):
         '''
         fmt: jpg/raw
         '''
-        MCI.write(file_path,self.data,metadata=self.metadata,fmt=fmt)
+        MCITIFF.write(file_path,self.data,metadata=self.metadata,fmt=fmt)
     
     @staticmethod
     def get_img_size(file_path):
@@ -148,7 +141,7 @@ class MCI:
     
         cur_img = copy.deepcopy(cur_img[rect[0]:rect[2],rect[1]:rect[3]])
 
-        return MCI(cur_img,self.metadata)
+        return MCITIFF(cur_img,self.metadata)
 
 
 

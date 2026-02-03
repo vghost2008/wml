@@ -129,7 +129,7 @@ if __name__ == "__main__":
             raw_img = img.copy()
 
         if boxes is not None:
-            img = odv.draw_bboxes(
+            img = odv.draw_bboxes_xy(
                 img=img, classes=category_names, scores=None, 
                 bboxes=boxes, 
                 color_fn=None,
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         if binary_masks is not None:
             if r is not None:
                 binary_masks = binary_masks.resize(img.shape[:2][::-1])
-            img = odv.draw_maskv2(img,category_names,boxes,binary_masks,is_relative_coordinate=False,fill=True)
+            img = odv.draw_maskv2_xy(img,category_names,boxes,binary_masks,is_relative_coordinate=False,fill=True)
         if args.suffix is not None and len(args.suffix)>0:
             r_filename = osp.splitext(filename)[0]
             save_path = osp.join(args.out_dir,r_filename+args.suffix+osp.splitext(full_path)[-1])

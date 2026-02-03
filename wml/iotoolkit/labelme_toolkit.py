@@ -39,7 +39,7 @@ class LabelMeData(LabelMeBase):
         :return: 
         full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
         binary_masks:[N,H,W],全图
-        bboxes:[N,4] (ymin,xmin,ymax,xmax)
+        bboxes:[N,4] (xmin,ymin,xmax,ymax)
         '''
         img_file, json_file = self.files[idx]
         image, annotations_list = read_labelme_data(json_file, None,mask_on=self.mask_on,use_semantic=True,

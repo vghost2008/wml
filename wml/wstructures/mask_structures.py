@@ -24,10 +24,13 @@ class WPolygonMaskItem:
         example:
         [np.zeros(3,2),np.zeros(11,2)]
         '''
-        for p in points:
+        self.points = [] 
+        for p in points:# shape of p is [Ni,2]
+            if len(p.shape)==3 and p.shape[1]==1:
+                p = np.squeeze(p,axis=1)
             if len(p.shape)!=2 or p.shape[1]!=2:
-                raise RuntimeError(f"ERROR: error polygon mask item points, p shape {p.shape}, expected [N,2]")
-        self.points = [p.copy().astype(np.int32) for p in points] # shape of p is [Ni,2]
+                raise RuntimeError(f"ERROR: mask_structures: error polygon mask item points, p shape {p.shape}, expected [N,2]")
+            self.points.append(p.copy().astype(np.int32))
         self.width = width
         self.height = height
 

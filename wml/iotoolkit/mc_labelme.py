@@ -16,15 +16,17 @@ from .common import *
 from .labelme_toolkit_fwd import *
 from wml.semantic.structures import *
 from .labelme_base import LabelMeBase
+from .labelme_toolkit import LabelMeData
 import glob
 
-class FastLabelMeData(LabelMeBase):
+class MCLabelMe(LabelMeBase):
     '''
-    与LabelMeData的区别为生成的Mask使用多边形的方式保存
+    与LabelMeData的区别为使用多通道数据
     '''
-    def __init__(self,label_text2id=None,shuffle=True,absolute_coord=True,
+    def __init__(self,channel_names=[],allow_miss_channel=False,label_text2id=None,shuffle=True,absolute_coord=True,
                  filter_empty_files=False,
                  resample_parameters=None,
+                 use_polygon_mask=False,
                  read_data_kwargs={'circle_points_nr':20},**kwargs):
         '''
         label_text2id: func(name)->int
@@ -34,25 +36,64 @@ class FastLabelMeData(LabelMeBase):
                          absolute_coord=absolute_coord,
                          filter_empty_files=filter_empty_files,
                          resample_parameters=resample_parameters,
+                         use_polygon_mask=use_polygon_mask,
                          read_data_kwargs=read_data_kwargs,**kwargs)
-        
+        self.channel_names = channel_names
+        self.allow_miss_channel = allow_miss_channel
+
+    def find_files_in_dir(self,dir_path,img_suffix=wmli.BASE_IMG_SUFFIX):
+        dirs = wmlu.get_leaf_dirs(dir_path)
+        img_dirs = []
+        json_files = []
+        for d in dirs:
+            t_img_files = []
+            t_json_files = []
+            t_nr = 0
+
+            for cn in self.channel_names:
+                ip = osp.join(d,"IMG_"+cn+".jpg")
+                if osp.exists(ip):
+                    t_img_files.append(ip)
+                    jp = wmlu.change_suffix(ip,"json")
+                    if osp.exists(jp):
+                        t_json_files.append(jp)
+                    t_nr += 1
+                else:
+                    t_img_files.append(None)
+
+            if t_nr==0:
+                continue
+            elif len(t_json_files)==0:
+                continue
+            elif self.allow_miss_channel or (len(t_img_files)==len(self.channel_names)):
+                img_dirs.append(t_img_files)
+                json_files.append(t_json_files)
+
+        return img_dirs,json_files
+
     def __getitem__(self,idx):
         '''
         :return: 
         full_path,img_size,category_ids,category_names,boxes,binary_masks,area,is_crowd,num_annotations_skipped
         binary_masks:[N,H,W]
-        bboxes:[N,4] (xmin,ymin,xmax,ymax)
+        bboxes:[N,4] (ymin,xmin,ymax,xmax)
         '''
-        img_file, json_file = self.files[idx]
-        image, annotations_list = read_labelme_data(json_file, None,mask_on=self.mask_on,use_semantic=True,use_polygon_mask=True,
+        img_file, json_files = self.files[idx]
+        annotations_list = []
+        for json_file in json_files:
+            image, t_annotations_list = read_labelme_data(json_file, None,mask_on=self.mask_on,use_semantic=True,use_polygon_mask=self.fast_mode,
                                                     **self.read_data_kwargs)
+            annotations_list.extend(t_annotations_list)
         labels_names,bboxes = get_labels_and_bboxes(image,annotations_list,is_relative_coordinate=not self.absolute_coord)
         masks = [ann["segmentation"] for ann in annotations_list] if self.mask_on else None
         difficult = np.array([v['difficult'] for v in annotations_list],dtype=bool)
         img_height = image['height']
         img_width = image['width']
         if masks is not None:
-            masks = WPolygonMasks(masks,width=img_width,height=img_height)
+            if self.fast_mode:
+                masks = WPolygonMasks(masks,width=img_width,height=img_height)
+            else:
+                mask = WBitmapMasks()
         
         if self.label_text2id is not None:
             try:
