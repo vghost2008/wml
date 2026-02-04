@@ -794,6 +794,7 @@ class ClsPrecisionAndRecall(BaseMetrics):
             return
         self.precision = self.tp/max(self.fp+self.tp,1)
         self.recall = self.tp/max(self.fn+self.tp,1)
+        self.correct = self.tp/max(self.fn+self.tp+self.fp,1)
 
     @property
     def f1(self):
@@ -817,7 +818,7 @@ class ClsPrecisionAndRecall(BaseMetrics):
             return "N.A."
 
     def __repr__(self):
-        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1:.3f}"
+        res = f"total test nr {self.total_test_nr}, precision {self.precision:.3f}, recall {self.recall:.3f}, f1 {self.f1:.3f}, correct {self.correct}"
         return res
 
 @METRICS_REGISTRY.register()

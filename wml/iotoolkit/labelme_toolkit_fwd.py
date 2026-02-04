@@ -291,6 +291,19 @@ def read_labelme_data(file_path,label_text_to_id=None,mask_on=True,use_semantic=
     else:
         raise RuntimeError(f"ERROR: error return type {return_type}")
 
+
+def read_labelme2detdata(file_path,label_text_to_id=None,mask_on=True,use_semantic=True,
+                      use_polygon_mask=False,
+                      circle_points_nr=20,
+                      do_raise=False):
+    return read_labelme_data(file_path=file_path,
+                             label_text_to_id=label_text_to_id,mask_on=mask_on,
+                             use_semantic=use_semantic,
+                             use_polygon_mask=use_polygon_mask,
+                             circle_points_nr=circle_points_nr,
+                             do_raise=do_raise,
+                             return_type=1)
+
 def read_labelme2detbboxes(file_path,label_text_to_id=None,mask_on=True,use_semantic=True,
                       use_polygon_mask=True,
                       circle_points_nr=20,
@@ -302,7 +315,7 @@ def read_labelme2detbboxes(file_path,label_text_to_id=None,mask_on=True,use_sema
                              use_polygon_mask=use_polygon_mask,
                              circle_points_nr=circle_points_nr,
                              do_raise=do_raise,
-                             return_type=1)
+                             return_type=2)
 
 def save_labelme_data(file_path,image_path,image=None,annotations_list=[],label_to_text=lambda x:str(x)):
     '''
