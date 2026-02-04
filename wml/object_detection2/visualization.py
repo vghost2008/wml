@@ -8,7 +8,7 @@ from wml.basic_data_def import COCO_JOINTS_PAIR,colors_tableau ,colors_tableau_l
 from wml.basic_data_def import DEFAULT_COLOR_MAP as _DEFAULT_COLOR_MAP
 #import .bboxes as odb
 from .bboxes import npchangexyorder
-from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem, WMLines, WMLinesItem
+from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypointsItem, WMLines, WMLinesItem,DetBboxesData,detbboxesdata2detdata
 import math
 import wml.basic_img_utils as bwmli
 from .basic_visualization import *
@@ -548,6 +548,28 @@ def draw_bboxes_and_maskv2(img,classes,scores=None,bboxes=None,masks=None,
     return img
 
 
+def draw_detdata(img,detdata,color_fn=fixed_color_large_fn,
+                           text_fn=default_text_fn,
+                           thickness=4,
+                           show_text=False,
+                           is_relative_coordinate=True,
+                           font_scale=0.8,
+                           draw_mask=True):
+    if isinstance(detdata,DetBboxesData):
+        detdata = detbboxesdata2detdata(detdata)
+    
+    path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data = detdata
+    if bboxes is not None:
+        img = draw_bboxes_xy(img,
+                         classes=labels,
+                         bboxes=bboxes,
+                         is_crowd=is_crowd,
+                         text_fn=text_fn)
+    if draw_mask and masks is not None:
+        img = draw_maskv2_xy(img,classes=labels,bboxes=bboxes,masks=masks)
+
+    return 
+    
 
 def draw_heatmap_on_image(image,scores,color_pos=(255,0,0),color_neg=(0,0,0),alpha=0.4):
     '''

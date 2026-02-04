@@ -74,6 +74,7 @@ class MCI:
                 fmt = metadata.get('fmt',"jpg")
             else:
                 fmt = 'jpg'
+                metadata = {}
 
             if fmt.lower() == "raw":
                 datas = data['imgs']
@@ -83,7 +84,7 @@ class MCI:
                     datas.append(d)
                 datas = np.stack(datas,axis=-1)
 
-            return datas
+            return MCI(datas,metadata)
 
     
     @staticmethod

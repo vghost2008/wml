@@ -1,6 +1,10 @@
 #coding=utf-8
 import numpy as np
 import math
+from wml.wstructures.detdata import DetBboxesData,DetData
+from wml.semantic.mask_utils import resize_mask_structures
+from collections.abc import Iterable
+
 
 '''
 bboxes:[X,4], ymin,xmin,ymax,xmax, relative coordinate
@@ -359,3 +363,55 @@ def bboxes_filter(bboxes,labels, probs,threshold=0.5):
     if not isinstance(probs,np.ndarray):
         probs = np.array(probs)
     return bboxes[idxes],labels[idxes],probs[idxes],idxes
+
+def resize_detbboxesdata(detdata,r=None,new_shape=None,old_shape=None):
+    assert r is None or new_shape is None,f"npod_toolkit:r or new_shape must to be None"
+    if old_shape is None:
+        old_shape = list(detdata.img_shape[:2])[::-1]
+    if r is not None:
+        if not isinstance(r,Iterable):
+            r = np.array([r,r],np.float32)
+        new_shape = (r*np.array(old_shape)).astype(np.int32)
+    else:
+        r = np.array(new_shape[:2],dtype=np.float32)/np.array(old_shape[:2],dtype=np.float32)
+    
+    path,img_shape,labels,bboxes,is_crowd = detdata
+
+    bboxes = bboxes*np.stack([r,r],axis=0)
+
+    detdata = detdata._replace(bboxes=bboxes)
+
+    return detdata
+
+def resize_detdata(detdata,r=None,new_shape=None,old_shape=None):
+    '''
+    r: [wr,hr] or scale
+    new_shape: [W,H]
+    old_shape: [W,H]
+    '''
+    assert r is None or new_shape is None,f"npod_toolkit:r or new_shape must to be None"
+    if isinstance(detdata,DetBboxesData):
+        return resize_detbboxesdata(detdata,r,new_shape,old_shape)
+
+    if old_shape is None:
+        old_shape = list(detdata.img_shape[:2])[::-1]
+    if r is not None:
+        if not isinstance(r,Iterable):
+            r = np.array([r,r],np.float32)
+        new_shape = (r*np.array(old_shape)).astype(np.int32)
+    else:
+        r = np.array(new_shape[:2],dtype=np.float32)/np.array(old_shape[:2],dtype=np.float32)
+    
+    path,img_shape,labels,labels_name,bboxes,masks,area,is_crowd,extra_data = detdata
+
+    bboxes = bboxes*np.stack([r,r],axis=0)
+    masks = resize_mask_structures(masks,new_shape)
+
+    detdata =detdata._replace(bboxes=bboxes)
+    detdata =detdata._replace(masks=masks)
+
+    return detdata
+        
+        
+    
+

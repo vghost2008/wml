@@ -540,6 +540,8 @@ def resize_imgv3(img,size,interpolation=cv2.INTER_LINEAR,return_scale=False,alig
     '''
     size: (w,h)
     '''
+    if not isinstance(img,np.ndarray) and hasattr(img,'data'):
+        img = img.data
     old_shape = img.shape
     img = resize_img(img,size,keep_aspect_ratio=keep_aspect_ratio,interpolation=interpolation)
 
