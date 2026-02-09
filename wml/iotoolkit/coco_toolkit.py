@@ -97,8 +97,8 @@ class COCOData:
                 print(
                     'Found groundtruth annotations. Building annotations index.')
                 for annotation in groundtruth_data['annotations']:
+                    category_id = annotation['category_id']
                     if self.trans_label is not None:
-                        category_id = annotation['category_id']
                         new_category_id = self.trans_label(category_id)
                         if new_category_id is None:
                             continue
@@ -291,7 +291,7 @@ class COCOData:
                     binary_mask = np.amax(binary_mask, axis=2)
                 binary_masks.append(binary_mask)
 
-        boxes = np.array(list(zip(ymin,xmin,ymax,xmax)),dtype=np.float32)
+        boxes = np.array(list(zip(xmin,ymin,xmax,ymax)),dtype=np.float32)
 
         if len(binary_masks)>0:
             binary_masks = np.stack(binary_masks,axis=0)

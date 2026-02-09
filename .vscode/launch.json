@@ -156,11 +156,12 @@
             "type": "python",
             "justMyCode": false,
             "request": "launch",
-            "program": "wml/datasets_trans/trans_labelme_to_cityscapes.py",
+            "program": "wml/datasets_trans/trans_coco_to_voc.py",
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
             //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
-            "args":["~/ai/mldata1/0day/a" "~/ai/mldata1/0day/c"],
+            //"args":["~/ai/mldata1/0day/a" "~/ai/mldata1/0day/c"],
+            "args":["/home/wj/ai/mldata1/coco/annotations/instances_val2017.json" "/home/wj/ai/mldata1/0day/coco"],
         },
         {
             "name": "Python: change label",
