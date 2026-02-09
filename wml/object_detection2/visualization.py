@@ -118,6 +118,8 @@ def draw_bboxes(img, classes=None, scores=None, bboxes=None,
                         is_show_text=None,
                         fill_bboxes=False,
                         is_crowd=None):
+    if not isinstance(img,np.ndarray) and hasattr(img,'data'):
+        img = img.data
     if bboxes is None:
         return img
 

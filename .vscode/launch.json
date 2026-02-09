@@ -118,7 +118,8 @@
             //"args":["/home/wj/ai/mldata1/B11ACT/datas/train_s0" "/home/wj/ai/mldata1/B11ACT/tmp/view" "--type" "LabelMeData"],
             //"args":["~/ai/mldata1/B10CF/datasets/testv1.0/" "~/ai/mldata1/B10CF/tmp/view" "--type" "LabelMeData"],
             //"args":["/home/wj/ai/mldata1/B17MDL/tmp/trans_file" "/home/wj/ai/mldata1/B17MDL/tmp/trans_file_view"],
-            "args":["/home/wj/ai/mldata1/B17MDL/tmp/trans_file_cut" "/home/wj/ai/mldata1/B17MDL/tmp/trans_file_cut_view0" "--new-width" "1024"],
+            //"args":["/home/wj/ai/mldata1/B17MDL/tmp/trans_file_cut" "/home/wj/ai/mldata1/B17MDL/tmp/trans_file_cut_view0" "--new-width" "1024"],
+            "args":["~/ai/mldata1/B17MDL/datasets/datasetv3.0/val"  "~/ai/mldata1/0day/b17mdl"],
         },
         {
             "name": "Python: view kps dataset",
