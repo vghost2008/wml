@@ -18,6 +18,7 @@ from wml.iotoolkit.object365v2_toolkit import Object365V2
 from wml.object_detection2.data_process_toolkit import remove_class
 from wml.walgorithm import lower_bound
 import copy
+from wml.iotoolkit.common import have_regexp
 
 class DictDatasetReader:
 
@@ -41,6 +42,7 @@ class DictDatasetReader:
 ratio: h/w
 '''
 def statistics_boxes(boxes,nr=100,name=""):
+    name = str(name)
     sizes = [math.sqrt((x[2]-x[0])*(x[3]-x[1])) for x in boxes]
     sizes1 = [math.fabs(x[2]-x[0]) for x in boxes] + [math.fabs(x[3]-x[1]) for x in boxes]
     ratios = [(x[2]-x[0])/(x[3]-x[1]+1e-8) for x in boxes]
@@ -224,8 +226,17 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     if labels is None:
         labels = []
 
+    if have_regexp(labels):
+        use_ids = True
+    else:
+        use_ids = False
+
     for data in datas:
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
+        raw_labels_text = copy.deepcopy(labels_text)
+        if use_ids:
+            labels_text = category_ids
+
         total_file_nr += 1
         if is_crowd is not None:
             is_crowd = np.array(is_crowd).astype(np.int32)
@@ -315,11 +326,15 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
 
     print(f"Total bboxes count {total_nr}")
     print("\n--->BBoxes count:")
-    for k in labels:
-        if k not in labels_counter_dict:
+    for idx,k in enumerate(labels):
+        if use_ids:
+            lck = idx
+        else:
+            lck = k
+        if lck not in labels_counter_dict:
             v = 0 
         else:
-            v = labels_counter_dict[k]
+            v = labels_counter_dict[lck]
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
     print("")
     for k,v in labels_counter:
@@ -335,11 +350,15 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     print("\n--->File count:")
     label_file_count_l= list(label_file_count.items())
     label_file_count_l.sort(key=lambda x:x[1],reverse=True)
-    for k in labels:
-        if k not in label_file_count:
+    for idx,k in enumerate(labels):
+        if use_ids:
+            lck = idx
+        else:
+            lck = k
+        if lck not in label_file_count:
             v = 0 
         else:
-            v = label_file_count[k]
+            v = label_file_count[lck]
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
     print("")
     for k,v in label_file_count_l:
@@ -466,7 +485,11 @@ def coco2014_val_dataset():
     return data.get_items()
 
 def labelme_dataset(data_dir,labels=None):
-    data = FastLabelMeData(label_text2id=None,absolute_coord=True)
+    if labels is not None and len(labels)>0:
+        label_text2id = dict(zip(labels,count()))
+    else:
+        label_text2id = None
+    data = FastLabelMeData(label_text2id=label_text2id,absolute_coord=True)
     data.read_data(data_dir,img_suffix=wmli.BASE_IMG_SUFFIX)
     return data.get_items()
 

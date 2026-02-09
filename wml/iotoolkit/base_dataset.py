@@ -2,7 +2,7 @@ import random
 import os
 import os.path as osp
 import wml.wml_utils as wmlu
-from .common import resample,ignore_case_dict_label_text2id
+from .common import resample,ignore_case_dict_label_text2id,regex_dict_label_text2id,trans_dict2repattern,have_regexp
 from abc import ABCMeta, abstractmethod
 from functools import partial
 
@@ -27,7 +27,11 @@ class BaseDataset(metaclass=ABCMeta):
             if not self.filter_empty_files and not self.filter_error and min(list(label_text2id.values()))<0:
                 wmlu.print_error(f"error text2label min value is less than 0, force set filter_error to True")
                 self.filter_error = True
-            self.label_text2id = partial(ignore_case_dict_label_text2id,
+            if have_regexp(label_text2id.keys()):
+                self.label_text2id = partial(regex_dict_label_text2id,
+                    dict_data=trans_dict2repattern(label_text2id))
+            else:
+                self.label_text2id = partial(ignore_case_dict_label_text2id,
                     dict_data=wmlu.trans_dict_key2lower(label_text2id))
         else:
             self.label_text2id = label_text2id

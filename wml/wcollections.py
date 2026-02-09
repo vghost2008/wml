@@ -2,6 +2,7 @@ import numpy as np
 import random
 import copy
 from collections import abc
+import re
 
 
 class ExperienceBuffer():
@@ -180,6 +181,8 @@ def trans_dict_key2lower(data):
     for k,v in data.items():
         res[k.lower()] = v
     return res
+
+
 
 def is_seq_of(seq, expected_type, seq_type=None):
     """Check whether it is a sequence of some type.

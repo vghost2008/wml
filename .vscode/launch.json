@@ -148,7 +148,8 @@
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
             //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
-            "args":["~/ai/mldata1/B17MDL/labeled_data,~/ai/mldata1/B17MDL/labeled_data2"]
+            //"args":["~/ai/mldata1/B17MDL/labeled_data,~/ai/mldata1/B17MDL/labeled_data2"]
+            "args":["~/ai/mldata1/B17MDL/datasets/datasetv3.0/val" "--labels" "L.*" "M.*"]
         },
         {
             "name": "Python: trans dataset",

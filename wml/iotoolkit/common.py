@@ -6,6 +6,7 @@ import os.path as osp
 import glob
 from wml.wstructures.detdata import *
 import traceback
+import re
 
 
 def __get_resample_nr(labels,resample_parameters):
@@ -50,18 +51,41 @@ def get_shape_from_img(xml_path,img_path):
 
 def ignore_case_dict_label_text2id(name,info="",dict_data={}):
     name = name.lower()
-    if name not in dict_data:
-        wmlu.print_warning(f"{info}: trans {name} faild in ignore_case_dict_label_text2id.")
     v = dict_data.get(name,None)
     if isinstance(v,(str,bytes)) and v.lower() in dict_data:
-        return ignore_case_dict_label_text2id(v.lower(), info,dict_data)
-    else:
-        return v
+        v = ignore_case_dict_label_text2id(v.lower(), info,dict_data)
+    if v is None:
+        wmlu.print_warning(f"{info}: trans {name} faild in ignore_case_dict_label_text2id.")
+    return v
 
 def dict_label_text2id(name,info="",dict_data={}):
     if name not in dict_data:
         wmlu.print_warning(f"{info}: trans {name} faild in dict_label_text2id.")
     return dict_data.get(name,None)
+
+def regex_dict_label_text2id(name,info="",dict_data={}):
+    name = name.lower()
+    v = dict_data.get(name,None)
+    if isinstance(v,(str,bytes)) and v.lower() in dict_data:
+        v = regex_dict_label_text2id(v.lower(), info,dict_data)
+    elif v is None:
+        for k,tv in dict_data.items():
+            try:
+                if not isinstance(k,(str,bytes)):
+                    d = k.fullmatch(name)
+                    if d is not None:
+                        if isinstance(tv,int):
+                            v = tv
+                        elif isinstance(tv,(str,bytes)) and tv.lower() in dict_data:
+                            v = regex_dict_label_text2id(tv.lower(), info,dict_data)
+                        break
+            except:
+                pass
+
+    if v is None:
+        wmlu.print_warning(f"{info}: trans {name} faild in ignore_case_dict_label_text2id.")
+    
+    return v
 
 def find_imgs_for_ann_file(ann_path):
     ann_path = osp.abspath(ann_path)
@@ -126,3 +150,20 @@ def get_ann_file_path(img_file,suffix):
         if osp.exists(candidate_path):
             return candidate_path
     return json_file
+
+def trans_dict2repattern(data):
+    res = type(data)()
+    for k,v in data.items():
+        if "." in k or "*" in k or "?" in k or "}" in k:
+            k = re.compile(k.lower())
+        else:
+            k = k.lower()
+        res[k] = v
+    return res
+
+def have_regexp(data_list):
+    for k in data_list:
+        if "." in k or "*" in k or "?" in k or "}" in k:
+            return True
+    
+    return False
