@@ -51,11 +51,12 @@ def get_shape_from_img(xml_path,img_path):
 
 def ignore_case_dict_label_text2id(name,info="",dict_data={}):
     name = name.lower()
-    v = dict_data.get(name,None)
+    v = dict_data.get(name,-2)
     if isinstance(v,(str,bytes)) and v.lower() in dict_data:
         v = ignore_case_dict_label_text2id(v.lower(), info,dict_data)
-    if v is None:
+    if isinstance(v,int) and v < -1:
         wmlu.print_warning(f"{info}: trans {name} faild in ignore_case_dict_label_text2id.")
+        v = None
     return v
 
 def dict_label_text2id(name,info="",dict_data={}):
@@ -65,10 +66,10 @@ def dict_label_text2id(name,info="",dict_data={}):
 
 def regex_dict_label_text2id(name,info="",dict_data={}):
     name = name.lower()
-    v = dict_data.get(name,None)
+    v = dict_data.get(name,-2)
     if isinstance(v,(str,bytes)) and v.lower() in dict_data:
         v = regex_dict_label_text2id(v.lower(), info,dict_data)
-    elif v is None:
+    elif isinstance(v,int) and v < -1:
         for k,tv in dict_data.items():
             try:
                 if not isinstance(k,(str,bytes)):
@@ -82,8 +83,9 @@ def regex_dict_label_text2id(name,info="",dict_data={}):
             except:
                 pass
 
-    if v is None:
+    if isinstance(v,int) and v < -1:
         wmlu.print_warning(f"{info}: trans {name} faild in ignore_case_dict_label_text2id.")
+        v = None
     
     return v
 

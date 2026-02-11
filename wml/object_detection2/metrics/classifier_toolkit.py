@@ -317,19 +317,26 @@ class ConfusionMatrix(BaseClassifierMetrics):
         res = "\n"
         if self.classes is None:
             self.classes = [f"C{i}" for i in range(self.num_classes)]
-        res += f"{' ':<10},"
+        tmp = 'GT\Pred'
+        res += f"|{tmp:<10}|"
         print(f"Num classes: {self.num_classes}, classes {self.classes}")
         for i in range(self.num_classes):
-            res += f"{self.classes[i]:>5}, "
+            res += f"{self.classes[i]:>5}| "
         res += "\n"
+
+        res+= "|---|"
         for i in range(self.num_classes):
-            line = f"{self.classes[i]:<10},"
+            res += "---|"
+        res += "\n"
+
+        for i in range(self.num_classes):
+            line = f"|{self.classes[i]:<10}|"
             for j in range(self.num_classes):
                 if blod and i==j:
                     #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
-                    line += f"{self.cm[i,j]:<4}*, "
+                    line += f"{self.cm[i,j]:<4}*| "
                 else:
-                    line += f"{self.cm[i,j]:<5}, "
+                    line += f"{self.cm[i,j]:<5}| "
             res += line+"\n"
         return res
 

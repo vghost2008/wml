@@ -209,7 +209,7 @@ def trans_img_long_size_to(img_size,long_size=512):
     return [x*scale for x in img_size]
 
 def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_to_remove=None,max_aspect=None,absolute_size=False,
-                                trans_img_size=None,labels=None,silent=False):
+                                trans_img_size=None,labels=None,silent=False,use_ids=None):
     all_boxes = []
     all_labels = []
     max_examples = 0
@@ -226,10 +226,11 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     if labels is None:
         labels = []
 
-    if have_regexp(labels):
-        use_ids = True
-    else:
-        use_ids = False
+    if use_ids is None:
+        if have_regexp(labels):
+            use_ids = True
+        else:
+            use_ids = False
 
     for data in datas:
         file, img_size,category_ids, labels_text, bboxes, binary_mask, area, is_crowd, _ = data
