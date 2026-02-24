@@ -98,6 +98,8 @@ def show_list(values,fmt=None,recurse=False,max_show_nr=None):
 def show_dict(values,format:str=None):
     print("{")
     for k,v in values.items():
+        if isinstance(k,str):
+            k = "\""+k+"\""
         if format is None:
             print(k,":",v,",")
         else:

@@ -74,11 +74,11 @@ if __name__ == "__main__":
         args.labels = read_classes(args)
         if len(args.labels)>0:
             print(f"Auto update labels to {args.labels}")
+
+    dlabels = None
     if args.labels is not None and len(args.labels)>0:
         if have_regexp(args.labels):
             dlabels = args.labels
-        else:
-            dlabels = None
     
 
     dataset_type = args.type

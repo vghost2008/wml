@@ -27,6 +27,57 @@ def concat(datas):
     return concat_detdata(datas)
 
 
+def detdata_remove_label_names(detdata,names2remove):
+    if not isinstance(names2remove,(list,tuple)):
+        names2remove = [names2remove]
+
+    keep = []
+    for l in detdata.labels_name:
+        if l in names2remove:
+            keep.append(False)
+        else:
+            keep.append(True)
+    keep = np.array(keep,dtype=bool)
+    labels = detdata.labels
+    if labels is not None and len(labels)>0:
+        labels = labels[keep]
+    labels_name = detdata.labels_name[keep]
+    bboxes = detdata.bboxes[keep]
+    masks = detdata.masks
+    if masks is not None and len(masks)>0:
+        masks = masks[keep]
+    area = detdata.area
+    if area is not None and len(area)>0:
+        area = area[keep]
+    is_crowd = detdata.is_crowd
+    if is_crowd is not None and len(is_crowd)>0:
+        is_crowd = is_crowd[keep]
+    detdata = detdata._replace(labels=labels,labels_name=labels_name,bboxes=bboxes,masks=masks,area=area,is_crowd=is_crowd)
+
+    return detdata
+
+def detbboxes_remove_label_names(detdata,names2remove):
+    if not isinstance(names2remove,(list,tuple)):
+        names2remove = [names2remove]
+
+    keep = []
+    for l in detdata.labels:
+        if l in names2remove:
+            keep.append(False)
+        else:
+            keep.append(True)
+    keep = np.array(keep,dtype=bool)
+    labels = np.array(detdata.labels)
+    if labels is not None and len(labels)>0:
+        labels = labels[keep]
+    bboxes = detdata.bboxes[keep]
+    is_crowd = detdata.is_crowd
+    if is_crowd is not None and len(is_crowd)>0:
+        is_crowd = np.array(is_crowd)[keep]
+    detdata = detdata._replace(labels=labels,bboxes=bboxes,is_crowd=is_crowd)
+
+    return detdata
+
 def concat_detdata(datas):
     if len(datas) == 0:
         return datas
