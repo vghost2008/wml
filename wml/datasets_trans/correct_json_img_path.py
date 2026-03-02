@@ -17,7 +17,7 @@ def trans_data(ann_dir):
         try:
             with open(json_path,"r") as f:
                 data = json.load(f)
-            json_img_path = data['imagePath']
+            json_img_path = data.get('imagePath',"")
             if json_img_path  == osp.basename(img_path):
                 print(f"OK: {json_path} {data['imagePath']}")
                 continue

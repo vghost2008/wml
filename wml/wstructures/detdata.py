@@ -62,7 +62,7 @@ def detbboxes_remove_label_names(detdata,names2remove):
 
     keep = []
     for l in detdata.labels:
-        if l in names2remove:
+        if l.strip() in names2remove:
             keep.append(False)
         else:
             keep.append(True)

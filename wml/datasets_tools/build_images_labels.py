@@ -36,14 +36,20 @@ if __name__ == "__main__":
     print(f"Save dir:",img_save_dir,json_save_dir)
 
     for imgf,annf in files:
-        bn = wmlu.get_relative_path(imgf,args.src_dir)
+        if 'labels' in annf:
+            bn = osp.basename(imgf)
+        else:
+            bn = wmlu.get_relative_path(imgf,args.src_dir)
         print(bn,imgf,args.src_dir)
         save_path = osp.join(img_save_dir,bn)
         dir_path = osp.dirname(save_path)
         os.makedirs(dir_path,exist_ok=True)
         shutil.copy(imgf,save_path)
 
-        bn = wmlu.get_relative_path(annf,args.src_dir)
+        if 'labels' in annf:
+            bn = osp.basename(annf)
+        else:
+            bn = wmlu.get_relative_path(annf,args.src_dir)
         save_path = osp.join(json_save_dir,bn)
         dir_path = osp.dirname(save_path)
         os.makedirs(dir_path,exist_ok=True)

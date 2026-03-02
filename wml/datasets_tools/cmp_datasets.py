@@ -170,7 +170,7 @@ if __name__ == "__main__":
         print(DATASETS,args.type)
         dataset_type = DATASETS[args.type]
     label_text2id = None
-    '''
+'''
     label_text2id = {
 "Line" : 0 ,
 "Point" : 1 ,
