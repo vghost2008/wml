@@ -37,6 +37,7 @@ def parse_args():
         '--view-nr', type=int, default=-1, help='view dataset nr.')
     parser.add_argument('--suffix', type=str, default="_view",help='suffix to output')
     parser.add_argument(
+        '-ci',
         '--copy-imgs',
         action='store_true',
         help='whether copy raw img to target')
@@ -90,6 +91,7 @@ if __name__ == "__main__":
     else:
         print(DATASETS,args.type)
         dataset_type = DATASETS[args.type]
+    print(dataset_type)
     data = dataset_type(label_text2id=None,shuffle=shuffle,absolute_coord=True)
     data.read_data(args.src_dir,img_suffix=args.ext)
 

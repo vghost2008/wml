@@ -1916,7 +1916,7 @@ class DetConfusionMatrix(BaseMetrics):
         self.pred_labels = []
         self.gt_labels = []
         if classes is not None:
-            classes = list(classes)+["BackGround"]
+            classes = list(classes)+["B.G."]
         self.classes = classes
         self.kernel = ConfusionMatrix(num_classes=self.num_classes+1,classes=classes)
         self.image_id = 0

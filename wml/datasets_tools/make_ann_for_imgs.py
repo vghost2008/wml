@@ -37,6 +37,8 @@ def make_json_for_imgs(img_dir,ann_type="json"):
     all_img_files = get_all_imgs(img_dir)
     for file in all_img_files:
         save_path = wmlu.change_suffix(file,"json")
+        if "false" not in save_path.lower():
+            continue
         if osp.exists(save_path):
             print(f"Skip {save_path}")
             continue

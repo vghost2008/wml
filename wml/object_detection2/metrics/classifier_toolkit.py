@@ -313,7 +313,8 @@ class ConfusionMatrix(BaseClassifierMetrics):
             res += line+"\n"
         return res
 
-    def to_string(self,blod=True):
+    '''
+    def to_string_old(self,blod=True):
         res = "\n"
         if self.classes is None:
             self.classes = [f"C{i}" for i in range(self.num_classes)]
@@ -337,6 +338,37 @@ class ConfusionMatrix(BaseClassifierMetrics):
                     line += f"{self.cm[i,j]:<4}*| "
                 else:
                     line += f"{self.cm[i,j]:<5}| "
+            res += line+"\n"
+        return res
+    '''
+
+    def to_string(self,blod=True):
+        res = "\n"
+        if self.classes is None:
+            self.classes = [f"C{i}" for i in range(self.num_classes)]
+        tmp = 'GT\Pred(%)'
+        res += f"|{tmp:<16}|"
+        print(f"Num classes: {self.num_classes}, classes {self.classes}")
+        for i in range(self.num_classes):
+            res += f"{self.classes[i]:>5}| "
+        res += "\n"
+
+        res+= "|---|"
+        for i in range(self.num_classes):
+            res += "---|"
+        res += "\n"
+
+        for i in range(self.num_classes):
+            cur_total = np.sum(self.cm[i])
+            tmp_str = f"{self.classes[i]}({cur_total})"
+            line = f"|{tmp_str:<16}|"
+            cur_total = max(cur_total,1)
+            for j in range(self.num_classes):
+                if blod and i==j:
+                    #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
+                    line += f"{self.cm[i,j]*100/cur_total:<4.1f}*| "
+                else:
+                    line += f"{self.cm[i,j]*100/cur_total:<5.1f}| "
             res += line+"\n"
         return res
 

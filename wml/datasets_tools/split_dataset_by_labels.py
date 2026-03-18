@@ -7,7 +7,7 @@ import random
 import time
 from wml.iotoolkit.pascal_voc_toolkit import read_voc_xml
 from wml.iotoolkit.labelme_toolkit import read_labelme_data
-from wml.iotoolkit import get_auto_dataset_suffix
+from wml.iotoolkit import get_auto_dataset_suffix, get_ann_file_path, get_img_file_path
 from wml.iotoolkit.image_folder import ImageFolder
 import wml.img_utils as wmli
 import shutil
@@ -106,10 +106,10 @@ if __name__ == "__main__":
 
     if not args.no_imgs:
         img_files = wmlu.get_files(args.src_dir,suffix=args.img_suffix)
-        ann_files = [wmlu.change_suffix(x,args.suffix) for x in img_files]
+        ann_files = [get_ann_file_path(x,args.suffix) for x in img_files]
     else:
         ann_files = wmlu.get_files(args.src_dir,suffix=args.suffix)
-        img_files = [wmlu.change_suffix(x,"jpg") for x in ann_files]
+        img_files = [get_img_file_path(x,"jpg") for x in ann_files]
     basenames = [wmlu.base_name(x) for x in img_files]
     if len(basenames) == len(set(basenames)):
         add_nr = False

@@ -160,6 +160,24 @@ def get_ann_file_path(img_file,suffix):
                 return candidate_path
     return json_file
 
+def get_img_file_path(ann_file,suffix="jpg"):
+    '''
+    suffix: jpg/bmp/...
+    '''
+    img_file = wmlu.change_suffix(ann_file, suffix)
+    if not osp.exists(img_file):
+        if "labels" in img_file:
+            candidate_path = img_file.replace("labels","images")
+            if osp.exists(candidate_path):
+                return candidate_path
+        else:
+            bn = osp.basename(img_file)
+            dir_path = osp.dirname(osp.dirname(img_file))
+            candidate_path = osp.join(dir_path,"images",bn)
+            if osp.exists(candidate_path):
+                return candidate_path
+    return img_file
+
 def trans_dict2repattern(data):
     res = type(data)()
     for k,v in data.items():

@@ -989,3 +989,46 @@ class GradScale(nn.Module):
     def forward(self, x):
         x = self.layer(x)
         return x
+
+def scaled_dot_product_attention(query, key, value, attn_mask=None, dropout_p=0.0, is_causal=False):
+    """
+    手动实现 scaled_dot_product_attention
+    参数说明:
+    - query: [batch_size, num_heads, seq_len_q, head_dim]
+    - key: [batch_size, num_heads, seq_len_k, head_dim]
+    - value: [batch_size, num_heads, seq_len_k, head_dim]
+    - attn_mask: [seq_len_q, seq_len_k] 或 [batch_size, seq_len_q, seq_len_k]
+    - dropout_p: dropout 概率
+    - is_causal: 是否启用因果掩码
+    """
+    #return F.scaled_dot_product_attention(query,key,value,attn_mask=attn_mask,dropout_p=dropout_p,is_causal=is_causal)
+    #if torch.__version_info__ > (2, 0):
+    #   return F.scaled_dot_product_attention(query,key,value,attn_mask=attn_mask,dropout_p=dropout_p,is_causal=is_causal)
+    # 获取维度
+    d_k = query.size(-1)
+    
+    # 计算注意力分数并缩放
+    scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
+    
+    # 应用因果掩码
+    if is_causal:
+        seq_len_q = query.size(-2)
+        seq_len_k = key.size(-2)
+        causal_mask = torch.tril(torch.ones(seq_len_q, seq_len_k, dtype=torch.bool))
+        scores = scores.masked_fill(causal_mask == 0, float('-inf'))
+    
+    # 应用注意力掩码
+    if attn_mask is not None:
+        scores = scores.masked_fill(attn_mask == 0, float('-inf'))
+    
+    # 应用 softmax 得到注意力权重
+    attn_weights = F.softmax(scores, dim=-1)
+    
+    # 应用 dropout
+    if dropout_p > 0.0:
+        attn_weights = F.dropout(attn_weights, p=dropout_p)
+    
+    # 加权求和得到输出
+    output = torch.matmul(attn_weights, value)
+    
+    return output
