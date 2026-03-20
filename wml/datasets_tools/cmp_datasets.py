@@ -57,7 +57,7 @@ def save_data(lh_data,rh_data,save_dir):
     save_one_data(rh_data,save_dir,"_1")
 
 def save_one_data(data,save_dir,suffix):
-    if save_dir is not None:
+    if save_dir is None:
         return
     full_path, shape, category_ids, category_names, boxes, binary_masks, area, is_crowd, num_annotations_skipped = data
     img = wmli.imread(full_path)
@@ -70,7 +70,7 @@ def save_one_data(data,save_dir,suffix):
     save_name = wmlu.base_name(full_path)+suffix
     suffix = osp.splitext(full_path)[-1]
     save_path = osp.join(save_dir,save_name+suffix)
-    wmli.imwrite_for_view(save_path,img)
+    wmli.imwrite_for_view(save_path,img,fps=None)
 
 
 def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_value=1,name2label=None,args=None,**kwargs):
@@ -82,6 +82,7 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
     :return:
     '''
     rh_ds_dict = {}
+    lh_ds_dict = {}
     rh_total_box_nr = 0
     lh_total_box_nr = 0
 
@@ -95,6 +96,7 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
 
     for i,data in enumerate(lh_ds):
         full_path, shape, category_ids, category_names, boxes, binary_masks, area, is_crowd, num_annotations_skipped = data
+        lh_ds_dict[os.path.basename(full_path)] = data
         [all_labels.add(name.lower()) for name in category_names]
     
     all_labels = list(all_labels)
@@ -119,6 +121,16 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
     total_same_nr = 0
     cmp_nr = 0
 
+    for i,data in enumerate(rh_ds):
+        full_path, shape, category_ids, category_names, boxes, binary_masks, area, is_crowd, num_annotations_skipped = data
+        lh_total_box_nr += len(category_names)
+
+        base_name = os.path.basename(full_path)
+        if base_name not in lh_ds_dict:
+            print(f"Error find {base_name} in lh_ds faild.")
+            save_one_data(data,osp.join(args.save_dir,"only_rhds"),suffix="")
+            continue
+
     for i,data in enumerate(lh_ds):
         full_path, shape, category_ids, category_names, boxes, binary_masks, area, is_crowd, num_annotations_skipped = data
         lh_total_box_nr += len(category_names)
@@ -126,6 +138,7 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
         base_name = os.path.basename(full_path)
         if base_name not in rh_ds_dict:
             print(f"Error find {base_name} in rh_ds faild.")
+            save_one_data(data,osp.join(args.save_dir,"only_lhds"),suffix="")
             continue
 
         cmp_nr += 1
@@ -142,7 +155,7 @@ def cmp_datasets(lh_ds,rh_ds,mask_on=False,model=COCOEvaluation,classes_begin_va
             total_same_nr += 1
         if args.save_dir is not None:
             if p<0.990 or r<0.99:
-                save_data(data,rh_data,args.save_dir)
+                save_data(data,rh_data,osp.join(args.save_dir,"diff"))
             else:
                 save_one_data(data,osp.join(args.save_dir,"same"),suffix="")
         kwargs['probability'] = np.ones([len(category_names)],np.float32)
