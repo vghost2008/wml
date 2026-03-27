@@ -15,6 +15,7 @@ import wml.wml_utils as wmlu
 from .build import METRICS_REGISTRY
 from .classifier_toolkit import ConfusionMatrix
 from .common import *
+from collections import OrderedDict
 
 
 def getF1(gtboxes,gtlabels,boxes,labels,threshold=0.5):
@@ -1466,7 +1467,7 @@ class ClassesWiseModelPerformace(BaseMetrics):
             except:
                 print("N.A.")
                 pass
-        self.classes_wise_results = {}
+        self.classes_wise_results = OrderedDict()
         sys.stdout.flush()
         print(f"---------------------------------------------------------------")
         print(f"All classes")
@@ -1484,11 +1485,15 @@ class ClassesWiseModelPerformace(BaseMetrics):
         str1 += "---|"
         str2 += f"{str(self.mp.to_string())}|"
 
+        self.classes_wise_results["ALL"] = str(self.mp.to_string())
+
         for i in range(self.num_classes):
-            classes_id = i+1
-            str0 += f"{self.classes[i]}|"
+            cur_classes_name = self.classes[i]
+            cur_value = str(self.data[i].to_string())
+            str0 += f"{cur_classes_name}|"
             str1 += "---|"
-            str2 += f"{str(self.data[i].to_string())}|"
+            str2 += f"{cur_value}|"
+            '''
             try:
                 keys = ['mAP', 'mAP (small)', 'mAP (medium)', 'mAP (large)']
                 if hasattr(self.data[i], "box_evaluator"):
@@ -1496,9 +1501,11 @@ class ClassesWiseModelPerformace(BaseMetrics):
                 else:
                     d = self.data[i].cached_values
                 values = [d[k] for k in keys]
-                self.classes_wise_results[classes_id] = values
+                self.classes_wise_results[cur_classes_name] = values
             except:
                 self.classes_wise_results[classes_id] = [-1.0]*len(keys)
+            '''
+            self.classes_wise_results[cur_classes_name] = cur_value
         print(str0)
         print(str1)
         print(str2)

@@ -266,7 +266,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         example_nrs.append(e_nr)
         max_examples = max(e_nr,max_examples)
         all_boxes.extend(bboxes)
-        all_labels.extend(labels_text)
+        all_labels.extend(labels_text) #用于bbox计数统计等
         for l,box in zip(labels_text,bboxes):
             if l in classeswise_boxes:
                 classeswise_boxes[l].append(box)
@@ -281,14 +281,15 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             else:
                 labels_to_file[l] = [file]
 
+        #统计文件计数
         for k in tmp_dict.keys():
             if k in label_file_count:
                 label_file_count[k] += 1
             else:
                 label_file_count[k] = 1
 
+    #按bbox统计
     labels_counter = {}
-    org_labels_counter = {}
     encoded_labels = []
     for _l in all_labels:
         l = label_encoder(_l)
@@ -297,10 +298,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             labels_counter[l] = labels_counter[l]+1
         else:
             labels_counter[l] = 1
-        if _l in org_labels_counter:
-            org_labels_counter[_l] = org_labels_counter[_l]+1
-        else:
-            org_labels_counter[_l] = 1
+
     example_nrs = np.array(example_nrs)
     try:
         print(f"Max element size {np.max(example_nrs)}, element min {np.min(example_nrs)}, element mean {np.mean(example_nrs)}, element var {np.var(example_nrs)}.")
@@ -320,7 +318,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     if total_file_nr==0 or total_nr==0:
         return None
     
-    #打印框的统计数
+    #打印bbox的统计数
     print("*"*80)
     print(f"Total files contain crowd bboxes: {total_crowd_files}/{total_crowd_files*100/total_file_nr:.2f}%")
     print(f"Total crowd bboxes: {total_crowd_bboxes}/{total_crowd_bboxes*100/max(total_nr,1):.2f}%")
@@ -338,7 +336,10 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             v = labels_counter_dict[lck]
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
     print("")
-    for k,v in labels_counter:
+    for i,(k,v) in enumerate(labels_counter):
+        if use_ids:
+            if i < len(labels):
+                continue
         if k in labels:
             continue
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_nr))
@@ -362,7 +363,10 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             v = label_file_count[lck]
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
     print("")
-    for k,v in label_file_count_l:
+    for i,(k,v) in enumerate(label_file_count_l):
+        if use_ids:
+            if i < len(labels):
+                continue
         if k in labels:
             continue
         print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))

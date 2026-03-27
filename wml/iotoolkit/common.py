@@ -125,6 +125,7 @@ def get_auto_dataset_suffix(data_dir,suffix="auto"):
     for f in wmlu.find_files(data_dir,suffix=".xml"):
         return "xml"
 
+    print(f"Find 0 json and 0 xml file in {data_dir}")
     return "none"
 
 def check_dataset_dir(dir_path):
