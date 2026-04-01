@@ -390,7 +390,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     except:
         pass
 
-    return [all_boxes,classeswise_boxes,labels_to_file,classes_nr_per_img]
+    return [all_boxes,classeswise_boxes,labels_to_file,classes_nr_per_img,label_file_count]
 
 def statistics_dict_dataset_boxes_with_datas(datas,*args,**kwargs):
     ndatas = DictDatasetReader(datas)

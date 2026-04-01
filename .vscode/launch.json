@@ -165,6 +165,18 @@
             "args":["/home/wj/ai/mldata1/coco/annotations/instances_val2017.json" "/home/wj/ai/mldata1/0day/coco"],
         },
         {
+            "name": "Python: split dataset",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "wml/datasets_tools/split_dataset_by_labels.py",
+            "console": "integratedTerminal",
+            //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
+            //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
+            //"args":["~/ai/mldata1/0day/a" "~/ai/mldata1/0day/c"],
+            "args":["~/ai/mldata1/B16BP/datasets/datasetsv1.1/val/" "~/ai/mldata1/B16BP/datasets/datasetsv1.1/valslnm" "-bn"],
+        },
+        {
             "name": "Python: change label",
             "type": "python",
             "justMyCode": false,

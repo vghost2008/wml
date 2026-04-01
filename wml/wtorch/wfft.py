@@ -94,8 +94,8 @@ def fft_ifft(
 
 def irfft(input,s,dim):
     end = (s+1)//2
-    
-    input2 = torch.index_select(input, dim, torch.flip(torch.arange(1,end),dims=(0,)))
+    device = input.device 
+    input2 = torch.index_select(input, dim, torch.flip(torch.arange(1,end),dims=(0,)).to(device))
     r0 = torch.real(input)
     i0 = torch.imag(input)
     r1 = torch.real(input2)
@@ -107,13 +107,16 @@ def irfft(input,s,dim):
     return torch.fft.ifft(input,s,dim)
                       
 def rfft(input, dim):
+    input = input.float()
     input = torch.fft.fft(input, dim=dim)
+    device = input.device
     # 取一半
-    input = torch.index_select(input, dim, torch.arange(input.shape[dim]//2+1))
+    input = torch.index_select(input, dim, torch.arange(input.shape[dim]//2+1).to(device))
     return input
 
 
 def rfftn(input, dim):
+    input = input.float()
     new_dim  = []
     for d in dim:
         if d<0:
@@ -126,6 +129,7 @@ def rfftn(input, dim):
     return input
 
 def irfftn(input, sl, dim):
+    input = input.float()
     new_dim  = []
     for d in dim:
         if d<0:
