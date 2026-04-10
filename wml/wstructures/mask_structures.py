@@ -901,6 +901,8 @@ class WBitmapMasks(WBaseMask):
     def polygon(self,bboxes=None):
         return self.ndarray2polygon(self.masks,bboxes=bboxes)
 
+    def bitmap(self):
+        return self.masks
 
     @staticmethod
     def ndarray2polygon(masks,bboxes=None):

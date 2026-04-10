@@ -45,7 +45,8 @@ def np_draw_masks_on_images(image,mask,alpha,colors=MIN_RANDOM_STANDARD_COLORS,n
 '''
 masks:[X,H,W]
 labels:[X]
-no_background: 如果为True, 那么labels的值域为[1,num_classes], 生成时labels转换为labels-1
+no_background: 如果为True, 那么labels的值域为[1,num_classes], 生成时labels转换为labels-1, 返回shape为[num_classes-1,H,W]
+否则: labels的值域为[0,num_classes), 返回shape为[num_classes,H,W]
 output:
 [num_classes,H,W]/[num_classes-1,H,W](no_background=True)
 '''

@@ -189,8 +189,17 @@ def forgiving_state_restore(net, loaded_dict,verbose=False,strict=False):
     net.load_state_dict(net_state_dict)
     sys.stdout.flush()
     print(f"Load checkpoint finish.")
-    if strict and (len(unused_ckpt_key)>0 or len(unloaded_net_state_key)>0):
-        raise RuntimeError(f"Load ckpt faild.")
+    if strict:
+        if len(unloaded_net_state_key) > 0:
+            raise RuntimeError(f"Load ckpt faild.")
+        if len(unused_ckpt_key)>0:
+            not_aid_nr = 0
+            for k in unused_ckpt_key:
+                if "aid_" in k:  #用作辅助损失相关的参数可以不加载
+                    continue
+                not_aid_nr += 1
+            if not_aid_nr>0:
+                raise RuntimeError(f"Load ckpt faild.")
     print(colorama.Style.RESET_ALL)
     return net,list(new_loaded_dict.keys()),unloaded_net_state_key
 
