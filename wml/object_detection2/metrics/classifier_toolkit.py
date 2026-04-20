@@ -288,7 +288,7 @@ class ConfusionMatrix(BaseClassifierMetrics):
         for p,t in zip(all_pred,all_target):
             cm[t,p] = cm[t,p]+1
         
-        self.cm = cm #cm[i,j] 表示gt类别i被分为类别j的数量
+        self.cm = cm #cm[i,j] 表示gt类别i被分为类别j的数量, 每行的和为GT总数,每列为预测总数
 
         return cm
 
@@ -297,7 +297,7 @@ class ConfusionMatrix(BaseClassifierMetrics):
     def show(self,name=""):
         sys.stdout.flush()
         self.evaluate()
-        print(self.to_string())
+        print(self)
         return self.accuracy
 
     def value(self,blod=True):
@@ -313,36 +313,49 @@ class ConfusionMatrix(BaseClassifierMetrics):
             res += line+"\n"
         return res
 
-    '''
-    def to_string_old(self,blod=True):
+    def to_string(self,blod=True):
+        return self.to_string_number(blod,begin_char="",mid_spliter=",")
+
+    def to_string_number(self,blod=True,begin_char="|",mid_spliter="|"):
         res = "\n"
         if self.classes is None:
             self.classes = [f"C{i}" for i in range(self.num_classes)]
         tmp = 'GT\Pred'
-        res += f"|{tmp:<10}|"
+        res += f"{begin_char}{tmp:<10}{mid_spliter}"
         print(f"Num classes: {self.num_classes}, classes {self.classes}")
         for i in range(self.num_classes):
-            res += f"{self.classes[i]:>5}| "
+            res += f"{self.classes[i]:>5}{mid_spliter} "
         res += "\n"
 
-        res+= "|---|"
-        for i in range(self.num_classes):
-            res += "---|"
-        res += "\n"
+        if begin_char is not None and len(begin_char)>0:
+            res+= f"{begin_char}---{mid_spliter}"
+            for i in range(self.num_classes):
+                res += f"---{mid_spliter}"
+            res += "\n"
 
         for i in range(self.num_classes):
-            line = f"|{self.classes[i]:<10}|"
+            line = f"{begin_char}{self.classes[i]:<10}{mid_spliter}"
             for j in range(self.num_classes):
                 if blod and i==j:
                     #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
-                    line += f"{self.cm[i,j]:<4}*| "
+                    line += f"{self.cm[i,j]:<4}*{mid_spliter} "
                 else:
-                    line += f"{self.cm[i,j]:<5}| "
+                    line += f"{self.cm[i,j]:<5}{mid_spliter} "
             res += line+"\n"
-        return res
-    '''
+        
+        #精度
+        line = f"{begin_char}Precision{mid_spliter}"
+        for i in range(self.num_classes):
+            line += f"{safe_persent(self.cm[i,i],np.sum(self.cm[:,i])):<4.1f}{mid_spliter} "
+        res += line+"\n"
 
-    def to_string(self,blod=True):
+        line = f"{begin_char}Recall{mid_spliter}"
+        for i in range(self.num_classes):
+            line += f"{safe_persent(self.cm[i,i],np.sum(self.cm[i,:])):<4.1f}{mid_spliter} "
+        res += line+"\n"
+        return res
+
+    def to_string_markdown(self,blod=True):
         res = "\n"
         if self.classes is None:
             self.classes = [f"C{i}" for i in range(self.num_classes)]
@@ -372,7 +385,35 @@ class ConfusionMatrix(BaseClassifierMetrics):
             res += line+"\n"
         return res
 
+    def to_string_csv(self,blod=True):
+        res = "\n"
+        if self.classes is None:
+            self.classes = [f"C{i}" for i in range(self.num_classes)]
+        tmp = 'GT\Pred(%)'
+        res += f"{tmp:<16},"
+        print(f"Num classes: {self.num_classes}, classes {self.classes}")
+        for i in range(self.num_classes):
+            res += f"{self.classes[i]:>5}, "
+        res += "\n"
+
+        for i in range(self.num_classes):
+            cur_total = np.sum(self.cm[i])
+            tmp_str = f"{self.classes[i]}({cur_total})"
+            line = f"{tmp_str:<16},"
+            cur_total = max(cur_total,1)
+            for j in range(self.num_classes):
+                if blod and i==j:
+                    #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
+                    line += f"{self.cm[i,j]*100/cur_total:<4.1f}*, "
+                else:
+                    line += f"{self.cm[i,j]*100/cur_total:<5.1f}, "
+            res += line+"\n"
+        return res
+
     def __repr__(self):
+        if self.classes is not None and len(self.classes)>40:
+            #return self.to_string_csv()
+            return self.to_string()
         return self.to_string()
     
     def value(self):

@@ -187,6 +187,18 @@
             //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
             "args":["/home/wj/ai/mldata1/B2ARM/raw_datasets/B2ADMCF_REPAIR/已区分-20251118" "/home/wj/ai/mldata1/B2ARM/tmp/ar"],
         },
+        {
+            "name": "Python: tmp cmd",
+            "type": "python",
+            "justMyCode": false,
+            "request": "launch",
+            "program": "wml/datasets_tools/cp_dataset.py",
+            "console": "integratedTerminal",
+            //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
+            //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
+            "args":["~/ai/mldata1/tmp/example_data/" "~/ai/mldata1/tmp/example_data1/"],
+            //"args":["~/ai/mldata1/tmp/example_data/" "~/ai/mldata1/tmp/example_data1/" "-sd" "~/ai/mldata1/tmp/example_data2/"],
+        },
     ]
     
 }

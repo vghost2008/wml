@@ -149,6 +149,14 @@ class Counter(dict):
             self[key] = nr
         return self[key]
     
+    def merge(self,data):
+        for k,v in data.items():
+            if k in self:
+                self[k] += v
+            else:
+                self[k] = v
+        
+    
     def total_size(self):
         return np.sum(list(self.values()))
 

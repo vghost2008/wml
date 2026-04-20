@@ -124,6 +124,39 @@ def add_decomposed_rel_pos(
 
     return attn
 
+def add_decomposed_rel_pos1d(
+    attn: torch.Tensor,
+    q: torch.Tensor,
+    rel_pos: torch.Tensor,
+    q_size: Tuple[int, int],
+    k_size: Tuple[int, int],
+) -> torch.Tensor:
+    """
+    Calculate decomposed Relative Positional Embeddings from :paper:`mvitv2`.
+    https://github.com/facebookresearch/mvit/blob/19786631e330df9f3622e5402b4a419a263a2c80/mvit/models/attention.py   # noqa B950
+    Args:
+        attn (Tensor): attention map.
+        q (Tensor): query q in the attention layer with shape (B, q_h * q_w, C).
+        rel_pos_h (Tensor): relative position embeddings (Lh, C) for height axis.
+        rel_pos_w (Tensor): relative position embeddings (Lw, C) for width axis.
+        q_size (Tuple): spatial sequence size of query q with (q_h, q_w).
+        k_size (Tuple): spatial sequence size of key k with (k_h, k_w).
+
+    Returns:
+        attn (Tensor): attention map with added relative positional embeddings.
+    """
+    R = get_rel_pos(q_size, k_size, rel_pos)
+
+    B, _, dim = q.shape
+    r_q = q.reshape(B, q_size, dim)
+    rel = torch.einsum("bhwc,hkc->bhwk", r_q, R)
+
+    attn = (
+        attn.view(B, q_size,  k_size) + rel
+    ).view(B, q_size, k_size)
+
+    return attn
+
 class MLPBlock(nn.Module):
     def __init__(
         self,
@@ -259,6 +292,118 @@ class TransformerBlock(nn.Module):
         # Reverse window partition
         if self.window_size > 0:
             x = window_unpartition(x, self.window_size, pad_hw, (H, W))
+
+        x = shortcut + x
+        x = x + self.mlp(self.norm2(x))
+
+        return x
+
+class Attention1D(nn.Module):
+    """Multi-head Attention block with relative position embeddings."""
+
+    def __init__(
+        self,
+        dim: int,
+        num_heads: int = 8,
+        qkv_bias: bool = True,
+        use_rel_pos: bool = True,
+        input_size: int = None,
+    ) -> None:
+        """
+        Args:
+            dim (int): Number of input channels.
+            num_heads (int): Number of attention heads.
+            qkv_bias (bool):  If True, add a learnable bias to query, key, value.
+            rel_pos (bool): If True, add relative positional embeddings to the attention map.
+            input_size (tuple(int, int) or None): Input resolution for calculating the relative
+                positional parameter size. (H,W)
+        """
+        super().__init__()
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
+        self.scale = head_dim**-0.5
+
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.proj = nn.Linear(dim, dim)
+
+        self.use_rel_pos = use_rel_pos
+        if self.use_rel_pos:
+            assert (
+                input_size is not None
+            ), "Input size must be provided if using relative positional encoding."
+            # initialize relative positional embeddings
+            self.rel_pos = nn.Parameter(torch.zeros(2 * input_size - 1, head_dim))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        '''
+        x: [B,L,C]
+        '''
+        B, L, _ = x.shape
+        # qkv with shape (3, B, nHead, H * W, C)
+        qkv = self.qkv(x).reshape(B, L, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
+        # q, k, v with shape (3,B,nHead, L, C/nHead)
+        q, k, v = qkv.reshape(3, B * self.num_heads, L, -1).unbind(0)  #[B*num_heads,L,C/nHead]
+
+        attn = (q * self.scale) @ k.transpose(-2, -1)
+
+        if self.use_rel_pos:
+            attn = add_decomposed_rel_pos1d(attn, q, self.rel_pos,  L, L)
+
+        attn = attn.softmax(dim=-1) #attn@v: [B*nHead,L,C/nHead] -> [B,nHead,L,C/nHead]
+        x = (attn @ v).view(B, self.num_heads, L, -1).permute(0, 2, 1, 3).reshape(B, L, -1)
+        x = self.proj(x)
+
+        return x
+
+class TransformerBlock1D(nn.Module):
+    """Transformer blocks with support of window attention and residual propagation blocks"""
+
+    def __init__(
+        self,
+        dim: int = 768,
+        num_heads: int = 12,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = True,
+        norm_layer: Type[nn.Module] = partial(torch.nn.LayerNorm, eps=1e-6),
+        act_layer: Type[nn.Module] = nn.GELU,
+        use_rel_pos: bool = False,
+        input_size: int = 64,
+    ) -> None:
+        """
+        Args:
+            dim (int): Number of input channels.
+            num_heads (int): Number of attention heads in each ViT block.
+            mlp_ratio (float): Ratio of mlp hidden dim to embedding dim.
+            qkv_bias (bool): If True, add a learnable bias to query, key, value.
+            norm_layer (nn.Module): Normalization layer.
+            act_layer (nn.Module): Activation layer.
+            use_rel_pos (bool): If True, add relative positional embeddings to the attention map.
+            window_size (int): Window size for window attention blocks. If it equals 0, then
+                use global attention.
+            input_size (tuple(int, int) or None): Input resolution for calculating the relative
+                positional parameter size.
+        """
+        super().__init__()
+        self.norm1 = norm_layer(dim)
+        self.attn = Attention1D(
+            dim,
+            num_heads=num_heads,
+            qkv_bias=qkv_bias,
+            use_rel_pos=use_rel_pos,
+            input_size=input_size
+        )
+
+        self.norm2 = norm_layer(dim)
+        self.mlp = MLPBlock(embedding_dim=dim, mlp_dim=int(dim * mlp_ratio), act=act_layer)
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        '''
+        x: [B,L,C]
+        '''
+        shortcut = x
+        x = self.norm1(x)
+        x = self.attn(x)
 
         x = shortcut + x
         x = x + self.mlp(self.norm2(x))

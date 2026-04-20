@@ -361,7 +361,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
             v = 0 
         else:
             v = label_file_count[lck]
-        print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
+        #print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
+        print("\'{}\':{:<8}, #{:>4.2f}%".format(k,v,v*100./total_file_nr))
     print("")
     for i,(k,v) in enumerate(label_file_count_l):
         if use_ids:
@@ -369,7 +370,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
                 continue
         if k in labels:
             continue
-        print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
+        print("\'{}\':{:<8}, #{:>4.2f}%".format(k,v,v*100./total_file_nr))
+        #print("{:>8}:{:<8}, {:>4.2f}%".format(k,v,v*100./total_file_nr))
 
     print("*"*80)
     #print("\n--->org statistics:")

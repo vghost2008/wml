@@ -1,5 +1,7 @@
 #coding=utf-8
 import cv2
+import matplotlib
+from io import BytesIO
 import random
 import numpy as np
 import wml.semantic.visualization_utils as smv
@@ -12,6 +14,7 @@ from wml.wstructures import WPolygonMasks,WBitmapMasks, WMCKeypoints, WMCKeypoin
 import math
 import wml.basic_img_utils as bwmli
 from .basic_visualization import *
+import matplotlib.pyplot as plt
 
 DEFAULT_COLOR_MAP = _DEFAULT_COLOR_MAP
 
@@ -1046,6 +1049,74 @@ def draw_seg_on_img(img,seg,color_mapping=DEFAULT_COLOR_MAP,alpha=0.4,ignore_idx
     img = np.clip(img,a_min=0,a_max=255).astype(np.uint8)
 
     return img
+
+
+def view_lines(ys,save_path=None,x=None,data_type=None,is_use_log=False):
+    '''
+    ys:[N,data_len] or [data_len]
+    x: [data_len] or None
+    '''
+    if save_path is not None:
+        save_img = True
+    else:
+        save_img = False
+
+    if save_img:
+        matplotlib.use('Agg')
+        fig = plt.figure()
+        fig.set_size_inches(10,10)
+    else:
+        fig = plt.figure()
+
+    if len(ys.shape) == 1:
+        ys = np.expand_dims(ys,axis=0)
+    if x is None:
+        x = np.array(list(range(ys.shape[1])))
+    if data_type is not None:
+        plt.title(data_type[0])
+        plt.xlabel(data_type[1])
+        plt.ylabel(data_type[2])
+    plt.grid(
+        True,                # 启用网格
+        which='both',        # 同时显示主次网格线 ('major', 'minor' 或 'both')
+        axis='both',         # 网格方向 ('x', 'y' 或 'both')
+        linestyle='--',      # 线型 ('-', '--', ':', '-.')
+        linewidth=0.7,       # 线宽
+        color='gray',        # 颜色
+        alpha=0.5            # 透明度 (0-1)
+    )
+    #plt.axhline(0, color='#5555FF', linewidth=0.8)  # x轴
+    #plt.axvline(0, color='#5555FF', linewidth=0.8) 
+    #colors = ["#FF0000","#AA0000","#550000","#FFFF00","#AAAA00","#555500"]
+    #colors = ["#0000FF","#0000AA","#000055","#00FFFF","#00AAAA","#005555"]
+    colors = ["#FF0000","#AA0000","#550000","#0050EF","#6A0DFF","#0d8b01"]
+    for i,y in enumerate(ys):
+        if i < len(colors):
+            color = colors[i]
+        else:
+            #color = "#0000FF"
+            color = "#FF0000"
+        #plt.plot(x,y,label=f"{v}",color=color)
+        #plt.scatter(x,y,s=5,label=f"{v}",color=color,alpha=0.5)
+        #plt.scatter(x,y,s=5,label=f"{i}",color=color,alpha=0.5,marker='s')
+        plt.plot(x,y,color=color)
+    if is_use_log:
+        plt.yscale("log")
+    plt.legend()
+
+    if save_img:
+        #buf = BytesIO()
+        fig.savefig(save_path, format='png', dpi=100)
+
+        #buf.seek(0)
+        #image_array = cv2.imdecode(np.frombuffer(buf.getvalue(), dtype=np.uint8), 1)
+        #image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)  # 转为RGB格式
+        plt.close(fig)
+        #return image_array
+    else:
+        plt.show()
+        plt.close(fig)
+        return None
 
 
 
