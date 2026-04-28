@@ -4,6 +4,7 @@
 from typing import Dict, Optional, Any
 import copy
 import inspect
+import traceback
 
 
 class Registry(object):
@@ -162,4 +163,5 @@ class Registry(object):
             return obj_cls(**args)
         except Exception as e:
             # Normal TypeError does not print class name.
+            traceback.print_exc()
             raise type(e)(f'{obj_cls.__name__}: {e}, cfg={cfg}')
