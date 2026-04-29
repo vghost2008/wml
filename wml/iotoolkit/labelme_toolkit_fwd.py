@@ -405,7 +405,7 @@ def save_labelme_datav2(file_path,image_path,image,annotations_list,label_to_tex
         contours, hierarchy = cv.findContours(ann["segmentation"], cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         hierarchy = np.reshape(hierarchy,[-1,4]) 
         for he,cont in zip(hierarchy,contours):
-            if he[-1]>=0 and cv.contourArea(cont) < cv.contourArea(contours[[he[-1]]]):
+            if he[-1]>=0 and cv.contourArea(cont) < cv.contourArea(contours[he[-1]]):
                 continue
             points = cont
             if len(cont.shape)==3 and cont.shape[1]==1:

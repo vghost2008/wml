@@ -3,6 +3,7 @@ from multiprocessing import Pool
 import numpy as np
 import math
 import cv2
+from collections import Iterable
 
 def _edit_distance(v0,v1):
     if v0 == v1:
@@ -228,6 +229,8 @@ def remove_non_ascii(s):
     return ''.join(filter(str.isascii, s))
 
 def align_to(input,align_v):
+    if isinstance(input,Iterable):
+        return [align_to(v,align_v) for v in input]
     return ((input+align_v-1)//align_v)*align_v
 
 def point2point_distance_square(p0,p1):

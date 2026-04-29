@@ -340,12 +340,11 @@ class YOLOmAP(BaseMetrics):
     def show(self,name=""):
         sys.stdout.flush()
         self.evaluate()
-        print(f"Test size {self.num_examples()}")
-        print(f"{self.to_string()}")
-        return self.map
+        print(f"mAP={self.map:.3f}, mAP@50={self.map50:.3f}, mAP@75={self.map75:.3f}, ap50={self.ap50}")
+        return self.map50
 
     def to_string(self):
-        return f"mAP={self.map:.3f}, mAP@50={self.map50:.3f}, mAP@75={self.map75:.3f}, ap50={self.ap50}"
+        return f"{self.map50:.3f}"
 
     def __repr__(self):
         return self.to_string()
