@@ -38,8 +38,54 @@ class DictDatasetReader:
         labels_text = [str(x) for x in data['labels']]
         return data['filename'],[0,0],data['labels'],labels_text,data['bboxes'],None,None,None,None
         
+def show_shapes_info(shapes,step):
+    
+    if len(shapes) == 0:
+        return
+
+    widths = wmlu.MDict(dtype=list)
+    heights = wmlu.MDict(dtype=list)
+    all_widths = []
+    all_heights = []
+    ratios = []
+
+    for shape in shapes:
+        w = shape[1]
+        h = shape[0]
+        w_key = wmlu.align_to(w,step)
+        h_key = wmlu.align_to(h,step)
+        all_widths.append(w)
+        all_heights.append(h)
+        ratios.append(w/max(h,1))
+        widths[w_key].append(h)
+        heights[h_key].append(w)
+
+    widths = list(widths.items())
+    widths.sort(key=lambda x:x[0])
+    heights = list(heights.items())
+    heights.sort(key=lambda x:x[0])
+
+    print("\n")
+    print("="*120)
+    print("Width:")
+    for k,v in widths:
+        print(f"{k:>8}, total {len(v):<5}, {len(v)*100.0/len(shapes):>6.2f}%, height mean: {int(np.mean(v)):<5}, std: {int(np.std(v)):<4}")
+
+    print("\n")
+    print("-"*120)
+    print("Height:")
+    for k,v in heights:
+        print(f"{k:>8}, total {len(v):<5}, {len(v)*100.0/len(shapes):>6.2f}%, height mean: {int(np.mean(v)):<5}, std: {int(np.std(v)):<4}")
+
+    print("\n")
+    print("-"*120)
+    print(f" WIDTH: max={np.max(all_widths):5.0f}, min={np.min(all_widths):5.0f}, mean={np.mean(all_widths):5.0f}, std={np.std(all_widths):5.0f}")
+    print(f"HEIGHT: max={np.max(all_heights):5.0f}, min={np.min(all_heights):5.0f}, mean={np.mean(all_heights):5.0f}, std={np.std(all_heights):5.0f}")
+    print(f"RATIOS(W/H): max={np.max(ratios):<4.2f}, min={np.min(ratios):<4.2f}, mean={np.mean(ratios):<4.2f}, std={np.std(ratios):4.2f}")
+    print("="*120)
+    print("\n")
 '''
-ratio: h/w
+ratio: w/h
 '''
 def statistics_boxes(boxes,nr=100,name=""):
     name = str(name)
@@ -56,6 +102,13 @@ def statistics_boxes(boxes,nr=100,name=""):
         print(f"Real Ratio:Min {min(rratios):.2f}, max {max(rratios):.2f}, mean: {np.mean(rratios):.2f}, std: {np.std(rratios):.2f}.")
     except:
         pass
+
+    bboxes = np.array(boxes)
+    bboxes_shapes = bboxes[:,2:]-bboxes[:,:2]
+    bboxes_shapes = bboxes_shapes[:,::-1]
+    info_step = max(int(np.max(sizes)/20),1)
+    print(f"Bboxes shape info, align to {info_step}:")
+    show_shapes_info(bboxes_shapes,info_step)
 
     pd_sizes = pd.Series(sizes)
     pd_ratios = pd.Series(ratios)
