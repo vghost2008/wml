@@ -125,3 +125,47 @@ def concat_detbboxesdata(datas):
     datas = [detbboxesdata2detdata(x) for x in datas]
     data = concat_detdata(datas)
     return detdata2detbboxesdata(data)
+
+
+def resize_detdata(data,size,old_size=None):
+    '''
+    size: [w,h]
+    '''
+
+    if isinstance(data,DetBboxesData):
+        return resize_detbboxesdata(data,size,old_size)
+
+    img_shape = data.img_shape[:2] #H,W
+
+    masks = data.masks
+    if masks is not None:
+        masks = masks.resize(size)
+
+    bboxes = data.bboxes
+    if bboxes is not None:
+        w_scale = size[0]/img_shape[1]
+        h_scale = size[1]/img_shape[0]
+        old_dtype = bboxes.dtype
+        bboxes = (bboxes*np.array([[w_scale,h_scale,w_scale,h_scale]])).astype(old_dtype)
+
+    img_shape = [size[1],size[0]]
+    data = data._replace(img_shape=img_shape,masks=masks,bboxes=bboxes)
+
+    return data
+
+def resize_detbboxesdata(data,size,old_size=None):
+    '''
+    size: [w,h]
+    old_size: [w,h]
+    '''
+    bboxes = data.bboxes
+    if bboxes is not None:
+        w_scale = size[0]/old_size[0]
+        h_scale = size[1]/old_size[1]
+        old_dtype = bboxes.dtype
+        bboxes = (bboxes*np.array([[w_scale,h_scale,w_scale,h_scale]])).astype(old_dtype)
+
+    img_shape = [size[1],size[0]]
+    data = data._replace(img_shape=img_shape,bboxes=bboxes)
+
+    return data

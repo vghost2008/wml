@@ -77,14 +77,15 @@ def regex_dict_label_text2id(name,info="",dict_data={}):
                     if d is not None:
                         if isinstance(tv,int):
                             v = tv
-                        elif isinstance(tv,(str,bytes)) and tv.lower() in dict_data:
-                            v = regex_dict_label_text2id(tv.lower(), info,dict_data)
+                        elif isinstance(tv,(str,bytes)):
+                            tv = tv.lower()
+                            v = regex_dict_label_text2id(tv, info,dict_data)
                         break
             except:
                 pass
 
     if isinstance(v,int) and v < -1:
-        wmlu.print_warning(f"{info}: trans {name} faild in ignore_case_dict_label_text2id.")
+        wmlu.print_warning(f"{info}: trans {name} faild in regex_dict_label_text2id.")
         v = None
     
     return v
@@ -186,6 +187,8 @@ def trans_dict2repattern(data):
             k = re.compile(k.lower())
         else:
             k = k.lower()
+        if isinstance(v,(str,bytes)):
+            v = v.lower()
         res[k] = v
     return res
 

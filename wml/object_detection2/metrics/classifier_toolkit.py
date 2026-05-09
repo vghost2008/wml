@@ -244,7 +244,7 @@ class BPrecisionAndRecall(PrecisionAndRecall):
 
 @CLASSIFIER_METRICS_REGISTRY.register()
 class ConfusionMatrix(BaseClassifierMetrics):
-    def __init__(self,num_classes=-1,classes=None,**kwargs):
+    def __init__(self,num_classes=-1,classes=None,have_bg=False,**kwargs):
         super().__init__(**kwargs)
         if num_classes <= 0 and classes is not None:
             num_classes = len(classes)
@@ -254,6 +254,7 @@ class ConfusionMatrix(BaseClassifierMetrics):
         self.accuracy = 100.0
         self.num_classes = num_classes
         self.cm = []
+        self.have_bg = have_bg  #最后一个类别是否为背景
 
     def __call__(self,output,target):
         '''
@@ -300,6 +301,12 @@ class ConfusionMatrix(BaseClassifierMetrics):
         print(self)
         return self.accuracy
 
+    @property
+    def real_num_classes(self):
+        if self.have_bg:
+            return self.num_classes-1
+        return self.num_classes
+
     def value(self,blod=True):
         res = "\n"
         for i in range(self.num_classes):
@@ -317,6 +324,8 @@ class ConfusionMatrix(BaseClassifierMetrics):
         return self.to_string_number(blod,begin_char="",mid_spliter=",")
 
     def to_string_number(self,blod=True,begin_char="|",mid_spliter="|"):
+        if len(self.cm)==0:
+            self.evaluate()
         res = "\n"
         if self.classes is None:
             self.classes = [f"C{i}" for i in range(self.num_classes)]
@@ -325,6 +334,7 @@ class ConfusionMatrix(BaseClassifierMetrics):
         print(f"Num classes: {self.num_classes}, classes {self.classes}")
         for i in range(self.num_classes):
             res += f"{self.classes[i]:>5}{mid_spliter} "
+
         res += "\n"
 
         if begin_char is not None and len(begin_char)>0:
@@ -337,21 +347,47 @@ class ConfusionMatrix(BaseClassifierMetrics):
             line = f"{begin_char}{self.classes[i]:<10}{mid_spliter}"
             for j in range(self.num_classes):
                 if blod and i==j:
-                    #line += f"\033[1m{self.cm[i,j]:<5}\033[0m, "
-                    line += f"{self.cm[i,j]:<4}*{mid_spliter} "
+                    #line += f"{self.cm[i,j]:<4}*{mid_spliter} "
+                    line += f"{self.cm[i,j]:<5}{mid_spliter} "
                 else:
                     line += f"{self.cm[i,j]:<5}{mid_spliter} "
             res += line+"\n"
         
-        #精度
-        line = f"{begin_char}Precision{mid_spliter}"
-        for i in range(self.num_classes):
-            line += f"{safe_persent(self.cm[i,i],np.sum(self.cm[:,i])):<4.1f}{mid_spliter} "
+        classes_names = ""
+        for i in range(self.real_num_classes):
+            classes_names += f"{self.classes[i]:>5}{mid_spliter} "
+
+        res += "\n"
+        line = f"{begin_char} {mid_spliter}"+classes_names+f" Total {mid_spliter}"
         res += line+"\n"
 
+        #样本数
+        line = f"{begin_char}Number{mid_spliter}"
+        for i in range(self.real_num_classes):
+            line += f"{int(np.sum(self.cm[i,:]))}{mid_spliter} "
+        
+        total_nr = sum([np.sum(self.cm[i,:]) for i in range(self.real_num_classes)])
+        line += f"{total_nr}{mid_spliter} "
+        res += line+"\n"
+
+        #精度
+        line = f"{begin_char}Precision{mid_spliter}"
+        for i in range(self.real_num_classes):
+            line += f"{safe_persent(self.cm[i,i],np.sum(self.cm[:,i])):<4.1f}{mid_spliter} "
+
+        #总体精度
+        all_tp = sum([self.cm[i,i] for i in range(self.real_num_classes)])
+        all_tp_fp = sum([np.sum(self.cm[:self.real_num_classes,i]) for i in range(self.real_num_classes)])
+        line += f"{safe_persent(all_tp,all_tp_fp):<4.1f}{mid_spliter} "
+
+        res += line+"\n"
+
+        #召回
         line = f"{begin_char}Recall{mid_spliter}"
-        for i in range(self.num_classes):
+        for i in range(self.real_num_classes):
             line += f"{safe_persent(self.cm[i,i],np.sum(self.cm[i,:])):<4.1f}{mid_spliter} "
+        #总体召回
+        line += f"{safe_persent(all_tp,total_nr):<4.1f}{mid_spliter} "
         res += line+"\n"
         return res
 

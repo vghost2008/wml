@@ -268,9 +268,9 @@ _label_text2id = {
     }
 
 label_text2id = {}
-for k,v in _label_text2id.items():
-    k = re.compile(k.lower())
-    label_text2id[k] = v
+#for k,v in _label_text2id.items():
+    #k = re.compile(k.lower())
+    #label_text2id[k] = v
 
 def trans_labels(labels):
     #return labels

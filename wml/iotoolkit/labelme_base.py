@@ -50,6 +50,8 @@ class LabelMeBase(BaseDataset):
 
     def get_labels(self,fs):
         img_file,json_file = fs
+        if img_file == '/home/wj/ai/mldata1/B16BP/datasets/datasetsv1.2/train/AOI/66A/0313_R6&R8补充/ACTR8AT/G66A61E001A2BAF12_A1080A0N_2_845328.9999_147271.9999_A001_20260211_160620_180_MIC1_TDI3_AA.jpg':
+            print("A")
         image, annotations_list = read_labelme_data(json_file, None,use_semantic=True,mask_on=False,
                                                     use_polygon_mask=True,
                                                     do_raise=True,

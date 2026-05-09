@@ -1911,11 +1911,6 @@ class WMAP(BaseMetrics):
 class DetConfusionMatrix(BaseMetrics):
     def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.5,threshold=0.3,classes=None):
         super().__init__()
-        if categories_list is None:
-            print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
-            self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(num_classes)]
-        else:
-            self.categories_list = categories_list
         self.num_classes = num_classes
         self.label_trans = label_trans
         self.iou_thr = threshold
@@ -1923,10 +1918,17 @@ class DetConfusionMatrix(BaseMetrics):
         self.pred_labels = []
         self.gt_labels = []
         if classes is not None:
+            if self.num_classes is None:
+                self.num_classes = len(classes)
             classes = list(classes)+["B.G."]
         self.classes = classes
-        self.kernel = ConfusionMatrix(num_classes=self.num_classes+1,classes=classes)
+        self.kernel = ConfusionMatrix(num_classes=self.num_classes+1,classes=classes,have_bg=True)
         self.image_id = 0
+        if categories_list is None:
+            print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
+            self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(self.num_classes)]
+        else:
+            self.categories_list = categories_list
 
     def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
                  gtmasks=None,
