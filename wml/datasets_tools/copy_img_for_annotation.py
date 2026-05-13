@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument('--suffix', default=wmli.BASE_IMG_SUFFIX,type=str,help='img suffix')
     parser.add_argument('--type', default="auto",type=str,help='img_dir')
     parser.add_argument('-l','--level', default=0,type=int,help='test parent level number')
+    parser.add_argument("-mv",'--move', action="store_true",help='move img.')
     args = parser.parse_args()
     return args
 
@@ -50,7 +51,7 @@ def get_all_imgs(img_dir,level=0,img_suffix=".jpg;;.jpeg;;.png;;.bmp"):
             res[basename] = f
     return res
 
-def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_type=".xml"):
+def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_type=".xml",args=None):
     if ann_type == "auto":
         ann_type = "."+get_auto_dataset_suffix(ann_dir)
     all_img_files = get_all_imgs(img_dir,level=level,img_suffix=img_suffix)
@@ -78,7 +79,13 @@ def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_ty
                 cur_dir = osp.dirname(xf)
                 print(f"{files} --> {cur_dir}")
                 save_path = osp.join(cur_dir,wmlu.base_name(xf)+osp.splitext(files)[-1])
-                shutil.copy(files,save_path)
+                if not args.move:
+                    shutil.copy(files,save_path)
+                else:
+                    try:
+                        shutil.move(files,save_path)
+                    except Exception as e:
+                        print(f"ERROR: {e}")
                 copy_nr += 1
             else:
                 print(f"ERROR: Find multi img files for {xf}, img files {files}, key={base_name}")
@@ -91,4 +98,4 @@ def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_ty
 
 if __name__ == "__main__":
     args = parse_args()
-    copy_imgfiles(args.ann_dir,args.img_dir,level=args.level,ann_type=args.type,img_suffix=args.suffix)
+    copy_imgfiles(args.ann_dir,args.img_dir,level=args.level,ann_type=args.type,img_suffix=args.suffix,args=args)

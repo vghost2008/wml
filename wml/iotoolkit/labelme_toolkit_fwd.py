@@ -434,6 +434,8 @@ def save_labelme_datav3(file_path,image_path,image,labels,bboxes,masks,label_to_
     masks:[N,h,w] 仅包含bbox内的部分
     '''
     annotatios_list = []
+    if isinstance(bboxes,np.ndarray):
+        bboxes = bboxes.astype(np.int32).tolist()
     for i in range(len(labels)):
         annotatios = {"category_id":labels[i],
         'segmentation':masks[i] if masks is not None else None,

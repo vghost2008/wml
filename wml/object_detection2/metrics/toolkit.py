@@ -1909,7 +1909,7 @@ class WMAP(BaseMetrics):
 
 @METRICS_REGISTRY.register()
 class DetConfusionMatrix(BaseMetrics):
-    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=0.5,threshold=0.3,classes=None):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=None,threshold=0.3,classes=None):
         super().__init__()
         self.num_classes = num_classes
         self.label_trans = label_trans
@@ -1988,6 +1988,110 @@ class DetConfusionMatrix(BaseMetrics):
             v = labels[idx]
             tmp_gt_labels.append(self.num_classes)
             tmp_pred_labels.append(v)
+
+        self.pred_labels.extend(tmp_pred_labels)
+        self.gt_labels.extend(tmp_gt_labels)
+        self.image_id += 1
+        #self.show()
+
+    def evaluate(self):
+        print(f"Test size {self.num_examples()}")
+        self.kernel(output=np.array(self.pred_labels,dtype=np.int32),
+                    target=np.array(self.gt_labels,dtype=np.int32))
+        self.kernel.evaluate()
+
+    def show(self,name=""):
+        #显示的最后一行，列为背景
+        '''
+        i行，j列: 表示gt类别i被分为类别j的数量
+        最后一个类别为背景
+        '''
+        sys.stdout.flush()
+        print(f"Test size {self.num_examples()}")
+        self.evaluate()
+        return self.kernel.show()
+
+    def to_string(self):
+        return self.kernel.to_string()
+
+    def __repr__(self):
+        return self.to_string()
+    
+    def value(self):
+        return self.kernel.value()
+
+    def num_examples(self):
+        return self.image_id
+
+
+@METRICS_REGISTRY.register()
+class ClsDetConfusionMatrix(BaseMetrics):
+    def __init__(self,categories_list=None,num_classes=None,mask_on=False,label_trans=None,classes_begin_value=1,score_thr=None,threshold=0.3,classes=None):
+        super().__init__()
+        self.num_classes = num_classes
+        self.label_trans = label_trans
+        self.iou_thr = threshold
+        self.score_thr = score_thr
+        self.pred_labels = []
+        self.gt_labels = []
+        if classes is not None:
+            if self.num_classes is None:
+                self.num_classes = len(classes)
+            classes = list(classes)+["B.G."]
+        self.classes = classes
+        self.kernel = ConfusionMatrix(num_classes=self.num_classes+1,classes=classes,have_bg=True)
+        self.image_id = 0
+        if categories_list is None:
+            print(f"WARNING: Use default categories list, start classes is {classes_begin_value}")
+            self.categories_list = [{"id":x+classes_begin_value,"name":str(x+classes_begin_value)} for x in range(self.num_classes)]
+        else:
+            self.categories_list = categories_list
+
+    def __call__(self, gtboxes,gtlabels,boxes,labels,probability=None,img_size=[512,512],
+                 gtmasks=None,
+                 masks=None,is_crowd=None,use_relative_coord=False):
+        if probability is None:
+            probability = np.ones_like(labels,dtype=np.float32)
+        if not isinstance(gtboxes,np.ndarray):
+            gtboxes = np.array(gtboxes)
+        if not isinstance(gtlabels,np.ndarray):
+            gtlabels = np.array(gtlabels)
+        if not isinstance(boxes,np.ndarray):
+            boxes = np.array(boxes)
+        if not isinstance(labels,np.ndarray):
+            labels = np.array(labels)
+        if self.label_trans is not None:
+            gtlabels = self.label_trans(gtlabels)
+            labels = self.label_trans(labels)
+        if probability is not None and not isinstance(probability,np.ndarray):
+            probability = np.array(probability)
+        
+        if self.score_thr is not None:
+            keep = probability>self.score_thr
+            labels = labels[keep]
+            boxes = boxes[keep]
+            probability = probability[keep]
+
+        tmp_pred_labels = []
+        tmp_gt_labels = []
+        gt_set = set(gtlabels.tolist())
+        pred_set = set(labels.tolist())
+
+        union_set = gt_set&pred_set
+        miss_set = gt_set-union_set
+        over_set = pred_set-union_set
+
+        for l in union_set:
+            tmp_gt_labels.append(l)
+            tmp_pred_labels.append(l)
+        
+        for l in miss_set:
+            tmp_gt_labels.append(l)
+            tmp_pred_labels.append(self.num_classes) #使用self.num_classes+1作为背景
+
+        for l in over_set:
+            tmp_gt_labels.append(self.num_classes)
+            tmp_pred_labels.append(l)
 
         self.pred_labels.extend(tmp_pred_labels)
         self.gt_labels.extend(tmp_gt_labels)

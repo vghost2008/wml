@@ -10,8 +10,8 @@ def parse_args():
     parser.add_argument('result', help='Config file')
     parser.add_argument('--metrics', type=str,default="PrecisionAndRecall",help='metrics')
     parser.add_argument('--num-classes', type=int,default=0,help='num of classes')
-    parser.add_argument('--beg-score-thr', type=float,default=0.1,help='begin test thr')
-    parser.add_argument('--end-score-thr', type=float,default=1.0, help='end test thr')
+    parser.add_argument('-bs','--beg-score-thr', type=float,default=0.1,help='begin test thr')
+    parser.add_argument('-es','--end-score-thr', type=float,default=1.0, help='end test thr')
     parser.add_argument('--score-step', type=float,default=0.05, help='score step')
     parser.add_argument('--classes-wise', action='store_true', help='score step')
     parser.add_argument('--verbose', action='store_true', help='verbose mode')
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 raise RuntimeError(f"Find scores key faind: {list(d.keys())}")
             keep = d[scores_key]>=score
             d[scores_key] = d[scores_key][keep]
-            d['labels'] = d['labels'][keep]
+            d['labels'] = np.array(d['labels'])[keep]
             if BOXES in d:
                 d['boxes'] = d['boxes'][keep]
             if "kps" in d:
