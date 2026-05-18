@@ -256,9 +256,11 @@ if __name__ == "__main__":
         label2files = wmlu.MDict(dtype=list)
         for i,(img_f,ann_f) in enumerate(all_files):
             labels = get_labels(ann_f,args.suffix)
-            for l in set(labels):
+            labels = list(set(labels))
+            if len(labels)>1:
+                l = random.choice(labels)
                 label2files[l].append((img_f,ann_f))
-            if len(labels)==0:
+            elif len(labels)==0:
                 label2files['NONE'].append((img_f,ann_f))
         copyed_files = set()
         for k,v in label2files.items():

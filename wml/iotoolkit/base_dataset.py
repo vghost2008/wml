@@ -5,6 +5,7 @@ import wml.wml_utils as wmlu
 from .common import resample,ignore_case_dict_label_text2id,regex_dict_label_text2id,trans_dict2repattern,have_regexp
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from wml.basic_img_utils import BASE_IMG_SUFFIX
 
 
 
@@ -136,7 +137,7 @@ class BaseDataset(metaclass=ABCMeta):
         print(f"Total find {raw_nr} files, repeat to {len(all_files)} files.")
         return all_files
 
-    def read_data(self,dir_path,img_suffix=".jpg;;.bmp;;.png;;.jpeg"):
+    def read_data(self,dir_path,img_suffix=BASE_IMG_SUFFIX):
         _files = self.find_files(dir_path,img_suffix=img_suffix)
         if self.filter_empty_files and self.label_text2id:
             _files = self.apply_filter_empty_files(_files)

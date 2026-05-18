@@ -563,6 +563,8 @@ def save_detdata(file_path,image_path,det_data,label_to_text=lambda x:str(x)):
         elif label_to_text is not None and det_data.labels is not None:
             l = det_data.labels[i]
             l = label_to_text(l)
+        else:
+            l = det_data.labels[i]
         if det_data.is_crowd is not None:
             is_crowd = det_data.is_crowd[i]
         else:
