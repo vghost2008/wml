@@ -177,7 +177,7 @@ def _get_shape_points(shape,circle_points_nr=20):
         r = math.sqrt(d[0]*d[0]+d[1]*d[1])
         points = points_on_circle(center=center,r=r,points_nr=circle_points_nr)
         return points
-    elif shape_type == "linestrip":
+    elif shape_type in ["linestrip", "rotation"]:
         return np.array(shape['points']).astype(np.int32)
     else:
         print(f"WARNING: unsupport labelme shape type {shape_type}")
