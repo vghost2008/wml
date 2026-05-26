@@ -260,6 +260,9 @@ if __name__ == "__main__":
             if len(labels)>1:
                 l = random.choice(labels)
                 label2files[l].append((img_f,ann_f))
+            elif len(labels)==1:
+                l = labels[0]
+                label2files[l].append((img_f,ann_f))
             elif len(labels)==0:
                 label2files['NONE'].append((img_f,ann_f))
         copyed_files = set()

@@ -35,16 +35,38 @@ def parse_args():
         '-f',
         action='store_true',
         help='force use base name.')
+    parser.add_argument(
+        '--no-imgs',
+        '-ni',
+        action='store_true',
+        help='only check annotation files in ref dir.')
+    parser.add_argument(
+        '--dont-copy-imgs',
+        '-dci',
+        action='store_true',
+        help='only copy annotation files from src dir.')
     args = parser.parse_args()
 
     return args
 
 
-def get_files(data_dir,args):
+def get_files(data_dir,args,no_imgs=False):
     data_dir = osp.abspath(osp.expanduser(data_dir))
-    files = wmlu.get_img_files(data_dir)
-    files = [(x,wmlu.change_suffix(x,args.suffix)) for x in files]
-    files = list(filter(lambda x:osp.exists(x[1]),files))
+    if not no_imgs:
+        files = wmlu.get_img_files(data_dir)
+        files = [(x,wmlu.change_suffix(x,args.suffix)) for x in files]
+        files = list(filter(lambda x:osp.exists(x[1]),files))
+    else:
+        base_files = get_files(data_dir,args,False)
+        ann_set = set([osp.basename(x[1]) for x in base_files])
+        anns_files = wmlu.get_files(data_dir,suffix=args.suffix)
+
+        files = base_files
+        for af in anns_files: 
+            bn = osp.basename(af)
+            if bn in ann_set:
+                continue
+            files.append([None,af])
 
     return files
 
@@ -62,11 +84,11 @@ if __name__ == "__main__":
     if args.save_dir is None or len(args.save_dir)==0:
         args.save_dir = args.ref_dir
 
-    dfiles = get_files(args.ref_dir,args)
+    dfiles = get_files(args.ref_dir,args,args.no_imgs)
     dst_data = {}
 
     for img_f,ann_f in dfiles:
-        bn = osp.basename(img_f)
+        bn = osp.basename(ann_f)
         if bn in dst_data:
             wmlu.print_error("{bn} is already exists in ref dir, {img_f},{dst_data[bn][0]}")
             if not args.force:
@@ -84,7 +106,7 @@ if __name__ == "__main__":
             else:
                 print(f"{ann_f} have been modified, need to copy")
         elif args.base_name:
-            bn = osp.basename(img_f)
+            bn = osp.basename(ann_f)
             if bn in dst_data:
                 dann_f = dst_data[bn][1]
                 if not newer(ann_f,dann_f):
@@ -122,8 +144,9 @@ if __name__ == "__main__":
         save_dir = osp.dirname(save_img_f)
         os.makedirs(save_dir,exist_ok=True)
 
-        print(f"{img_f} --> {save_img_f}")
-        shutil.copy2(img_f,save_img_f)
+        if not args.dont_copy_imgs:
+            print(f"{img_f} --> {save_img_f}")
+            shutil.copy2(img_f,save_img_f)
         print(f"{ann_f} --> {save_ann_f}")
         shutil.copy2(ann_f,save_ann_f)
 

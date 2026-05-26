@@ -197,7 +197,8 @@
             "console": "integratedTerminal",
             //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
             //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
-            "args":["~/ai/mldata1/tmp/example_data/" "~/ai/mldata1/tmp/example_data1/"],
+            //"args":["~/ai/mldata1/tmp/example_data/" "~/ai/mldata1/tmp/example_data1/"],
+            "args":["/home/wj/ai/mldata1/tmp/example_data/" "/home/wj/ai/mldata1/tmp/example_data1" "-sd" "/home/wj/ai/mldata1/tmp/example_data2" "-ni"],
             //"args":["~/ai/mldata1/tmp/example_data/" "~/ai/mldata1/tmp/example_data1/" "-sd" "~/ai/mldata1/tmp/example_data2/"],
         },
     ]
