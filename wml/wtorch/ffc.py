@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
-from .wfft import rfftn,irfftn
+#from .wfft import rfftn,irfftn
+#from .wfft_basic import rfftn,irfftn
+from .wfft_basic import rfftn as wrfftn
+from .wfft_basic import irfftn as wirfftn
+from torch.fft import rfftn,irfftn
 import wml.wtorch.nn as wnn
 from .conv_module import ConvModule
 
@@ -32,7 +36,10 @@ class FourierUnit(nn.Module):
         fft_dim = (-2, -1)
         fft_dim = [abs_dim[d] for d in fft_dim]
 
-        ffted = torch.fft.rfftn(x, dim=fft_dim)
+        if torch.jit.is_tracing():
+            ffted = wrfftn(x, dim=fft_dim)
+        else:
+            ffted = rfftn(x, dim=fft_dim)
         ffted = torch.stack((ffted.real, ffted.imag), dim=-1)
         ffted = ffted.permute(0, 1, 4, 2, 3).contiguous()  # (batch, c, 2, h, w/2+1)
         ffted = ffted.view((batch, -1,) + ffted.size()[3:])
@@ -46,8 +53,10 @@ class FourierUnit(nn.Module):
         ffted = torch.complex(ffted[..., 0], ffted[..., 1])
 
         ifft_shape_slice = x.shape[-2:]
-        #output = irfftn(ffted, sl=ifft_shape_slice, dim=fft_dim)
-        output = torch.fft.irfftn(ffted, s=ifft_shape_slice,dim=fft_dim)
+        if torch.jit.is_tracing():
+            output = wirfftn(ffted, s=ifft_shape_slice, dim=fft_dim)
+        else:
+            output = irfftn(ffted, s=ifft_shape_slice, dim=fft_dim)
 
 
         return output

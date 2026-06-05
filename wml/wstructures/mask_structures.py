@@ -67,7 +67,7 @@ class WPolygonMaskItem:
     def copy(self):
         return WPolygonMaskItem(self.points,width=self.width,height=self.height)
 
-    def bitmap(self,width=None,height=None):
+    def bitmap(self,width=None,height=None,scale_factor=None,new_size=None):
         '''
         return: [H,W]
         '''
@@ -75,9 +75,19 @@ class WPolygonMaskItem:
             width = self.width
         if height is None:
             height = self.height
+        assert scale_factor is None or new_size is None,f"WPolygonMaskItem: one of scale_factor/new_size must be None"
+        if new_size is not None:
+            scale_factor = min(new_size[0]/width,new_size[1]/height)
+        if scale_factor is not None:
+            width = int(scale_factor*width)
+            height = int(scale_factor*height)
         mask = np.zeros(shape=[height,width],dtype=np.uint8)
         if len(self.points)>0 and len(self.points[0])>0:
-            mask = cv2.drawContours(mask,self.points,-1,color=(1),thickness=cv2.FILLED)
+            points = self.points
+            if scale_factor is not None:
+                points = copy.deepcopy(points)
+                points = [(x.astype(np.float32)*scale_factor).astype(np.int32) for x in points]
+            mask = cv2.drawContours(mask,points,-1,color=(1),thickness=cv2.FILLED)
         return mask  
 
     def resize(self,size,width=None,height=None):
@@ -551,14 +561,15 @@ class WPolygonMasks(WBaseMask):
         s += f'width={self.width})'
         return s
 
-    def bitmap(self,exclusion=None):
+    def bitmap(self,exclusion=None,scale_factor=None,new_size=None):
         '''
         exclusion: 如果exclusion那么一个像素只能为一个类别，索引大的优先级高，即masks[i+1]会覆盖masks[i]的重叠区域
+        scale_factor/new_size: 如果设置,那么生成的bitmap会缩放会对应的大小
         '''
         if len(self.masks) == 0:
             return np.zeros(shape=[0,self.height,self.width],dtype=np.uint8)
 
-        masks = [m.bitmap(width=self.width,height=self.height) for m in self.masks]
+        masks = [m.bitmap(width=self.width,height=self.height,scale_factor=scale_factor,new_size=new_size) for m in self.masks]
         
         if exclusion is None:
             exclusion = self.exclusion
@@ -977,7 +988,7 @@ class WBitmapMasks(WBaseMask):
 
     @property
     def shape(self):
-        return self.masks.shape
+        return self.masks.shape #[N,H,W]
     
     def flip(self,direction=WBaseMask.HORIZONTAL):
         if len(self.masks)==0:

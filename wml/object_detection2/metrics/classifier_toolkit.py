@@ -377,8 +377,9 @@ class ConfusionMatrix(BaseClassifierMetrics):
 
         #总体精度
         all_tp = sum([self.cm[i,i] for i in range(self.real_num_classes)])
-        all_tp_fp = sum([np.sum(self.cm[:self.real_num_classes,i]) for i in range(self.real_num_classes)])
+        all_tp_fp = sum([np.sum(self.cm[:,i]) for i in range(self.real_num_classes)])
         line += f"{safe_persent(all_tp,all_tp_fp):<4.1f}{mid_spliter} "
+        #line += f"{all_tp},{all_tp_fp}{mid_spliter} "
 
         res += line+"\n"
 

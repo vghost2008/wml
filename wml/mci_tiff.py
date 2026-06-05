@@ -6,7 +6,10 @@ import copy
 import os
 import os.path as osp
 import cv2
-import tifffile
+try:
+    import tifffile
+except:
+    tifffile = None
 import json
 
 class MCITIFF:

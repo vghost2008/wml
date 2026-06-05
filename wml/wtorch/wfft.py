@@ -114,7 +114,9 @@ def rfft(input, dim):
     input = torch.index_select(input, dim, torch.arange(input.shape[dim]//2+1).to(device))
     return input
 
-
+'''
+input: [B,C,H,W]
+'''
 def rfftn(input, dim):
     input = input.float()
     new_dim  = []
@@ -123,13 +125,15 @@ def rfftn(input, dim):
             d = input.ndim+d
         new_dim.append(d)
     dim = new_dim
-    input = rfft(input,dim[0])
-    for d in dim[1:]:
+    input = rfft(input,dim[-1])
+    for d in dim[::-1][1:]:
         input = torch.fft.fft(input, dim=d)
     return input
 
-def irfftn(input, sl, dim):
-    input = input.float()
+'''
+input: complex,[B,C,H,W]
+'''
+def irfftn(input, s, dim):
     new_dim  = []
     for d in dim:
         if d<0:
@@ -138,7 +142,7 @@ def irfftn(input, sl, dim):
     dim = new_dim
 
     output = input
-    for s, d in zip(sl[1:][::-1], dim[1:][::-1]):
-        output= torch.fft.ifft(output, s, d)
-    output = irfft(output,sl[0],dim[0])
+    for _s, d in zip(s[:-1], dim[:-1]):
+        output= torch.fft.ifft(output, _s, d)
+    output = irfft(output,s[-1],dim[-1])
     return torch.real(output)

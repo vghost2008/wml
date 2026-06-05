@@ -6,6 +6,8 @@ LABELS = "labels"
 PROBABILITY = "probability"
 RAW_PROBABILITY = "raw_probability"
 IMAGE = 'img'
+PERLIN_MASK = "perlin_mask"
+INPAINT_MASK = "inpaint_mask"
 HEIGHT = "height"
 WIDTH = "width"
 MASKS = "masks"
@@ -23,6 +25,7 @@ IMG_METAS = "img_metas"
 PROPOSAL_BBOXES = "proposal_bboxes"
 SAMPLED_BBOXES = "sampled_bboxes"
 
+GT_IMAGE = 'gt_img'
 GT_BOXES = 'gt_bboxes'
 GT_LENGTH = 'gt_length'
 GT_LABELS = 'gt_labels'

@@ -80,7 +80,8 @@ def copy_imgfiles(ann_dir,img_dir,level=0,img_suffix=wmli.BASE_IMG_SUFFIX,ann_ty
                 print(f"{files} --> {cur_dir}")
                 save_path = osp.join(cur_dir,wmlu.base_name(xf)+osp.splitext(files)[-1])
                 if not args.move:
-                    shutil.copy(files,save_path)
+                    #shutil.copy(files,save_path)
+                    wmlu.try_link(files,save_path)
                 else:
                     try:
                         shutil.move(files,save_path)
