@@ -256,6 +256,24 @@ class ConfusionMatrix(BaseClassifierMetrics):
         self.cm = []
         self.have_bg = have_bg  #最后一个类别是否为背景
 
+    @staticmethod
+    def seq_confusion_matrix(preds,gts,show=True):
+        '''
+        preds: list[str]
+        gts: list[str]
+        '''
+        classes = list(preds)+list(gts)
+        classes = sorted(list(set(classes)))
+        metrics = ConfusionMatrix(classes=classes)
+        metrics(preds,gts)
+        if show:
+            metrics.show()
+        return metrics
+
+    def label_text2id(self,label_text):
+        return [self.classes.index(a) for a in label_text]
+
+
     def __call__(self,output,target):
         '''
         output: [N0,...,Nn,num_classes]
@@ -268,6 +286,10 @@ class ConfusionMatrix(BaseClassifierMetrics):
             pred = idx[...,-1]
         else:
             pred = output
+        if len(pred)>0 and isinstance(pred[0],(str,bytes)):
+            pred = self.label_text2id(pred)
+        if len(target)>0 and isinstance(target[0],(str,bytes)):
+            target = self.label_text2id(target)
         self.all_pred.append(copy.deepcopy(np.reshape(pred,[-1])))
         self.all_target.append(copy.deepcopy(np.reshape(target,[-1])))
     

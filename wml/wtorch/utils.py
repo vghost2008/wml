@@ -547,6 +547,19 @@ def simple_model_device(model):
 def simple_model_dtype(model):
      return next(model.parameters()).dtype
 
+def get_model_attr(model,attr,default_value=None):
+    if "." in attr:
+        attrs = attr.split(".")
+    else:
+        attrs = [attr]
+    for k in attrs:
+        if hasattr(model,k):
+            model = getattr(model,k)
+        else:
+            return default_value
+    return model
+
+
 def resize_mask(mask,size=None,r=None):
     '''
     mask: [N,H,W]

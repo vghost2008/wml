@@ -637,10 +637,12 @@ def lowest_common_multiple(a,b):
     res = max_v*min_v
 
     while True:
-        for i in range(1,min_v):
+        for i in range(2,min_v):
             if is_divide_exactly(res,i):
                 tmp_v = res//i
                 if is_divide_exactly(tmp_v,max_v) and is_divide_exactly(tmp_v,min_v):
+                    #max_v = max_v//i
+                    #min_v = min_v//i
                     res = tmp_v
                     break
         if i>=min_v-1:
