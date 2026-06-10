@@ -51,6 +51,38 @@ class LoRALinear(nn.Module):
         
         return original_output + lora_output
 
+    def merge(self):
+        lora_A = self.lora_A.weight
+        lora_B = self.lora_B.weight
+        
+        # 获取缩放系数 (scaling factor)
+        # LoRA 的最终增量是 scaling * (B @ A)
+        scaling = self.scaling
+        
+            
+        
+        # 3. 计算增量权重 Delta W = scaling * (B @ A)
+        # 注意矩阵乘法的维度：
+        # A: [rank, in_features]
+        # B: [out_features, rank]
+        # B @ A: [out_features, in_features] -> 与 original_linear.weight 维度一致
+        delta_weight = torch.mm(lora_B, lora_A) * scaling
+        original_linear = self.linear
+        
+        # 4. 将增量权重合并到原始权重中
+        # original_linear.weight.data 是 [out_features, in_features]
+        with torch.no_grad():
+            original_linear.weight.data += delta_weight.to(original_linear.weight.dtype)
+            
+            # 如果存在 bias，也需要处理（通常 LoRA 不微调 bias，但需确保一致性）
+            if original_linear.bias is not None:
+                # LoRA 通常不改变 bias，除非显式配置了 lora_bias
+                # 如果配置了 lora_bias，这里需要加上对应的 bias 增量
+                if hasattr(self, 'lora_bias'):
+                     original_linear.bias.data += self.lora_bias.to(original_linear.bias.dtype)
+        
+        return original_linear
+
 class LoRAConv(nn.Module):
     '''
             self.kernel_size = kernel_size
@@ -131,7 +163,7 @@ def simple_get_model(
     rank=4, lora_alpha=16, dropout=0.0,
 ):
     """
-    简化版的 get_peft_model 实现，仅以 LoRA 为例展示核心逻辑。
+    简化版的 get_model 实现，仅以 LoRA 为例展示核心逻辑。
     """
 
     # 3. 遍历模型，查找并替换目标模块 (Target Modules)
@@ -185,7 +217,7 @@ def simple_get_conv_model(
 
 ):
     """
-    简化版的 get_peft_model 实现，仅以 LoRA 为例展示核心逻辑。
+    简化版的 get_model 实现，仅以 LoRA 为例展示核心逻辑。
     """
     # 递归遍历模型的所有子模块
     if model is None:
@@ -248,3 +280,24 @@ def _is_target_module(name: str, module: nn.Module, target_modules: Union[list, 
             return True
         # 也可以检查模块类型，例如 isinstance(module, nn.Linear)
     return False
+
+
+def merge_and_unload(model):
+    for name, module in model.named_modules():
+        # 检查该模块是否是 PEFT 注入的 LoRA 模块
+        # 不同的 PEFT 版本可能有不同的类名，常见的是 LoraLayer 或具有 lora_A/lora_B 属性的模块
+        if hasattr(module, 'lora_A') and hasattr(module, 'lora_B') and hasattr(module,"merge"):
+            new_model = module.merge()
+            if new_model is None:
+                continue
+            parent_name = name.rsplit('.', 1)[0] if '.' in name else ''
+            child_name = name.rsplit('.', 1)[-1]
+            
+            if parent_name:
+                parent_module = dict(model.named_modules())[parent_name]
+            else:
+                parent_module = model
+                
+            setattr(parent_module, child_name, new_model.base_layer)
+
+    return model

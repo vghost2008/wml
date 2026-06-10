@@ -814,7 +814,8 @@ class ClsPrecisionAndRecall(BaseMetrics):
 
     def to_string(self):
         try:
-            return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1}/({self.total_test_nr})"
+            #return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1:.3f}/({self.total_test_nr})"
+            return f"{self.precision:.3f}/{self.recall:.3f}/{self.f1:.3f}"
         except:
             return "N.A."
 
