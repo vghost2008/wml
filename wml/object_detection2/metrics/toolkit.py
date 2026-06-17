@@ -1173,6 +1173,8 @@ class COCOEvaluation(BaseMetrics):
         else:
             return self.box_evaluator.to_string()
 
+METRICS_REGISTRY.register(COCOEvaluation,"coco")
+
 @METRICS_REGISTRY.register()
 class ObjEquaityEvaluation(COCOEvaluation):
     '''

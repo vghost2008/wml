@@ -152,7 +152,8 @@
             //"args":["~/ai/mldata1/B7mura/datas/train_sru4m/"]
             //"args":["~/ai/mldata1/B10CFOD/tmp/sps/val.dl"]
             //"args":["~/ai/mldata1/B17MDL/labeled_data,~/ai/mldata1/B17MDL/labeled_data2"]
-            "args":["~/ai/mldata1/B2ARM/raw_datasets_ov/260227/B已标注训练数据集"]
+            //"args":["~/ai/mldata1/B2ARM/raw_datasets_ov/260227/B已标注训练数据集"]
+            "args":["~/ai/mldata1/B16BP/datasets/datasetsv1.2/val/"]
         },
         {
             "name": "Python: trans dataset",

@@ -319,6 +319,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         example_nrs.append(e_nr)
         max_examples = max(e_nr,max_examples)
         all_boxes.extend(bboxes)
+        ###encode label
+        labels_text = [label_encoder(x) for x in labels_text]
         all_labels.extend(labels_text) #用于bbox计数统计等
         for l,box in zip(labels_text,bboxes):
             if l in classeswise_boxes:
@@ -344,8 +346,7 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
     #按bbox统计
     labels_counter = {}
     encoded_labels = []
-    for _l in all_labels:
-        l = label_encoder(_l)
+    for l in all_labels:
         encoded_labels.append(l)
         if l in labels_counter:
             labels_counter[l] = labels_counter[l]+1

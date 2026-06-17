@@ -604,6 +604,9 @@ def to_fraction(v):
             break
     if not is_int(v):
         return v,denominator
+
+    if v>10000:
+        return None,None
     
     v = int(v)
     for _ in range(max_try):

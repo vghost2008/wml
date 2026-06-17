@@ -190,8 +190,8 @@ def defrost_model(model,defrost_bn=True,silent=False):
             print(name, param.size(), "defrost")
         param.requires_grad = True
 
-def defrost_scope(model,scope,defrost_bn=True,silent=False):
-    if defrost_bn:
+def defrost_scope(model,scope,defrost_batch_normal=True,silent=False):
+    if defrost_batch_normal:
         defrost_bn(model,scope)
     for name, param in model.named_parameters():
         if not is_in_scope(name,scope):

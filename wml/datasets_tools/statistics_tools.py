@@ -105,7 +105,8 @@ if __name__ == "__main__":
     else:
         print(f"Unknow dataset type {dataset_type}")
     statics = statistics_boxes_with_datas(dataset,
-                                          label_encoder=default_encode_label,
+                                          #label_encoder=default_encode_label,
+                                          label_encoder=lambda x:x[3:5]+x[-1],
                                           labels_to_remove=None,
                                           max_aspect=None,absolute_size=True,
                                           labels=args.labels,
