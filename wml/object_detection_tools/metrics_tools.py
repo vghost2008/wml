@@ -12,7 +12,6 @@ def parse_args():
     parser.add_argument('--num-classes', type=int,default=0,help='num of classes')
     parser.add_argument('-bs','--beg-score-thr', type=float,default=0.1,help='begin test thr')
     parser.add_argument('-es','--end-score-thr', type=float,default=1.0, help='end test thr')
-    parser.add_argument('-s','--score-thr', type=float, help='test thr')
     parser.add_argument('--score-step', type=float,default=0.05, help='score step')
     parser.add_argument('-cw','--classes-wise', action='store_true', help='score step')
     parser.add_argument('--verbose', action='store_true', help='verbose mode')
@@ -29,11 +28,6 @@ if __name__ == "__main__":
         data = data['results']
     else:
         classes = None
-
-    if args.score_thr is not None and args.score_thr>0:
-        args.beg_score_thr = args.score_thr
-        args.end_score_thr = args.score_thr
-
     num_classes = args.num_classes
     if num_classes == 0:
         if classes is not None:
@@ -90,6 +84,13 @@ if __name__ == "__main__":
                 d['boxes'] = d['boxes'][keep]
             if "kps" in d:
                 d["kps"] = d["kps"][keep]
+            if len(d['labels'])==0 and "N1U" in classes:
+                zl = classes.index("N1U")
+                #print(f"use default label N1U , label {zl}")
+                d['labels'] = np.array([zl])
+                d['boxes'] = np.array([[0.0,0.0,1.0,1.0]])
+                d[scores_key] = np.array([0.9])
+                
             metrics(**d)
             cur_info = metrics.current_info()
             if args.verbose and  len(cur_info)>0:

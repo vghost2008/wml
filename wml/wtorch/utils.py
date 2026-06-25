@@ -698,12 +698,18 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
     with torch.no_grad():
         return _trunc_normal_(tensor, mean, std, a, b)
 
+def embedding_align_version2scores(scores,version,exponent=2):
+    assert version>=0 and version<100,f"ERROR: version need in range [0,100)"
+    scale = math.pow(10,exponent)
+    scores = ((scores*scale+version/2).to(torch.int32)//version)*version
+    scores = scores.to(torch.float32)/scale
+    return scores
 
 def embedding_version2scores(scores,version,exponent=2):
     assert version>=0 and version<100,f"ERROR: version need in range [0,100)"
     scale = math.pow(10,exponent)
     scores = (scores*scale).to(torch.int32).to(torch.float32)
-    version = version/10
+    version = version/100
     scores = (scores+version)/scale
     return scores
 

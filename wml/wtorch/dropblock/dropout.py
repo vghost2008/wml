@@ -39,6 +39,9 @@ class WDropout(nn.Module):
             self.cur_drop_prob = self.drop_prob
             return F.dropout(x, self.drop_prob, self.training, self.inplace)
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}, drop_prob={self.drop_prob}"
+
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):
     if drop_prob == 0. or not training:
@@ -60,3 +63,30 @@ class DropPath(nn.Module):
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}, drop_prob={self.drop_prob}"
+
+
+
+class WDropChannel(nn.Module):
+    def __init__(self, drop_prob,inplace=False):
+        super().__init__()
+
+        self.drop_prob = drop_prob
+        self.inplace = inplace
+        self.cur_drop_prob = 0.0
+
+    def forward(self, x):
+        if not self.training or self.drop_prob <= 0.:
+            self.cur_drop_prob = 0.0
+            return x
+        else:
+            self.cur_drop_prob = self.drop_prob
+            shape = (x.shape[0],x.shape[1]) + (1,) * (x.ndim - 2)
+            scale = torch.ones(shape).to(x.dtype).to(x.device)
+            scale = F.dropout(scale, self.drop_prob, self.training, self.inplace)
+            return x*scale
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}, drop_prob={self.drop_prob}"

@@ -345,7 +345,7 @@ class ConfusionMatrix(BaseClassifierMetrics):
     def to_string(self,blod=True):
         return self.to_string_number(blod,begin_char="",mid_spliter=",")
 
-    def to_string_number(self,blod=True,begin_char="|",mid_spliter="|"):
+    def to_string_number(self,blod=True,begin_char="|",mid_spliter="|",percent=True):
         if len(self.cm)==0:
             self.evaluate()
         res = "\n"
@@ -367,12 +367,17 @@ class ConfusionMatrix(BaseClassifierMetrics):
 
         for i in range(self.num_classes):
             line = f"{begin_char}{self.classes[i]:<10}{mid_spliter}"
+            if percent:
+                gti_sum = np.sum(self.cm[i,:])
             for j in range(self.num_classes):
+                v = self.cm[i,j]
+                if percent:
+                    v = f"{v*100/max(gti_sum,1):.1f}"
                 if blod and i==j:
                     #line += f"{self.cm[i,j]:<4}*{mid_spliter} "
-                    line += f"{self.cm[i,j]:<5}{mid_spliter} "
+                    line += f"{v:<5}{mid_spliter} "
                 else:
-                    line += f"{self.cm[i,j]:<5}{mid_spliter} "
+                    line += f"{v:<5}{mid_spliter} "
             res += line+"\n"
         
         classes_names = ""

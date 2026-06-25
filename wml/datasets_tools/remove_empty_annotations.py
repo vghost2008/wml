@@ -41,8 +41,8 @@ def get_labels(ann_file,suffix):
         labels = [x['category_id'] for x in annotation_list]
     elif suffix == "none":
         labels = [ImageFolder.get_label(ann_file)]
-    if len(labels)==0:
-        labels = ['NONE']
+    if labels is None or len(labels)==0:
+        labels = []
 
     return labels
 
@@ -72,8 +72,6 @@ if __name__ == "__main__":
     random.seed(int(time.time()))
     random.shuffle(all_files)
     print(f"Find {len(all_files)} files")
-
-    rm_labels = set(args.labels)
 
     total_skip = 0
     total_copy = 0

@@ -291,6 +291,8 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         if use_ids:
             labels_text = category_ids
 
+        if label_encoder is not None:
+            labels_text = [label_encoder(x) for x in labels_text]
         total_file_nr += 1
         if is_crowd is not None:
             is_crowd = np.array(is_crowd).astype(np.int32)
@@ -319,8 +321,6 @@ def statistics_boxes_with_datas(datas,label_encoder=default_encode_label,labels_
         example_nrs.append(e_nr)
         max_examples = max(e_nr,max_examples)
         all_boxes.extend(bboxes)
-        ###encode label
-        labels_text = [label_encoder(x) for x in labels_text]
         all_labels.extend(labels_text) #用于bbox计数统计等
         for l,box in zip(labels_text,bboxes):
             if l in classeswise_boxes:

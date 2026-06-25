@@ -6,7 +6,7 @@ from .common import resample,ignore_case_dict_label_text2id,regex_dict_label_tex
 from abc import ABCMeta, abstractmethod
 from functools import partial
 from wml.basic_img_utils import BASE_IMG_SUFFIX
-
+import sys
 
 
 class BaseDataset(metaclass=ABCMeta):
@@ -106,6 +106,12 @@ class BaseDataset(metaclass=ABCMeta):
         else:
             files = self.find_files_in_dir(dir_path,img_suffix=img_suffix)
 
+        if self.filter_empty_files and self.label_text2id:
+
+            files = self.apply_filter_empty_files(files)
+        elif self.filter_error:
+            files = self.apply_filter_error_files(files)
+
         return files
 
     @abstractmethod
@@ -131,18 +137,16 @@ class BaseDataset(metaclass=ABCMeta):
                 files = list(files)*int(repeat_nr)
 
             print(f"Find {files_nr} in {dir_path}, repeat to {len(files)} files")
+            sys.stdout.flush()
             raw_nr += files_nr
             all_files.extend(list(files))
 
         print(f"Total find {raw_nr} files, repeat to {len(all_files)} files.")
+        sys.stdout.flush()
         return all_files
 
     def read_data(self,dir_path,img_suffix=BASE_IMG_SUFFIX):
         _files = self.find_files(dir_path,img_suffix=img_suffix)
-        if self.filter_empty_files and self.label_text2id:
-            _files = self.apply_filter_empty_files(_files)
-        elif self.filter_error:
-            _files = self.apply_filter_error_files(_files)
         if self.resample_parameters is not None and self.label_text2id:
             _files = self.resample(_files)
         

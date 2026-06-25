@@ -78,8 +78,11 @@ def regex_dict_label_text2id(name,info="",dict_data={}):
                         if isinstance(tv,int):
                             v = tv
                         elif isinstance(tv,(str,bytes)):
-                            tv = tv.lower()
-                            v = regex_dict_label_text2id(tv, info,dict_data)
+                            if tv.lower() == "none":  #使用None表示没有标注,与匹配失败区分开
+                                v = None
+                            else:
+                                tv = tv.lower()
+                                v = regex_dict_label_text2id(tv, info,dict_data)
                         break
             except:
                 pass

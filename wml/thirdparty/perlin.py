@@ -1,4 +1,7 @@
-import imgaug.augmenters as iaa
+try:
+    import imgaug.augmenters as iaa
+except:
+    iaa = None
 import numpy as np
 import torch
 import math
